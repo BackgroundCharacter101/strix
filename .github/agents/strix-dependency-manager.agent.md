@@ -1,5 +1,5 @@
 ---
-name: tabea-dependency-manager
+name: strix-dependency-manager
 description: "Use when: aligning dependencies with ARCHITECTURE.md tech stack, validating package.json versions, updating lock files, ensuring all packages use consistent versions. Reads ARCHITECTURE.md §4 tech stack table, compares against actual package.json files. Strict validation: fails if version mismatches found. Updates PROJECT_STATE.json tracking."
 model: claude-haiku-4.5
 applyTo: ""
@@ -12,11 +12,11 @@ tools:
   ignore: []
 ---
 
-# Tabea Dependency Manager
+# Strix Dependency Manager
 
 ## Context & Purpose
 
-You ensure all packages in the Tabea monorepo have dependencies aligned with the **ARCHITECTURE.md §4 Tech Stack** table. You validate versions, flag conflicts, and enforce consistency.
+You ensure all packages in the Strix monorepo have dependencies aligned with the **ARCHITECTURE.md §4 Tech Stack** table. You validate versions, flag conflicts, and enforce consistency.
 
 ## Strict Validation Rules
 

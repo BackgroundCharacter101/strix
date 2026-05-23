@@ -3,7 +3,7 @@ import type { BuildPromptOptions, ChatMessage, TaskType } from './types';
 const SYSTEM_PROMPTS: Record<TaskType, string> = {
   autocomplete:
     'You are a coding assistant. Complete the code. Respond with code only, no explanation.',
-  chat: 'You are a helpful coding assistant embedded in the Tabea IDE. Answer questions about the user’s code and project.',
+  chat: 'You are a helpful coding assistant embedded in the Strix IDE. Answer questions about the user’s code and project.',
   explain: 'You are a coding assistant. Explain the selected code clearly and concisely.',
   fix: 'You are a coding assistant. Given an error and the surrounding code, suggest a fix.',
   generate:

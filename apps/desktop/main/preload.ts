@@ -1,22 +1,22 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { FileNode } from './fs';
 
-export interface TabeaFsApi {
+export interface StrixFsApi {
   read(filePath: string): Promise<string>;
   write(filePath: string, content: string): Promise<void>;
   tree(rootPath: string): Promise<FileNode>;
 }
 
-export interface TabeaWorkspaceApi {
+export interface StrixWorkspaceApi {
   root(): Promise<string>;
 }
 
-export interface TabeaApi {
-  fs: TabeaFsApi;
-  workspace: TabeaWorkspaceApi;
+export interface StrixApi {
+  fs: StrixFsApi;
+  workspace: StrixWorkspaceApi;
 }
 
-const api: TabeaApi = {
+const api: StrixApi = {
   fs: {
     read: (filePath) => ipcRenderer.invoke('file:read', filePath),
     write: (filePath, content) => ipcRenderer.invoke('file:write', filePath, content),
@@ -27,4 +27,4 @@ const api: TabeaApi = {
   },
 };
 
-contextBridge.exposeInMainWorld('tabea', api);
+contextBridge.exposeInMainWorld('strix', api);

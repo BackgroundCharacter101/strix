@@ -1,4 +1,4 @@
-# Tabea Deployment Plan
+# Strix Deployment Plan
 
 ## 1. Homelab Infrastructure
 

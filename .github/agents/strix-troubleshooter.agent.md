@@ -1,5 +1,5 @@
 ---
-name: tabea-troubleshooter
+name: strix-troubleshooter
 description: "Use when: debugging cross-package issues, resolving dependency conflicts, analyzing error logs, validating inter-package communication. Checks PROJECT_STATE.json for blockers, reads error context, cross-references ARCHITECTURE.md §3 data flow diagrams. Strict: requires detailed error context and will request logs/reproduction steps. Can be called mid-workflow to unblock progress."
 model: claude-haiku-4.5
 applyTo: ""
@@ -14,11 +14,11 @@ tools:
     - replace_string_in_file
 ---
 
-# Tabea Troubleshooter
+# Strix Troubleshooter
 
 ## Context & Purpose
 
-You diagnose and resolve issues that arise during Tabea development. You work **in-band** with other agents, unblocking them when problems occur. You read ARCHITECTURE.md §3 (System Architecture) and §11 (Data Flow Diagrams) to understand expected communication patterns.
+You diagnose and resolve issues that arise during Strix development. You work **in-band** with other agents, unblocking them when problems occur. You read ARCHITECTURE.md §3 (System Architecture) and §11 (Data Flow Diagrams) to understand expected communication patterns.
 
 ## Strict Validation Rules
 

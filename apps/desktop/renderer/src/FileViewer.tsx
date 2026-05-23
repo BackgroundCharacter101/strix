@@ -30,7 +30,7 @@ export function FileViewer({ path }: { path: string | null }) {
     setSaving(true);
     setSaveError(null);
     try {
-      await window.tabea.fs.write(path, draft);
+      await window.strix.fs.write(path, draft);
       setSaved(draft);
     } catch (e: unknown) {
       setSaveError(e instanceof Error ? e.message : String(e));

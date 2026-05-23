@@ -1,3 +1,3 @@
-# @tabea/lsp
+# @strix/lsp
 
-Language server bridge package for Tabea. Manages Python and TypeScript language servers for Monaco.
+Language server bridge package for Strix. Manages Python and TypeScript language servers for Monaco.

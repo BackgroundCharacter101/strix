@@ -16,7 +16,7 @@ export function useFileTree(rootPath: string): FileTreeState {
   const reload = useCallback(() => {
     setLoading(true);
     setError(null);
-    window.tabea.fs
+    window.strix.fs
       .tree(rootPath)
       .then(setTree)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))

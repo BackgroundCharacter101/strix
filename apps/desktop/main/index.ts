@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DEV_URL = 'http://localhost:3000';
-const USER_DATA_PATH = path.join(app.getPath('temp'), 'tabea-electron-user-data');
+const USER_DATA_PATH = path.join(app.getPath('temp'), 'strix-electron-user-data');
 app.setPath('userData', USER_DATA_PATH);
 
 function createWindow() {

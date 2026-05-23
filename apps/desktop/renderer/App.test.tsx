@@ -13,7 +13,7 @@ beforeEach(() => {
   root.mockReset();
   tree.mockReset();
   read.mockReset();
-  window.tabea = {
+  window.strix = {
     fs: {
       tree,
       read,

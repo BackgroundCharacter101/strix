@@ -1,4 +1,4 @@
-# Tabea IDE — Multi-Agent Workflow System
+# Strix IDE — Multi-Agent Workflow System
 
 > **Project**: Custom IDE (Zed-inspired) with self-hosted FreeLLMAPI backbone  
 > **Status**: Phase 0 — Planning  
@@ -9,20 +9,20 @@
 
 ## Agent Registry
 
-This file documents the five specialized agents that orchestrate Tabea's development in a disciplined, workflow-driven manner. All agents follow **strict validation** rules and communicate via `.github/PROJECT_STATE.json` (shared state) + chat handoff messages.
+This file documents the five specialized agents that orchestrate Strix's development in a disciplined, workflow-driven manner. All agents follow **strict validation** rules and communicate via `.github/PROJECT_STATE.json` (shared state) + chat handoff messages.
 
-### 1. **tabea-scaffolder**
+### 1. **strix-scaffolder**
 
 **Role**: Create monorepo structure exactly per ARCHITECTURE.md §5-6
 
 | Aspect | Value |
 |--------|-------|
-| **Trigger** | User: "Run scaffolder" OR PROJECT_STATE.json `next_agent: tabea-scaffolder` |
+| **Trigger** | User: "Run scaffolder" OR PROJECT_STATE.json `next_agent: strix-scaffolder` |
 | **Inputs** | ARCHITECTURE.md §5-6, PROJECT_STATE.json |
 | **Outputs** | Monorepo package/app structure from ARCHITECTURE.md, updated PROJECT_STATE.json |
 | **Phase** | 1 (Scaffolding) |
 | **Validation** | Strict — fails if package names don't match ARCHITECTURE.md exactly |
-| **Handoff** | Sets `next_agent: tabea-dependency-manager` |
+| **Handoff** | Sets `next_agent: strix-dependency-manager` |
 | **Tools** | create_file, create_directory, read_file, replace_string_in_file |
 
 **Workflow**:
@@ -38,18 +38,18 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 
 ---
 
-### 2. **tabea-dependency-manager**
+### 2. **strix-dependency-manager**
 
 **Role**: Align all package.json versions to ARCHITECTURE.md §4 tech stack
 
 | Aspect | Value |
 |--------|-------|
-| **Trigger** | PROJECT_STATE.json `next_agent: tabea-dependency-manager` |
+| **Trigger** | PROJECT_STATE.json `next_agent: strix-dependency-manager` |
 | **Inputs** | ARCHITECTURE.md §4, all package.json files, PROJECT_STATE.json |
 | **Outputs** | Updated all package.json files, updated PROJECT_STATE.json |
 | **Phase** | 2 (Dependencies) |
 | **Validation** | Strict — fails if version mismatches found (e.g., React 18 vs 19) |
-| **Handoff** | Sets `next_agent: tabea-deployment-orchestrator` |
+| **Handoff** | Sets `next_agent: strix-deployment-orchestrator` |
 | **Tools** | read_file, replace_string_in_file, run_in_terminal, grep_search |
 
 **Workflow**:
@@ -67,18 +67,18 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 
 ---
 
-### 3. **tabea-deployment-orchestrator**
+### 3. **strix-deployment-orchestrator**
 
 **Role**: Plan Raspberry Pi 5 FreeLLMAPI deployment (security, services, networking)
 
 | Aspect | Value |
 |--------|-------|
-| **Trigger** | PROJECT_STATE.json `next_agent: tabea-deployment-orchestrator` |
+| **Trigger** | PROJECT_STATE.json `next_agent: strix-deployment-orchestrator` |
 | **Inputs** | ARCHITECTURE.md §9-12, PROJECT_STATE.json |
 | **Outputs** | `.github/DEPLOYMENT_PLAN.md`, updated PROJECT_STATE.json |
 | **Phase** | 3 (Deployment Planning) |
 | **Validation** | Strict — fails if FreeLLMAPI/networking specs incomplete in ARCHITECTURE.md |
-| **Handoff** | Sets `next_agent: tabea-workflow-coordinator` |
+| **Handoff** | Sets `next_agent: strix-workflow-coordinator` |
 | **Tools** | read_file, create_file, replace_string_in_file, grep_search |
 
 **Workflow**:
@@ -103,7 +103,7 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 
 ---
 
-### 4. **tabea-troubleshooter**
+### 4. **strix-troubleshooter**
 
 **Role**: Diagnose & resolve cross-package issues (can be called anytime)
 
@@ -138,7 +138,7 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 
 ---
 
-### 5. **tabea-workflow-coordinator**
+### 5. **strix-workflow-coordinator**
 
 **Role**: Orchestrate all agents, validate workflow state, ensure phase alignment
 
@@ -171,7 +171,7 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 6. On agent completion:
    - Validate outputs match expected artifacts
    - Confirm state fields updated
-   - Produce summary: "✓ Phase X complete. → Next: tabea-Y-agent"
+   - Produce summary: "✓ Phase X complete. → Next: strix-Y-agent"
 ```
 
 ---
@@ -185,31 +185,31 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 │ Agent: (none — manual review)                                  │
 │ Output: ARCHITECTURE.md ✓                                       │
 └──────────────────────┬──────────────────────────────────────────┘
-                       │ next_agent: tabea-scaffolder
+                       │ next_agent: strix-scaffolder
                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ PHASE 1: SCAFFOLDING (Create monorepo package/app structure)   │
 │ Status: packages_scaffolded = true                              │
-│ Agent: tabea-scaffolder                                         │
+│ Agent: strix-scaffolder                                         │
 │ Output: apps/desktop + packages/{editor, ai-gateway, terminal, lsp, collab, ui} │
 └──────────────────────┬──────────────────────────────────────────┘
-                       │ next_agent: tabea-dependency-manager
+                       │ next_agent: strix-dependency-manager
                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ PHASE 2: DEPENDENCIES (Align versions to ARCHITECTURE §4)       │
 │ Status: dependencies_synced = true                              │
-│ Agent: tabea-dependency-manager                                 │
+│ Agent: strix-dependency-manager                                 │
 │ Output: All package.json updated, lock files generated          │
 └──────────────────────┬──────────────────────────────────────────┘
-                       │ next_agent: tabea-deployment-orchestrator
+                       │ next_agent: strix-deployment-orchestrator
                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ PHASE 3: DEPLOYMENT PLANNING (Create Pi infrastructure plan)    │
 │ Status: deployment_planned = true                               │
-│ Agent: tabea-deployment-orchestrator                            │
+│ Agent: strix-deployment-orchestrator                            │
 │ Output: .github/DEPLOYMENT_PLAN.md (comprehensive checklist)   │
 └──────────────────────┬──────────────────────────────────────────┘
-                       │ next_agent: tabea-workflow-coordinator
+                       │ next_agent: strix-workflow-coordinator
                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ PHASE 4: INTEGRATION TESTING (Run tests, validate each package) │
@@ -223,7 +223,7 @@ This file documents the five specialized agents that orchestrate Tabea's develop
 │ PHASE 5: PRODUCTION DEPLOYMENT (Deploy to Pi, run IDE client)   │
 │ Status: production_ready = true                                 │
 │ Agent: (framework to be defined — not yet implemented)          │
-│ Output: Running Tabea IDE on developer machines + Pi            │
+│ Output: Running Strix IDE on developer machines + Pi            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -237,7 +237,7 @@ All agents use **hybrid communication**:
 
 ```json
 {
-  "project": "Tabea IDE",
+  "project": "Strix IDE",
   "phase": "1-scaffolding",
   "status": {
     "packages_scaffolded": true,
@@ -245,8 +245,8 @@ All agents use **hybrid communication**:
     "deployment_planned": false,
     "all_checks_passed": false
   },
-  "last_agent": "tabea-scaffolder",
-  "next_agent": "tabea-dependency-manager",
+  "last_agent": "strix-scaffolder",
+  "next_agent": "strix-dependency-manager",
   "blockers": [],
   "notes": "Awaiting dependency manager to sync versions to ARCHITECTURE.md §4"
 }
@@ -259,7 +259,7 @@ All agents use **hybrid communication**:
   7 packages created (exact match to ARCHITECTURE.md §5-6)
   Updated .github/PROJECT_STATE.json
 
-→ Next: Run **tabea-dependency-manager**
+→ Next: Run **strix-dependency-manager**
   Goal: Sync all package.json versions to ARCHITECTURE.md §4 tech stack
 ```
 
@@ -270,7 +270,7 @@ All agents use **hybrid communication**:
 
 ## Blocker #1: Incomplete FreeLLMAPI specs in ARCHITECTURE.md
 - **Severity**: Blocking (deployment-orchestrator failed)
-- **Affected Agent**: tabea-deployment-orchestrator
+- **Affected Agent**: strix-deployment-orchestrator
 - **Issue**: §9 lacks list of 14 API providers + their keys
 - **Resolution**: User must add provider list to ARCHITECTURE.md §9, then re-run orchestrator
 ```
@@ -281,12 +281,12 @@ All agents use **hybrid communication**:
 
 | Scenario | Agent(s) to Run |
 |----------|-----------------|
-| "Set up the monorepo" | **tabea-scaffolder** (then follow workflow) |
-| "Update dependencies" | **tabea-dependency-manager** (if packages exist) |
-| "Plan Pi deployment" | **tabea-deployment-orchestrator** (if dependencies synced) |
-| "Something's broken" | **tabea-troubleshooter** (can run anytime) |
-| "What's the status?" | **tabea-workflow-coordinator** (meta-agent) |
-| "Resume work" | **tabea-workflow-coordinator** → follow recommendation |
+| "Set up the monorepo" | **strix-scaffolder** (then follow workflow) |
+| "Update dependencies" | **strix-dependency-manager** (if packages exist) |
+| "Plan Pi deployment" | **strix-deployment-orchestrator** (if dependencies synced) |
+| "Something's broken" | **strix-troubleshooter** (can run anytime) |
+| "What's the status?" | **strix-workflow-coordinator** (meta-agent) |
+| "Resume work" | **strix-workflow-coordinator** → follow recommendation |
 
 ---
 
@@ -301,11 +301,11 @@ All agents use **hybrid communication**:
 
 ### Strict Validation Failures
 
-- **tabea-scaffolder**: Packages don't match ARCHITECTURE.md §5-6 exactly
-- **tabea-dependency-manager**: Version mismatches (e.g., React 18 vs 19)
-- **tabea-deployment-orchestrator**: FreeLLMAPI specs incomplete or unclear in ARCHITECTURE.md
-- **tabea-troubleshooter**: Error context missing (requires logs/reproduction)
-- **tabea-workflow-coordinator**: Phase order violated (e.g., skip Phase 2)
+- **strix-scaffolder**: Packages don't match ARCHITECTURE.md §5-6 exactly
+- **strix-dependency-manager**: Version mismatches (e.g., React 18 vs 19)
+- **strix-deployment-orchestrator**: FreeLLMAPI specs incomplete or unclear in ARCHITECTURE.md
+- **strix-troubleshooter**: Error context missing (requires logs/reproduction)
+- **strix-workflow-coordinator**: Phase order violated (e.g., skip Phase 2)
 
 ### Response to Validation Failure
 
@@ -322,15 +322,15 @@ ACTION: [What user must do to unblock]
 ## Cross-Agent Dependencies
 
 ```
-tabea-scaffolder
+strix-scaffolder
     ↓ (next_agent)
-tabea-dependency-manager
+strix-dependency-manager
     ↓ (next_agent)
-tabea-deployment-orchestrator
+strix-deployment-orchestrator
     ↓ (next_agent)
-tabea-workflow-coordinator ← oversees all phases
+strix-workflow-coordinator ← oversees all phases
 
-tabea-troubleshooter ← can interrupt any phase if error reported
+strix-troubleshooter ← can interrupt any phase if error reported
 ```
 
 **Each agent**:
@@ -345,12 +345,12 @@ tabea-troubleshooter ← can interrupt any phase if error reported
 
 | File | Purpose | Owner(s) |
 |------|---------|----------|
-| `.github/agents/tabea-scaffolder.agent.md` | Agent definition | Scaffolder |
-| `.github/agents/tabea-dependency-manager.agent.md` | Agent definition | Dependency Manager |
-| `.github/agents/tabea-deployment-orchestrator.agent.md` | Agent definition | Deployment Orchestrator |
-| `.github/agents/tabea-troubleshooter.agent.md` | Agent definition | Troubleshooter |
-| `.github/agents/tabea-workflow-coordinator.agent.md` | Agent definition | Workflow Coordinator |
-| `.github/agents/tabea-deployment-executor.agent.md` | Agent definition | Deployment Executor |
+| `.github/agents/strix-scaffolder.agent.md` | Agent definition | Scaffolder |
+| `.github/agents/strix-dependency-manager.agent.md` | Agent definition | Dependency Manager |
+| `.github/agents/strix-deployment-orchestrator.agent.md` | Agent definition | Deployment Orchestrator |
+| `.github/agents/strix-troubleshooter.agent.md` | Agent definition | Troubleshooter |
+| `.github/agents/strix-workflow-coordinator.agent.md` | Agent definition | Workflow Coordinator |
+| `.github/agents/strix-deployment-executor.agent.md` | Agent definition | Deployment Executor |
 | `.github/PROJECT_STATE.json` | Shared state (all agents read/write) | All agents |
 | `.github/DEPLOYMENT_PLAN.md` | Pi deployment checklist | Deployment Orchestrator |
 | `.github/BLOCKERS.md` | Issues blocking progress | Troubleshooter |
@@ -362,20 +362,20 @@ tabea-troubleshooter ← can interrupt any phase if error reported
 ## Quick Start
 
 1. **Verify ARCHITECTURE.md is complete** (no TODOs, all sections filled)
-2. **Run**: Ask Copilot to invoke **tabea-scaffolder**
+2. **Run**: Ask Copilot to invoke **strix-scaffolder**
 3. **Follow workflow**: Each agent recommends next agent via `next_agent` field
-4. **Monitor status**: Run **tabea-workflow-coordinator** anytime to see progress
-5. **Hit a blocker?** Run **tabea-troubleshooter** with error context
+4. **Monitor status**: Run **strix-workflow-coordinator** anytime to see progress
+5. **Hit a blocker?** Run **strix-troubleshooter** with error context
 
 ---
 
 ## Future Extensions (Phase 5)
 
-- **tabea-ci-manager**: GitOps — automate agent workflows on push to main
+- **strix-ci-manager**: GitOps — automate agent workflows on push to main
 
 ## Current Phase 5 Support
 
-- **tabea-deployment-executor**: Execute DEPLOYMENT_PLAN.md on actual Raspberry Pi
+- **strix-deployment-executor**: Execute DEPLOYMENT_PLAN.md on actual Raspberry Pi
 
 ---
 

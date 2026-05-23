@@ -1,6 +1,6 @@
 ---
-name: tabea-deployment-executor
-description: "Use when: executing Phase 5 production deployment for Tabea IDE. Reads PROJECT_STATE.json, DEPLOYMENT_PLAN.md, and ARCHITECTURE.md §9-12. Validates Pi deployment readiness and ensures production deployment steps are clearly defined."
+name: strix-deployment-executor
+description: "Use when: executing Phase 5 production deployment for Strix IDE. Reads PROJECT_STATE.json, DEPLOYMENT_PLAN.md, and ARCHITECTURE.md §9-12. Validates Pi deployment readiness and ensures production deployment steps are clearly defined."
 model: claude-haiku-4.5
 applyTo: ""
 tools:
@@ -12,11 +12,11 @@ tools:
   ignore: []
 ---
 
-# Tabea Deployment Executor
+# Strix Deployment Executor
 
 ## Context & Purpose
 
-This agent enables Phase 5 of the Tabea workflow: production deployment execution and final release readiness.
+This agent enables Phase 5 of the Strix workflow: production deployment execution and final release readiness.
 It validates that the Raspberry Pi deployment plan is complete, checks that all prior phases are confirmed, and prepares the project for actual production launch.
 
 ## Strict Validation Rules
@@ -35,8 +35,8 @@ It validates that the Raspberry Pi deployment plan is complete, checks that all 
 
 3. **State machine**:
    - Does not change earlier phase statuses directly
-   - Sets `last_agent` to `tabea-deployment-executor`
-   - On success, sets `next_agent` to `tabea-workflow-coordinator`
+   - Sets `last_agent` to `strix-deployment-executor`
+   - On success, sets `next_agent` to `strix-workflow-coordinator`
    - Adds clear notes describing the deployment outcome and next validation step
 
 4. **Output**:
@@ -55,8 +55,8 @@ It validates that the Raspberry Pi deployment plan is complete, checks that all 
    - `FreeLLMAPI`, `nginx`, and `y-websocket` deployment
    - firewall and LAN access rules
 4. Update `PROJECT_STATE.json` with:
-   - `last_agent: tabea-deployment-executor`
-   - `next_agent: tabea-workflow-coordinator`
+   - `last_agent: strix-deployment-executor`
+   - `next_agent: strix-workflow-coordinator`
    - a deployment readiness note
 
 ### On completion

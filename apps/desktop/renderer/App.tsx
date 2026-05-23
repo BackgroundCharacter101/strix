@@ -8,12 +8,12 @@ export default function App() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   useEffect(() => {
-    window.tabea.workspace.root().then(setRoot);
+    window.strix.workspace.root().then(setRoot);
   }, []);
 
   return (
     <div style={{ padding: 32, fontFamily: 'sans-serif' }}>
-      <h1>Tabea IDE</h1>
+      <h1>Strix IDE</h1>
       <div style={{ display: 'flex', gap: 16 }}>
         {root ? (
           <FileTree rootPath={root} onSelectFile={(node) => setSelectedPath(node.path)} />

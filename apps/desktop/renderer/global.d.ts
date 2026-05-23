@@ -1,8 +1,8 @@
-import type { TabeaApi } from '../main/preload';
+import type { StrixApi } from '../main/preload';
 
 declare global {
   interface Window {
-    tabea: TabeaApi;
+    strix: StrixApi;
   }
 }
 

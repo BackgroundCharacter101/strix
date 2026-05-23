@@ -1,6 +1,6 @@
 # Homelab Deployment Guide
 
-This document will describe Raspberry Pi deployment and configuration for Tabea's FreeLLMAPI backend.
+This document will describe Raspberry Pi deployment and configuration for Strix's FreeLLMAPI backend.
 
 ## Planned sections
 

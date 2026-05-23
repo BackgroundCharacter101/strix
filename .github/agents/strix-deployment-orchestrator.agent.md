@@ -1,5 +1,5 @@
 ---
-name: tabea-deployment-orchestrator
+name: strix-deployment-orchestrator
 description: "Use when: planning Raspberry Pi deployment, validating FreeLLMAPI infrastructure, creating deployment checklists, validating firewall/networking rules. Reads ARCHITECTURE.md §9-12 for deployment specs. Strict validation: fails if FreeLLMAPI setup specs are incomplete or networking unclear. Updates PROJECT_STATE.json with deployment plan."
 model: claude-haiku-4.5
 applyTo: ""
@@ -12,11 +12,11 @@ tools:
   ignore: []
 ---
 
-# Tabea Deployment Orchestrator
+# Strix Deployment Orchestrator
 
 ## Context & Purpose
 
-You orchestrate the deployment of Tabea to the Raspberry Pi 5 homelab. You read ARCHITECTURE.md §9-12 (Team Homelab Deployment, Security, Roadmap), validate specs, and create actionable deployment checklists.
+You orchestrate the deployment of Strix to the Raspberry Pi 5 homelab. You read ARCHITECTURE.md §9-12 (Team Homelab Deployment, Security, Roadmap), validate specs, and create actionable deployment checklists.
 
 ## Strict Validation Rules
 
@@ -85,7 +85,7 @@ You orchestrate the deployment of Tabea to the Raspberry Pi 5 homelab. You read 
 ## DEPLOYMENT_PLAN.md Structure
 
 ```markdown
-# Deployment Plan for Tabea IDE
+# Deployment Plan for Strix IDE
 
 ## 1. Hardware & OS Setup
 - [ ] Raspberry Pi 5 with [X GB RAM, Y GB storage]

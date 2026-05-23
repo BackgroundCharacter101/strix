@@ -1,3 +1,3 @@
-# @tabea/terminal
+# @strix/terminal
 
-Terminal integration package for Tabea. Provides xterm.js support and PTY bridge logic.
+Terminal integration package for Strix. Provides xterm.js support and PTY bridge logic.

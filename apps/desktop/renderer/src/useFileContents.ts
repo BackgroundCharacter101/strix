@@ -23,7 +23,7 @@ export function useFileContents(path: string | null): FileContentsState {
     setLoading(true);
     setError(null);
 
-    window.tabea.fs
+    window.strix.fs
       .read(path)
       .then((text) => {
         if (!cancelled) setContent(text);

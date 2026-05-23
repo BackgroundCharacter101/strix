@@ -1,8 +1,8 @@
 # Blockers & Issues Log
 
-> **Project**: Tabea IDE  
+> **Project**: Strix IDE  
 > **Purpose**: Track unresolved issues that block workflow progress  
-> **Owner**: tabea-troubleshooter (writes), tabea-workflow-coordinator (reads)
+> **Owner**: strix-troubleshooter (writes), strix-workflow-coordinator (reads)
 
 ---
 
@@ -55,7 +55,7 @@
 
 ## Escalation Path
 
-1. **Agent encounters issue** → Calls **tabea-troubleshooter**
+1. **Agent encounters issue** → Calls **strix-troubleshooter**
 2. **Troubleshooter diagnoses** → Adds blocker to this file
 3. **Workflow Coordinator checks** → Blocks subsequent agents if `blockers[]` array not empty
 4. **User resolves** → Updates ARCHITECTURE.md or fixes root cause

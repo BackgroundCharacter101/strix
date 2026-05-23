@@ -1,5 +1,5 @@
 {
-    "name": "@tabea/ai-gateway",
+    "name": "@strix/ai-gateway",
     "version": "0.1.0",
     "main": "src/index.ts",
     "types": "dist/index.d.ts",

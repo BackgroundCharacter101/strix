@@ -1,3 +1,3 @@
-# @tabea/ui
+# @strix/ui
 
-Shared UI components and design system utilities for Tabea.
+Shared UI components and design system utilities for Strix.

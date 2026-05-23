@@ -7,7 +7,7 @@ import { buildFileTree, readFileContents, writeFileContents } from './fs';
 let tmp: string;
 
 beforeEach(async () => {
-  tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'tabea-fs-'));
+  tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'strix-fs-'));
 });
 
 afterEach(async () => {

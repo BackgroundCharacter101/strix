@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { runTask } from '@tabea/ai-gateway';
+import { runTask } from '@strix/ai-gateway';
 import { useFileContents } from './useFileContents';
 
 export function AiPanel({ filePath }: { filePath: string | null }) {

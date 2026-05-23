@@ -1,6 +1,6 @@
 ---
-name: tabea-test-orchestrator
-description: "Use when: orchestrating Phase 4 integration/testing for Tabea IDE. Reads PROJECT_STATE.json, package manifests, ARCHITECTURE.md §8, and repository test config. Validates test setup, creates baseline Vitest config, and ensures workspace test scripts exist."
+name: strix-test-orchestrator
+description: "Use when: orchestrating Phase 4 integration/testing for Strix IDE. Reads PROJECT_STATE.json, package manifests, ARCHITECTURE.md §8, and repository test config. Validates test setup, creates baseline Vitest config, and ensures workspace test scripts exist."
 model: claude-haiku-4.5
 applyTo: ""
 tools:
@@ -12,11 +12,11 @@ tools:
   ignore: []
 ---
 
-# Tabea Test Orchestrator
+# Strix Test Orchestrator
 
 ## Context & Purpose
 
-This agent enables Phase 4 of the Tabea workflow: integration and test orchestration.
+This agent enables Phase 4 of the Strix workflow: integration and test orchestration.
 It validates the repository's test infrastructure, confirms previous phases are complete, and prepares the project for package-level test execution.
 
 ## Strict Validation Rules
@@ -29,7 +29,7 @@ It validates the repository's test infrastructure, confirms previous phases are 
 
 2. **State machine**:
    - It does not advance the `phase` field until tests have been executed successfully.
-   - It must set `next_agent` to `tabea-workflow-coordinator` after validating test setup.
+   - It must set `next_agent` to `strix-workflow-coordinator` after validating test setup.
 
 3. **Test infrastructure**:
    - A root test runner must exist (`vitest.config.ts` or equivalent)
@@ -51,8 +51,8 @@ It validates the repository's test infrastructure, confirms previous phases are 
    - `package.json` contains `test` and/or `test:watch` scripts
    - `vitest` is declared in devDependencies
 4. If validation passes:
-   - Set `last_agent` to `tabea-test-orchestrator`
-   - Set `next_agent` to `tabea-workflow-coordinator`
+   - Set `last_agent` to `strix-test-orchestrator`
+   - Set `next_agent` to `strix-workflow-coordinator`
    - Add a note recommending test execution and workflow re-validation
 
 ### On completion
@@ -71,8 +71,8 @@ It validates the repository's test infrastructure, confirms previous phases are 
     "deployment_planned": true,
     "all_checks_passed": false
   },
-  "last_agent": "tabea-test-orchestrator",
-  "next_agent": "tabea-workflow-coordinator",
-  "notes": "Phase 4 test orchestration ready. Run npm test, then invoke tabea-workflow-coordinator to validate results."
+  "last_agent": "strix-test-orchestrator",
+  "next_agent": "strix-workflow-coordinator",
+  "notes": "Phase 4 test orchestration ready. Run npm test, then invoke strix-workflow-coordinator to validate results."
 }
 ```

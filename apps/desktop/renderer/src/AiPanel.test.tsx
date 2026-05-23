@@ -5,13 +5,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { FileNode } from '../../main/fs';
 
 const { runTask } = vi.hoisted(() => ({ runTask: vi.fn() }));
-vi.mock('@tabea/ai-gateway', () => ({ runTask }));
+vi.mock('@strix/ai-gateway', () => ({ runTask }));
 
 import { AiPanel } from './AiPanel';
 
 beforeEach(() => {
   runTask.mockReset();
-  window.tabea = {
+  window.strix = {
     fs: {
       read: vi.fn<[string], Promise<string>>().mockResolvedValue('const a = 1;'),
       write: vi.fn<[string, string], Promise<void>>(),

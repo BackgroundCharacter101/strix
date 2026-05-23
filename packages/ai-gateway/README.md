@@ -1,4 +1,4 @@
-# @tabea/ai-gateway
+# @strix/ai-gateway
 
 The single point of contact between the IDE and the AI. Wraps the OpenAI SDK
 configured against a self-hosted FreeLLMAPI instance and adds IDE-specific

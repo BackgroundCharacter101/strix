@@ -1,6 +1,6 @@
 # Setup Guide
 
-This document will describe how to set up the Tabea development environment.
+This document will describe how to set up the Strix development environment.
 
 ## Planned sections
 

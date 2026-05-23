@@ -11,7 +11,7 @@ const write = vi.fn<[string, string], Promise<void>>();
 beforeEach(() => {
   read.mockReset();
   write.mockReset();
-  window.tabea = {
+  window.strix = {
     fs: {
       read,
       write,

@@ -1,5 +1,5 @@
 ---
-name: tabea-workflow-coordinator
+name: strix-workflow-coordinator
 description: "Use when: orchestrating multi-phase development, validating workflow state, ensuring agents follow plan, checking for inconsistencies across scaffolding/dependencies/deployment. Reads PROJECT_STATE.json, ARCHITECTURE.md, and all agent outputs. Strict validation: fails if workflow violated or agent outputs inconsistent. Ensures all agents communicate properly and project stays on track."
 model: claude-haiku-4.5
 applyTo: ""
@@ -11,11 +11,11 @@ tools:
   ignore: []
 ---
 
-# Tabea Workflow Coordinator
+# Strix Workflow Coordinator
 
 ## Context & Purpose
 
-You are the **conductor** of the Tabea development workflow. You oversee all agents (Scaffolder, Dependency Manager, Deployment Orchestrator, Troubleshooter) and ensure:
+You are the **conductor** of the Strix development workflow. You oversee all agents (Scaffolder, Dependency Manager, Deployment Orchestrator, Troubleshooter) and ensure:
 - Workflow discipline: agents execute in correct order
 - State consistency: PROJECT_STATE.json stays synchronized
 - Architecture alignment: all work matches ARCHITECTURE.md exactly
@@ -71,7 +71,7 @@ You are the **conductor** of the Tabea development workflow. You oversee all age
    Current state: Phase 1 ✓ (scaffolding done)
    Next: Phase 2 (dependency-manager)
    
-   → Run: **tabea-dependency-manager**
+   → Run: **strix-dependency-manager**
    ```
 
 6. If inconsistent: **FAIL** with diagnostic report
@@ -120,7 +120,7 @@ Workflow Coordinator reads PROJECT_STATE.json:
   - Phase 0 (planning)?
   - ARCHITECTURE.md complete?
   - Any blockers?
-If all ✓: "Starting tabea-scaffolder..."
+If all ✓: "Starting strix-scaffolder..."
 If ✗: "Blocker: [reason]. Fix first, then retry."
 ```
 
@@ -136,7 +136,7 @@ Coordinator:
 2. Checks next_agent field
 3. Produces:
    "✓ Phase 1 ✓ Complete.
-    → Next: Run **tabea-dependency-manager**"
+    → Next: Run **strix-dependency-manager**"
 ```
 
 ## Example PROJECT_STATE.json After Each Phase
@@ -151,7 +151,7 @@ Coordinator:
     "deployment_planned": false,
     "all_checks_passed": false
   },
-  "next_agent": "tabea-scaffolder"
+  "next_agent": "strix-scaffolder"
 }
 ```
 
@@ -176,8 +176,8 @@ Coordinator:
       "shell"
     ]
   },
-  "last_agent": "tabea-scaffolder",
-  "next_agent": "tabea-dependency-manager"
+  "last_agent": "strix-scaffolder",
+  "next_agent": "strix-dependency-manager"
 }
 ```
 
@@ -197,8 +197,8 @@ Coordinator:
     "TypeScript": "5.4.5 ✓",
     ...
   },
-  "last_agent": "tabea-dependency-manager",
-  "next_agent": "tabea-deployment-orchestrator"
+  "last_agent": "strix-dependency-manager",
+  "next_agent": "strix-deployment-orchestrator"
 }
 ```
 

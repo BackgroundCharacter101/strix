@@ -1,5 +1,5 @@
 {
-    "project": "Tabea IDE",
+    "project": "Strix IDE",
     "phase": "5-production-deployment",
     "lastUpdated": "2026-05-23T00:00:00Z",
     "status": {
@@ -34,8 +34,8 @@
         "pending": []
     },
     "tech_stack_ref": "ARCHITECTURE.md#4-tech-stack",
-    "last_agent": "tabea-deployment-executor",
-    "next_agent": "tabea-workflow-coordinator",
+    "last_agent": "strix-deployment-executor",
+    "next_agent": "strix-workflow-coordinator",
     "blockers": [],
     "notes": "Final production launch readiness confirmed. All workflow phases complete and deployment plan validated. Proceed to actual Pi deployment or release launch."
 }

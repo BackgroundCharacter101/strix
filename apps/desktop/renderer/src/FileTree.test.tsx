@@ -13,7 +13,7 @@ const root = vi.fn<[], Promise<string>>();
 
 beforeEach(() => {
   tree.mockReset();
-  window.tabea = { fs: { tree, read, write }, workspace: { root } };
+  window.strix = { fs: { tree, read, write }, workspace: { root } };
 });
 
 const sample: FileNode = {

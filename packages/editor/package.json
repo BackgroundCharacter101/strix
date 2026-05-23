@@ -1,5 +1,5 @@
 {
-    "name": "@tabea/editor",
+    "name": "@strix/editor",
     "version": "0.1.0",
     "main": "src/index.tsx",
     "private": true,
