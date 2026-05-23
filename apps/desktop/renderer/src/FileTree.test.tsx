@@ -13,7 +13,11 @@ const root = vi.fn<[], Promise<string>>();
 
 beforeEach(() => {
   tree.mockReset();
-  window.strix = { fs: { tree, read, write }, workspace: { root } };
+  window.strix = {
+    fs: { tree, read, write },
+    workspace: { root },
+    git: { status: vi.fn<[string], Promise<import('../../main/git').GitStatus>>() },
+  };
 });
 
 const sample: FileNode = {

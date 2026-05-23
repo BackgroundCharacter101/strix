@@ -18,6 +18,7 @@ beforeEach(() => {
       tree: vi.fn<[string], Promise<FileNode>>(),
     },
     workspace: { root: vi.fn<[], Promise<string>>() },
+    git: { status: vi.fn<[string], Promise<import('../../main/git').GitStatus>>() },
   };
 });
 

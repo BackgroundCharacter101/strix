@@ -1,18 +1,22 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
 import type { FileNode } from '../main/fs';
+import type { GitStatus } from '../main/git';
 
 const root = vi.fn<[], Promise<string>>();
 const tree = vi.fn<[string], Promise<FileNode>>();
 const read = vi.fn<[string], Promise<string>>();
+const gitStatus = vi.fn<[string], Promise<GitStatus>>();
 
 beforeEach(() => {
   root.mockReset();
   tree.mockReset();
   read.mockReset();
+  gitStatus.mockReset();
+  gitStatus.mockResolvedValue({ isRepo: true, branch: 'main', files: [] });
   window.strix = {
     fs: {
       tree,
@@ -20,6 +24,7 @@ beforeEach(() => {
       write: vi.fn<[string, string], Promise<void>>(),
     },
     workspace: { root },
+    git: { status: gitStatus },
   };
 });
 
@@ -59,5 +64,24 @@ describe('App', () => {
 
     expect(await screen.findByDisplayValue('export const a = 1;')).toBeInTheDocument();
     expect(read).toHaveBeenCalledWith('/ws/a.ts');
+  });
+
+  it('shows the git branch and dirty count for the workspace', async () => {
+    root.mockResolvedValue('/ws');
+    tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });
+    gitStatus.mockResolvedValue({
+      isRepo: true,
+      branch: 'main',
+      files: [{ path: 'a.ts', status: 'modified', staged: false }],
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      const bar = screen.getByLabelText('git status');
+      expect(bar).toHaveTextContent('main');
+      expect(bar).toHaveTextContent('1 changed');
+    });
+    expect(gitStatus).toHaveBeenCalledWith('/ws');
   });
 });

@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { FileNode } from './fs';
+import type { GitStatus } from './git';
 
 export interface StrixFsApi {
   read(filePath: string): Promise<string>;
@@ -11,9 +12,14 @@ export interface StrixWorkspaceApi {
   root(): Promise<string>;
 }
 
+export interface StrixGitApi {
+  status(rootPath: string): Promise<GitStatus>;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
+  git: StrixGitApi;
 }
 
 const api: StrixApi = {
@@ -24,6 +30,9 @@ const api: StrixApi = {
   },
   workspace: {
     root: () => ipcRenderer.invoke('workspace:root'),
+  },
+  git: {
+    status: (rootPath) => ipcRenderer.invoke('git:status', rootPath),
   },
 };
 

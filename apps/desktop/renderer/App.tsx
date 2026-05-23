@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
 import { AiPanel } from './src/AiPanel';
+import { GitStatusBar } from './src/GitStatusBar';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -13,7 +14,10 @@ export default function App() {
 
   return (
     <div style={{ padding: 32, fontFamily: 'sans-serif' }}>
-      <h1>Strix IDE</h1>
+      <header style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+        <h1>Strix IDE</h1>
+        <GitStatusBar rootPath={root} />
+      </header>
       <div style={{ display: 'flex', gap: 16 }}>
         {root ? (
           <FileTree rootPath={root} onSelectFile={(node) => setSelectedPath(node.path)} />
