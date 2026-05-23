@@ -1,0 +1,26 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "apps/desktop"
+    },
+    {
+      "path": "packages/editor"
+    },
+    {
+      "path": "packages/ai-gateway"
+    },
+    {
+      "path": "packages/terminal"
+    },
+    {
+      "path": "packages/lsp"
+    },
+    {
+      "path": "packages/collab"
+    },
+    {
+      "path": "packages/ui"
+    }
+  ]
+}

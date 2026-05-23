@@ -1,0 +1,9 @@
+{
+    "name": "@tabea/ui",
+    "version": "0.1.0",
+    "main": "src/index.ts",
+    "private": true,
+    "dependencies": {
+        "react": "^19.0.0"
+    }
+}

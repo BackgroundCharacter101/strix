@@ -1,0 +1,10 @@
+{
+    "name": "@tabea/ai-gateway",
+    "version": "0.1.0",
+    "main": "src/index.ts",
+    "types": "dist/index.d.ts",
+    "private": true,
+    "dependencies": {
+        "openai": "^5.0.0"
+    }
+}

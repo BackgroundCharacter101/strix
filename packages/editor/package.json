@@ -1,0 +1,11 @@
+{
+    "name": "@tabea/editor",
+    "version": "0.1.0",
+    "main": "src/index.tsx",
+    "private": true,
+    "dependencies": {
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "monaco-editor": "^0.52.0"
+    }
+}

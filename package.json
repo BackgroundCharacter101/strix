@@ -1,0 +1,35 @@
+{
+    "name": "tabea",
+    "private": true,
+    "version": "0.1.0",
+    "workspaces": [
+        "apps/desktop",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "npm --workspace @tabea/desktop run dev",
+        "build": "tsc --build",
+        "typecheck": "tsc --build",
+        "lint": "eslint .",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "bootstrap": "npm install"
+    },
+    "devDependencies": {
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@types/node": "^25.9.1",
+        "@types/react": "^19.2.15",
+        "@types/react-dom": "^19.2.3",
+        "@vitejs/plugin-react": "^4.3.0",
+        "electron-builder": "^24.0.0",
+        "eslint": "^9.0.0",
+        "jsdom": "^25.0.1",
+        "prettier": "^3.0.0",
+        "tailwindcss": "^4.0.0",
+        "typescript": "^5.5.0",
+        "typescript-eslint": "^8.59.4",
+        "vite": "^6.0.0",
+        "vitest": "^1.4.0"
+    }
+}
