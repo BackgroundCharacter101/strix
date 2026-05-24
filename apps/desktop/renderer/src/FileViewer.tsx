@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { CodeEditor, languageForPath } from '@strix/editor';
 import { useFileContents } from './useFileContents';
 
 export function FileViewer({ path }: { path: string | null }) {
@@ -41,11 +42,9 @@ export function FileViewer({ path }: { path: string | null }) {
 
   return (
     <div>
-      <textarea
-        aria-label="File contents"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-      />
+      <div style={{ height: 400 }}>
+        <CodeEditor value={draft} language={languageForPath(path)} onChange={setDraft} />
+      </div>
       <button type="button" onClick={save} disabled={!dirty || saving}>
         Save
       </button>

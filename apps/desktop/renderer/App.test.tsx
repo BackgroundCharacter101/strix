@@ -2,6 +2,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+// Monaco can't render in jsdom; stub the editor so FileViewer yields a textarea.
+vi.mock('@strix/editor', () => ({
+  languageForPath: () => 'plaintext',
+  CodeEditor: ({ value, onChange }: { value: string; onChange?: (v: string) => void }) => (
+    <textarea
+      aria-label="File contents"
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+    />
+  ),
+}));
+
 import App from './App';
 import { makeStrixApi } from './test-utils';
 import type { FileNode } from '../main/fs';
