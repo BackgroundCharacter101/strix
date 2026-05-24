@@ -17,8 +17,10 @@ export interface GitStatus {
 // HEAD/WORKDIR/STAGE === 1 across the board means unchanged.
 export async function getGitStatus(dir: string): Promise<GitStatus> {
   try {
-    const branch = (await git.currentBranch({ fs, dir, fullname: false })) ?? null;
-    const matrix = await git.statusMatrix({ fs, dir });
+    // Walk up to the enclosing repo so status works from any subdirectory.
+    const root = await git.findRoot({ fs, filepath: dir });
+    const branch = (await git.currentBranch({ fs, dir: root, fullname: false })) ?? null;
+    const matrix = await git.statusMatrix({ fs, dir: root });
 
     const files: GitFileChange[] = [];
     for (const [path, head, workdir, stage] of matrix) {
