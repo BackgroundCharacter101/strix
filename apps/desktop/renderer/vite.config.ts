@@ -9,6 +9,9 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  // Relative asset paths so the built index.html works when loaded via file://
+  // in the Electron production window.
+  base: './',
   resolve: {
     alias: {
       '@': path.resolve(dirname, 'src'),

@@ -8,7 +8,7 @@
         "build:main": "tsc -p .",
         "build:renderer": "cd renderer && vite build",
         "build:app": "npm run build:main && npm run build:renderer",
-        "start:app": "npm run build:main && electron .",
+        "start:app": "npm run build:app && electron .",
         "start": "npm run start:app",
         "dev:renderer": "cd renderer && vite",
         "dev": "npm run dev:renderer"
