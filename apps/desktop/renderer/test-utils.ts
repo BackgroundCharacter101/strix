@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { StrixApi } from '../main/preload';
+import type { StrixApi } from '../main/bridge';
 import type { FileNode } from '../main/fs';
 import type { GitStatus } from '../main/git';
 

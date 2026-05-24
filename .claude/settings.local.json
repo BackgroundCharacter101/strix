@@ -10,7 +10,8 @@
       "Bash(node -e \"const o=require\\('openai'\\); console.log\\('default export keys:', Object.keys\\(o\\).slice\\(0,10\\)\\)\")",
       "Bash(ls -la \"C:\\\\Users\\\\kavee\\\\.claude\\\\debug\\\\50ae886a-fb5e-4c9c-acff-41c02968f8bc.txt\" 2>/dev/null && echo \"---EXISTS---\" || echo \"NO LOG FILE YET\")",
       "Bash(git add *)",
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "Bash(git rm *)"
     ]
   }
 }

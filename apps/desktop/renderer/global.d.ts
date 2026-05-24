@@ -1,4 +1,4 @@
-import type { StrixApi } from '../main/preload';
+import type { StrixApi } from '../main/bridge';
 
 declare global {
   interface Window {
