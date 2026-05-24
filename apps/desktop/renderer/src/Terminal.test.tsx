@@ -80,6 +80,17 @@ describe('Terminal', () => {
     expect(input).toHaveBeenCalledWith('term-1', 'ls\r');
   });
 
+  it('resizes the PTY when the window resizes', async () => {
+    render(<Terminal />);
+    await waitFor(() => expect(create).toHaveBeenCalled());
+
+    window.dispatchEvent(new Event('resize'));
+    expect(input).not.toHaveBeenCalled();
+    expect(kill).not.toHaveBeenCalled();
+    // 80x24 come from the stubbed xterm instance.
+    await waitFor(() => expect(window.strix.terminal.resize).toHaveBeenCalledWith('term-1', 80, 24));
+  });
+
   it('kills the session and disposes the terminal on unmount', async () => {
     const { unmount } = render(<Terminal />);
     await waitFor(() => expect(create).toHaveBeenCalled());

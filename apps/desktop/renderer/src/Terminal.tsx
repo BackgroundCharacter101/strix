@@ -45,8 +45,18 @@ export function Terminal() {
       sessionId = id;
     });
 
+    // Keep the PTY's dimensions in sync with the rendered terminal.
+    const onResize = () => {
+      fit.fit();
+      if (sessionId) {
+        window.strix.terminal.resize(sessionId, term.cols, term.rows);
+      }
+    };
+    window.addEventListener('resize', onResize);
+
     return () => {
       disposed = true;
+      window.removeEventListener('resize', onResize);
       offData();
       keySub.dispose();
       if (sessionId) {
