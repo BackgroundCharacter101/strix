@@ -2,6 +2,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+// xterm can't render in jsdom; stub the Terminal component.
+vi.mock('./src/Terminal', () => ({ Terminal: () => <div aria-label="terminal" /> }));
+
 // Monaco can't render in jsdom; stub the editor so FileViewer yields a textarea.
 vi.mock('@strix/editor', () => ({
   languageForPath: () => 'plaintext',
