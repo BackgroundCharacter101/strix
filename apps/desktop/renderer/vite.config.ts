@@ -1,13 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-correct dirname: apps/desktop is "type": "module", so __dirname is
+// unavailable here and Vite would mis-resolve `root` / the index.html entry.
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
-  root: __dirname,
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(dirname, 'src'),
     },
   },
   server: {
