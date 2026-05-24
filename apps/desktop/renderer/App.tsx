@@ -27,7 +27,9 @@ export default function App() {
         ) : (
           <p>Opening workspace…</p>
         )}
-        <FileViewer path={selectedPath} buffer={buffer} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <FileViewer path={selectedPath} buffer={buffer} />
+        </div>
         <AiPanel filePath={selectedPath} fileContent={buffer.draft} />
       </div>
       <TerminalTabs />

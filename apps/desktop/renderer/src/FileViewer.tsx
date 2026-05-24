@@ -15,7 +15,7 @@ export function FileViewer({ path, buffer }: { path: string | null; buffer: File
 
   return (
     <div>
-      <div style={{ height: 400 }}>
+      <div style={{ height: 400, width: '100%' }}>
         <CodeEditor value={buffer.draft} language={languageForPath(path)} onChange={buffer.setDraft} />
       </div>
       <button type="button" onClick={buffer.save} disabled={!buffer.dirty || buffer.saving}>
