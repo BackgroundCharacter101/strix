@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { runTask } from '@strix/ai-gateway';
+import { runTask, type TaskType } from '@strix/ai-gateway';
 import { useFileContents } from './useFileContents';
 
 export function AiPanel({ filePath }: { filePath: string | null }) {
@@ -9,13 +9,16 @@ export function AiPanel({ filePath }: { filePath: string | null }) {
   const [routedVia, setRoutedVia] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const send = async () => {
+  // File-context actions need the selected file's contents to have loaded.
+  const fileReady = filePath !== null && content !== null;
+
+  const run = async (task: TaskType) => {
     setBusy(true);
     setResponse('');
     setRoutedVia(null);
     try {
       await runTask(
-        'chat',
+        task,
         { filePath: filePath ?? '', fileContent: content ?? '', userMessage: input },
         {
           onToken: (token) => setResponse((prev) => prev + token),
@@ -30,8 +33,14 @@ export function AiPanel({ filePath }: { filePath: string | null }) {
   return (
     <section aria-label="AI chat">
       <textarea aria-label="Ask AI" value={input} onChange={(e) => setInput(e.target.value)} />
-      <button type="button" onClick={send} disabled={busy || input.length === 0}>
+      <button type="button" onClick={() => run('chat')} disabled={busy || input.length === 0}>
         Send
+      </button>
+      <button type="button" onClick={() => run('explain')} disabled={busy || !fileReady}>
+        Explain
+      </button>
+      <button type="button" onClick={() => run('vuln_check')} disabled={busy || !fileReady}>
+        Check security
       </button>
       <div aria-label="AI response">{response}</div>
       {routedVia && <footer>Routed via: {routedVia}</footer>}

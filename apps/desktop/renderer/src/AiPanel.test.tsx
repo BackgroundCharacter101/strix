@@ -19,9 +19,11 @@ beforeEach(() => {
 });
 
 describe('AiPanel', () => {
-  it('disables Send until there is input', () => {
+  it('disables Send until there is input, and file actions until a file loads', () => {
     render(<AiPanel filePath={null} />);
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Explain' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Check security' })).toBeDisabled();
   });
 
   it('streams the AI response and shows the routed model', async () => {
@@ -47,6 +49,40 @@ describe('AiPanel', () => {
       'chat',
       expect.objectContaining({ filePath: '/ws/a.ts', userMessage: 'what does this do?' }),
       expect.any(Object),
+    );
+  });
+
+  it('runs the explain task with the selected file as context once it loads', async () => {
+    render(<AiPanel filePath="/ws/a.ts" />);
+
+    const explain = screen.getByRole('button', { name: 'Explain' });
+    await waitFor(() => expect(explain).toBeEnabled()); // file content has loaded
+
+    fireEvent.click(explain);
+
+    await waitFor(() =>
+      expect(runTask).toHaveBeenCalledWith(
+        'explain',
+        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const a = 1;' }),
+        expect.any(Object),
+      ),
+    );
+  });
+
+  it('runs the vuln_check task from the Check security action', async () => {
+    render(<AiPanel filePath="/ws/a.ts" />);
+
+    const check = screen.getByRole('button', { name: 'Check security' });
+    await waitFor(() => expect(check).toBeEnabled());
+
+    fireEvent.click(check);
+
+    await waitFor(() =>
+      expect(runTask).toHaveBeenCalledWith(
+        'vuln_check',
+        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const a = 1;' }),
+        expect.any(Object),
+      ),
     );
   });
 });
