@@ -2,24 +2,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import type { FileNode } from '../../main/fs';
+import { makeStrixApi } from '../test-utils';
 
 const { runTask } = vi.hoisted(() => ({ runTask: vi.fn() }));
 vi.mock('@strix/ai-gateway', () => ({ runTask }));
 
 import { AiPanel } from './AiPanel';
 
+const read = vi.fn<[string], Promise<string>>();
+
 beforeEach(() => {
   runTask.mockReset();
-  window.strix = {
-    fs: {
-      read: vi.fn<[string], Promise<string>>().mockResolvedValue('const a = 1;'),
-      write: vi.fn<[string, string], Promise<void>>(),
-      tree: vi.fn<[string], Promise<FileNode>>(),
-    },
-    workspace: { root: vi.fn<[], Promise<string>>() },
-    git: { status: vi.fn<[string], Promise<import('../../main/git').GitStatus>>() },
-  };
+  read.mockReset();
+  read.mockResolvedValue('const a = 1;');
+  window.strix = makeStrixApi({ fs: { read } });
 });
 
 describe('AiPanel', () => {

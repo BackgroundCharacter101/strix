@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from './App';
+import { makeStrixApi } from './test-utils';
 import type { FileNode } from '../main/fs';
 import type { GitStatus } from '../main/git';
 
@@ -17,15 +18,11 @@ beforeEach(() => {
   read.mockReset();
   gitStatus.mockReset();
   gitStatus.mockResolvedValue({ isRepo: true, branch: 'main', files: [] });
-  window.strix = {
-    fs: {
-      tree,
-      read,
-      write: vi.fn<[string, string], Promise<void>>(),
-    },
+  window.strix = makeStrixApi({
+    fs: { tree, read, write: vi.fn<[string, string], Promise<void>>() },
     workspace: { root },
     git: { status: gitStatus },
-  };
+  });
 });
 
 describe('App', () => {

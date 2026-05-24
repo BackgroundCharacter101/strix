@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FileViewer } from './FileViewer';
-import type { FileNode } from '../../main/fs';
+import { makeStrixApi } from '../test-utils';
 
 const read = vi.fn<[string], Promise<string>>();
 const write = vi.fn<[string, string], Promise<void>>();
@@ -11,15 +11,7 @@ const write = vi.fn<[string, string], Promise<void>>();
 beforeEach(() => {
   read.mockReset();
   write.mockReset();
-  window.strix = {
-    fs: {
-      read,
-      write,
-      tree: vi.fn<[string], Promise<FileNode>>(),
-    },
-    workspace: { root: vi.fn<[], Promise<string>>() },
-    git: { status: vi.fn<[string], Promise<import('../../main/git').GitStatus>>() },
-  };
+  window.strix = makeStrixApi({ fs: { read, write } });
 });
 
 describe('FileViewer', () => {
