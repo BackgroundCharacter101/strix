@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '@xterm/xterm/css/xterm.css';
+import './src/monaco-setup';
 import App from './App';
 
 const container = document.getElementById('root');
