@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { runTask, type TaskType } from '@strix/ai-gateway';
-import { useFileContents } from './useFileContents';
 
-export function AiPanel({ filePath }: { filePath: string | null }) {
-  const { content } = useFileContents(filePath);
+export function AiPanel({
+  filePath,
+  fileContent,
+}: {
+  filePath: string | null;
+  fileContent: string;
+}) {
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
   const [routedVia, setRoutedVia] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // File-context actions need the selected file's contents to have loaded.
-  const fileReady = filePath !== null && content !== null;
+  // File-context actions act on the live editor buffer for the selected file.
+  const fileReady = filePath !== null;
 
   const run = async (task: TaskType) => {
     setBusy(true);
@@ -19,7 +23,7 @@ export function AiPanel({ filePath }: { filePath: string | null }) {
     try {
       await runTask(
         task,
-        { filePath: filePath ?? '', fileContent: content ?? '', userMessage: input },
+        { filePath: filePath ?? '', fileContent, userMessage: input },
         {
           onToken: (token) => setResponse((prev) => prev + token),
           onDone: (via) => setRoutedVia(via),

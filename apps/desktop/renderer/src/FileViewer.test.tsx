@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 
-// Monaco can't render in jsdom; stub the editor with a labelled textarea so the
-// viewer's load/dirty/save logic is exercised against a controllable element.
+// Monaco can't render in jsdom; stub the editor with a labelled textarea.
 vi.mock('@strix/editor', () => ({
   languageForPath: () => 'plaintext',
   CodeEditor: ({ value, onChange }: { value: string; onChange?: (v: string) => void }) => (
@@ -17,62 +16,59 @@ vi.mock('@strix/editor', () => ({
 }));
 
 import { FileViewer } from './FileViewer';
-import { makeStrixApi } from '../test-utils';
+import type { FileBuffer } from './useFileBuffer';
 
-const read = vi.fn<[string], Promise<string>>();
-const write = vi.fn<[string, string], Promise<void>>();
-
-beforeEach(() => {
-  read.mockReset();
-  write.mockReset();
-  window.strix = makeStrixApi({ fs: { read, write } });
-});
+function makeBuffer(overrides: Partial<FileBuffer> = {}): FileBuffer {
+  return {
+    draft: '',
+    setDraft: vi.fn(),
+    loading: false,
+    error: null,
+    dirty: false,
+    saving: false,
+    saveError: null,
+    save: vi.fn(),
+    ...overrides,
+  };
+}
 
 describe('FileViewer', () => {
   it('shows a placeholder when no file is selected', () => {
-    render(<FileViewer path={null} />);
+    render(<FileViewer path={null} buffer={makeBuffer()} />);
     expect(screen.getByText('No file selected')).toBeInTheDocument();
-    expect(read).not.toHaveBeenCalled();
   });
 
-  it('reads and displays the file contents in an editable field', async () => {
-    read.mockResolvedValue('const x = 1;');
-    render(<FileViewer path="/ws/a.ts" />);
-    expect(await screen.findByDisplayValue('const x = 1;')).toHaveAttribute(
-      'aria-label',
-      'File contents',
+  it('shows the loading and error states', () => {
+    const { rerender } = render(<FileViewer path="/a.ts" buffer={makeBuffer({ loading: true })} />);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    rerender(<FileViewer path="/a.ts" buffer={makeBuffer({ error: 'ENOENT' })} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('ENOENT');
+  });
+
+  it('renders the draft and reports edits via the buffer', () => {
+    const setDraft = vi.fn();
+    render(<FileViewer path="/a.ts" buffer={makeBuffer({ draft: 'hi', setDraft })} />);
+
+    const editor = screen.getByLabelText('File contents');
+    expect(editor).toHaveValue('hi');
+    fireEvent.change(editor, { target: { value: 'bye' } });
+    expect(setDraft).toHaveBeenCalledWith('bye');
+  });
+
+  it('disables Save when clean and invokes save when dirty', () => {
+    const save = vi.fn();
+    const { rerender } = render(
+      <FileViewer path="/a.ts" buffer={makeBuffer({ dirty: false, save })} />,
     );
-    expect(read).toHaveBeenCalledWith('/ws/a.ts');
-  });
-
-  it('surfaces a read error', async () => {
-    read.mockRejectedValue(new Error('ENOENT'));
-    render(<FileViewer path="/ws/missing.ts" />);
-    expect(await screen.findByRole('alert')).toHaveTextContent('ENOENT');
-  });
-
-  it('marks the buffer dirty on edit and writes it on save', async () => {
-    read.mockResolvedValue('old');
-    write.mockResolvedValue();
-    render(<FileViewer path="/ws/a.ts" />);
-
-    const textarea = await screen.findByDisplayValue('old');
-    const saveButton = screen.getByRole('button', { name: 'Save' });
-
-    // Clean buffer: save disabled, no dirty marker.
-    expect(saveButton).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(screen.queryByLabelText('unsaved changes')).not.toBeInTheDocument();
 
-    fireEvent.change(textarea, { target: { value: 'new content' } });
+    rerender(<FileViewer path="/a.ts" buffer={makeBuffer({ dirty: true, save })} />);
     expect(screen.getByLabelText('unsaved changes')).toBeInTheDocument();
-    expect(saveButton).toBeEnabled();
-
-    fireEvent.click(saveButton);
-    await waitFor(() => expect(write).toHaveBeenCalledWith('/ws/a.ts', 'new content'));
-
-    // After a successful save the buffer is clean again.
-    await waitFor(() =>
-      expect(screen.queryByLabelText('unsaved changes')).not.toBeInTheDocument(),
-    );
+    const button = screen.getByRole('button', { name: 'Save' });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    expect(save).toHaveBeenCalled();
   });
 });

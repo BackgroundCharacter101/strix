@@ -4,10 +4,12 @@ import { FileViewer } from './src/FileViewer';
 import { AiPanel } from './src/AiPanel';
 import { GitStatusBar } from './src/GitStatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
+import { useFileBuffer } from './src/useFileBuffer';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const buffer = useFileBuffer(selectedPath);
 
   useEffect(() => {
     window.strix.workspace.root().then(setRoot);
@@ -25,8 +27,8 @@ export default function App() {
         ) : (
           <p>Opening workspace…</p>
         )}
-        <FileViewer path={selectedPath} />
-        <AiPanel filePath={selectedPath} />
+        <FileViewer path={selectedPath} buffer={buffer} />
+        <AiPanel filePath={selectedPath} fileContent={buffer.draft} />
       </div>
       <TerminalTabs />
     </div>

@@ -2,25 +2,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { makeStrixApi } from '../test-utils';
 
 const { runTask } = vi.hoisted(() => ({ runTask: vi.fn() }));
 vi.mock('@strix/ai-gateway', () => ({ runTask }));
 
 import { AiPanel } from './AiPanel';
 
-const read = vi.fn<[string], Promise<string>>();
-
 beforeEach(() => {
   runTask.mockReset();
-  read.mockReset();
-  read.mockResolvedValue('const a = 1;');
-  window.strix = makeStrixApi({ fs: { read } });
 });
 
 describe('AiPanel', () => {
-  it('disables Send until there is input, and file actions until a file loads', () => {
-    render(<AiPanel filePath={null} />);
+  it('disables Send until there is input, and file actions until a file is selected', () => {
+    render(<AiPanel filePath={null} fileContent="" />);
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Explain' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Check security' })).toBeDisabled();
@@ -33,7 +27,7 @@ describe('AiPanel', () => {
       cb.onDone('gemini/gemini-2.5-flash');
     });
 
-    render(<AiPanel filePath="/ws/a.ts" />);
+    render(<AiPanel filePath="/ws/a.ts" fileContent="const a = 1;" />);
 
     fireEvent.change(screen.getByLabelText('Ask AI'), {
       target: { value: 'what does this do?' },
@@ -44,7 +38,6 @@ describe('AiPanel', () => {
       expect(screen.getByLabelText('AI response')).toHaveTextContent('Hello'),
     );
     expect(screen.getByText(/Routed via:/)).toHaveTextContent('gemini/gemini-2.5-flash');
-
     expect(runTask).toHaveBeenCalledWith(
       'chat',
       expect.objectContaining({ filePath: '/ws/a.ts', userMessage: 'what does this do?' }),
@@ -52,35 +45,29 @@ describe('AiPanel', () => {
     );
   });
 
-  it('runs the explain task with the selected file as context once it loads', async () => {
-    render(<AiPanel filePath="/ws/a.ts" />);
+  it('runs the explain task against the live editor draft (not on-disk)', async () => {
+    render(<AiPanel filePath="/ws/a.ts" fileContent="const unsaved = 2;" />);
 
-    const explain = screen.getByRole('button', { name: 'Explain' });
-    await waitFor(() => expect(explain).toBeEnabled()); // file content has loaded
-
-    fireEvent.click(explain);
+    fireEvent.click(screen.getByRole('button', { name: 'Explain' }));
 
     await waitFor(() =>
       expect(runTask).toHaveBeenCalledWith(
         'explain',
-        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const a = 1;' }),
+        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const unsaved = 2;' }),
         expect.any(Object),
       ),
     );
   });
 
   it('runs the vuln_check task from the Check security action', async () => {
-    render(<AiPanel filePath="/ws/a.ts" />);
+    render(<AiPanel filePath="/ws/a.ts" fileContent="x" />);
 
-    const check = screen.getByRole('button', { name: 'Check security' });
-    await waitFor(() => expect(check).toBeEnabled());
-
-    fireEvent.click(check);
+    fireEvent.click(screen.getByRole('button', { name: 'Check security' }));
 
     await waitFor(() =>
       expect(runTask).toHaveBeenCalledWith(
         'vuln_check',
-        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const a = 1;' }),
+        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'x' }),
         expect.any(Object),
       ),
     );
