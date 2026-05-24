@@ -3,7 +3,7 @@ import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
 import { AiPanel } from './src/AiPanel';
 import { GitStatusBar } from './src/GitStatusBar';
-import { Terminal } from './src/Terminal';
+import { TerminalTabs } from './src/TerminalTabs';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function App() {
         <FileViewer path={selectedPath} />
         <AiPanel filePath={selectedPath} />
       </div>
-      <Terminal />
+      <TerminalTabs />
     </div>
   );
 }
