@@ -15,13 +15,19 @@ export interface RunTaskCallbacks {
 
 // Builds the prompt for a task, opens a streaming completion against
 // FreeLLMAPI, and drives the token/done callbacks via streamToPanel.
+export interface RunTaskSettings {
+  /** Override the model; defaults to the task's preference ('auto'). */
+  model?: string;
+}
+
 export async function runTask(
   task: TaskType,
   opts: BuildPromptOptions,
   callbacks: RunTaskCallbacks,
+  settings: RunTaskSettings = {},
 ): Promise<void> {
   const params: ChatCompletionCreateParamsStreaming = {
-    model: TASK_MODEL_PREFERENCE[task],
+    model: settings.model || TASK_MODEL_PREFERENCE[task],
     messages: buildPrompt(task, opts) as ChatCompletionMessageParam[],
     stream: true,
   };

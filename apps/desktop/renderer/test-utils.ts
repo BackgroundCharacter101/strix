@@ -9,6 +9,7 @@ interface StrixApiOverrides {
   git?: Partial<StrixApi['git']>;
   terminal?: Partial<StrixApi['terminal']>;
   lsp?: Partial<StrixApi['lsp']>;
+  ai?: Partial<StrixApi['ai']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -43,6 +44,10 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       stop: vi.fn(),
       onMessage: vi.fn(() => () => {}),
     },
+    ai: {
+      config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'test-key' })),
+      models: vi.fn(async (): Promise<string[]> => ['auto']),
+    },
   };
 
   return {
@@ -51,5 +56,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     git: { ...base.git, ...overrides.git },
     terminal: { ...base.terminal, ...overrides.terminal },
     lsp: { ...base.lsp, ...overrides.lsp },
+    ai: { ...base.ai, ...overrides.ai },
   };
 }

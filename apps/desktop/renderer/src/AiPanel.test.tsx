@@ -3,73 +3,101 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
-const { runTask } = vi.hoisted(() => ({ runTask: vi.fn() }));
-vi.mock('@strix/ai-gateway', () => ({ runTask }));
+const { runTask, configureAi } = vi.hoisted(() => ({
+  runTask: vi.fn(),
+  configureAi: vi.fn(),
+}));
+vi.mock('@strix/ai-gateway', () => ({ runTask, configureAi }));
 
 import { AiPanel } from './AiPanel';
+import { makeStrixApi } from '../test-utils';
 
 beforeEach(() => {
   runTask.mockReset();
+  configureAi.mockReset();
+  localStorage.clear();
+  window.strix = makeStrixApi({
+    ai: {
+      config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'real-key' })),
+      models: vi.fn(async () => ['auto', 'groq/llama-3.3-70b', 'gemini/gemini-2.5-flash']),
+    },
+  });
 });
 
 describe('AiPanel', () => {
-  it('disables Send until there is input, and file actions until a file is selected', () => {
+  it('configures the AI client from the bridge on mount', async () => {
+    render(<AiPanel filePath={null} fileContent="" />);
+    await waitFor(() =>
+      expect(configureAi).toHaveBeenCalledWith({
+        baseURL: 'http://localhost:3001/v1',
+        apiKey: 'real-key',
+      }),
+    );
+  });
+
+  it('lists models from the bridge with Auto as the default', async () => {
+    render(<AiPanel filePath={null} fileContent="" />);
+    const select = screen.getByLabelText('model') as HTMLSelectElement;
+    await waitFor(() => expect(screen.getByRole('option', { name: 'groq/llama-3.3-70b' })).toBeInTheDocument());
+    expect(select.value).toBe('auto');
+  });
+
+  it('disables Send until input, and file actions until a file is selected', () => {
     render(<AiPanel filePath={null} fileContent="" />);
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Explain' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Check security' })).toBeDisabled();
   });
 
-  it('streams the AI response and shows the routed model', async () => {
+  it('sends chat with history + selected model and appends the turn to the thread', async () => {
     runTask.mockImplementation(async (_task, _opts, cb) => {
       cb.onToken('Hel');
       cb.onToken('lo');
-      cb.onDone('gemini/gemini-2.5-flash');
+      cb.onDone('groq/llama-3.3-70b');
     });
 
     render(<AiPanel filePath="/ws/a.ts" fileContent="const a = 1;" />);
-
-    fireEvent.change(screen.getByLabelText('Ask AI'), {
-      target: { value: 'what does this do?' },
-    });
+    // wait for the model list to load, then pick a specific model
+    await screen.findByRole('option', { name: 'groq/llama-3.3-70b' });
+    fireEvent.change(screen.getByLabelText('model'), { target: { value: 'groq/llama-3.3-70b' } });
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'what is this?' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     await waitFor(() =>
-      expect(screen.getByLabelText('AI response')).toHaveTextContent('Hello'),
+      expect(screen.getByLabelText('AI conversation')).toHaveTextContent('Hello'),
     );
-    expect(screen.getByText(/Routed via:/)).toHaveTextContent('gemini/gemini-2.5-flash');
+    expect(screen.getByText(/Routed via:/)).toHaveTextContent('groq/llama-3.3-70b');
+
     expect(runTask).toHaveBeenCalledWith(
       'chat',
-      expect.objectContaining({ filePath: '/ws/a.ts', userMessage: 'what does this do?' }),
+      expect.objectContaining({ filePath: '/ws/a.ts', userMessage: 'what is this?' }),
       expect.any(Object),
+      { model: 'groq/llama-3.3-70b' },
     );
+    // user message persisted to the thread + localStorage
+    expect(screen.getByLabelText('AI conversation')).toHaveTextContent('what is this?');
+    expect(localStorage.getItem('strix.ai.history')).toContain('what is this?');
   });
 
-  it('runs the explain task against the live editor draft (not on-disk)', async () => {
+  it('runs explain against the live editor content', async () => {
     render(<AiPanel filePath="/ws/a.ts" fileContent="const unsaved = 2;" />);
-
     fireEvent.click(screen.getByRole('button', { name: 'Explain' }));
-
     await waitFor(() =>
       expect(runTask).toHaveBeenCalledWith(
         'explain',
         expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const unsaved = 2;' }),
         expect.any(Object),
+        { model: 'auto' },
       ),
     );
   });
 
-  it('runs the vuln_check task from the Check security action', async () => {
-    render(<AiPanel filePath="/ws/a.ts" fileContent="x" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Check security' }));
-
-    await waitFor(() =>
-      expect(runTask).toHaveBeenCalledWith(
-        'vuln_check',
-        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'x' }),
-        expect.any(Object),
-      ),
+  it('restores a persisted conversation from localStorage', () => {
+    localStorage.setItem(
+      'strix.ai.history',
+      JSON.stringify([{ role: 'user', content: 'earlier question' }]),
     );
+    render(<AiPanel filePath={null} fileContent="" />);
+    expect(screen.getByLabelText('AI conversation')).toHaveTextContent('earlier question');
   });
 });

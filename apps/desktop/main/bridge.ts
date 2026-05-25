@@ -36,10 +36,16 @@ export interface StrixLspApi {
   onMessage(cb: (e: { id: string; message: JsonRpcMessage }) => void): () => void;
 }
 
+export interface StrixAiApi {
+  config(): Promise<{ baseURL: string; apiKey: string }>;
+  models(): Promise<string[]>;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
   git: StrixGitApi;
   terminal: StrixTerminalApi;
   lsp: StrixLspApi;
+  ai: StrixAiApi;
 }

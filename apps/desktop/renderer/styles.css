@@ -255,6 +255,50 @@ body {
   gap: 8px;
 }
 
+.ai-toolbar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.ai-toolbar select {
+  flex: 1 1 auto;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.ai-thread {
+  flex: 1 1 auto;
+  min-height: 80px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-msg {
+  white-space: pre-wrap;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ai-user {
+  background: var(--selection);
+  align-self: flex-end;
+  max-width: 90%;
+}
+
+.ai-assistant {
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
 .ai-pane textarea {
   width: 100%;
   resize: vertical;

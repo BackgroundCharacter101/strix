@@ -40,6 +40,10 @@ const api: StrixApi = {
       return () => ipcRenderer.removeListener('lsp:message', handler);
     },
   },
+  ai: {
+    config: () => ipcRenderer.invoke('ai:config'),
+    models: () => ipcRenderer.invoke('ai:models'),
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);

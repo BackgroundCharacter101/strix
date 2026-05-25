@@ -11,7 +11,19 @@
       "Bash(ls -la \"C:\\\\Users\\\\kavee\\\\.claude\\\\debug\\\\50ae886a-fb5e-4c9c-acff-41c02968f8bc.txt\" 2>/dev/null && echo \"---EXISTS---\" || echo \"NO LOG FILE YET\")",
       "Bash(git add *)",
       "Bash(git commit -q -m ' *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git check-ignore *)",
+      "Bash(git submodule *)",
+      "Bash(rm -f .gitmodules)",
+      "Bash(rm -rf .git/modules/freellmapi)",
+      "Bash(rm -rf freellmapi/.git)",
+      "Bash(grep -cE \"node_modules/|/dist/|\\\\.db|/\\\\.env$\")",
+      "Bash(ls -la freellmapi)",
+      "Bash(echo \"EXISTS:$?\")",
+      "Bash(echo \"check-ignore exit: $?\")",
+      "Bash(echo \"SCAN_EXIT:$?\")",
+      "Bash(curl -s -m 5 http://localhost:3001/api/settings/api-key)",
+      "Bash(echo \"--- exit:$? ---\")"
     ]
   }
 }

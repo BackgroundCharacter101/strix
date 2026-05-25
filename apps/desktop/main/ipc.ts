@@ -42,4 +42,36 @@ export function registerIpcHandlers(): void {
     (_event, { id, message }: { id: string; message: JsonRpcMessage }) => lsp.send(id, message),
   );
   ipcMain.on('lsp:stop', (_event, { id }: { id: string }) => lsp.stop(id));
+
+  // --- AI: bridge the renderer to the local FreeLLMAPI server ---
+  const aiPort = process.env.FREELLMAPI_PORT ?? '3001';
+  const aiBase = `http://localhost:${aiPort}`;
+
+  const fetchKey = async (): Promise<string> => {
+    const res = await fetch(`${aiBase}/api/settings/api-key`);
+    const body = (await res.json()) as { apiKey: string };
+    return body.apiKey;
+  };
+
+  ipcMain.handle('ai:config', async () => {
+    try {
+      return { baseURL: `${aiBase}/v1`, apiKey: await fetchKey() };
+    } catch {
+      return { baseURL: `${aiBase}/v1`, apiKey: '' };
+    }
+  });
+
+  ipcMain.handle('ai:models', async () => {
+    try {
+      const apiKey = await fetchKey();
+      const res = await fetch(`${aiBase}/v1/models`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const body = (await res.json()) as { data?: { id: string }[] };
+      const ids = (body.data ?? []).map((m) => m.id).filter((id) => id !== 'auto');
+      return ['auto', ...ids];
+    } catch {
+      return ['auto'];
+    }
+  });
 }

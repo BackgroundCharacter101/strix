@@ -62,4 +62,15 @@ describe('runTask', () => {
     });
     expect(create.mock.calls[1][0].max_tokens).toBeUndefined();
   });
+
+  it('uses a model override when provided, else the task default', async () => {
+    create.mockResolvedValue(toStream([chunk('x')]));
+    await runTask(
+      'chat',
+      { filePath: 'a.ts', fileContent: 'x' },
+      { onToken: () => {}, onDone: () => {} },
+      { model: 'groq/llama-3.3-70b' },
+    );
+    expect(create.mock.calls[0][0].model).toBe('groq/llama-3.3-70b');
+  });
 });
