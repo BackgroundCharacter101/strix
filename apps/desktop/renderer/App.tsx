@@ -4,11 +4,13 @@ import { FileViewer } from './src/FileViewer';
 import { EditorTabs } from './src/EditorTabs';
 import { AiPanel } from './src/AiPanel';
 import { GitStatusBar } from './src/GitStatusBar';
+import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
+  const [cursor, setCursor] = useState({ line: 1, column: 1 });
   const tabs = useEditorTabs();
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function App() {
         </aside>
         <main className="editor-pane">
           <EditorTabs tabs={tabs} />
-          <FileViewer path={tabs.activePath} buffer={tabs.active} />
+          <FileViewer path={tabs.activePath} buffer={tabs.active} onCursorChange={setCursor} />
         </main>
         <aside className="ai-pane">
           <AiPanel filePath={tabs.activePath} fileContent={tabs.active?.draft ?? ''} />
@@ -40,6 +42,7 @@ export default function App() {
       <section className="panel">
         <TerminalTabs />
       </section>
+      <StatusBar path={tabs.activePath} dirty={tabs.active?.dirty ?? false} cursor={cursor} />
     </div>
   );
 }

@@ -5,9 +5,11 @@ import type { FileBuffer } from './useFileBuffer';
 export function FileViewer({
   path,
   buffer,
+  onCursorChange,
 }: {
   path: string | null;
   buffer: FileBuffer | null;
+  onCursorChange?: (pos: { line: number; column: number }) => void;
 }) {
   if (!path || !buffer) {
     return <p className="empty-state">No file selected</p>;
@@ -41,7 +43,12 @@ export function FileViewer({
         {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
       </div>
       <div className="editor-host">
-        <CodeEditor value={buffer.draft} language={languageForPath(path)} onChange={buffer.setDraft} />
+        <CodeEditor
+          value={buffer.draft}
+          language={languageForPath(path)}
+          onChange={buffer.setDraft}
+          onCursorChange={onCursorChange}
+        />
       </div>
     </div>
   );
