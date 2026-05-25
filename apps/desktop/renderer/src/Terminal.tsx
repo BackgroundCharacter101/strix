@@ -66,5 +66,5 @@ export function Terminal() {
     };
   }, []);
 
-  return <div aria-label="terminal" ref={containerRef} style={{ height: 240 }} />;
+  return <div className="terminal-host" aria-label="terminal" ref={containerRef} />;
 }

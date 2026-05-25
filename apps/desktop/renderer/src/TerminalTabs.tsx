@@ -21,8 +21,8 @@ export function TerminalTabs() {
   };
 
   return (
-    <div aria-label="terminals">
-      <div role="tablist">
+    <div className="terminal-tabs" aria-label="terminals">
+      <div className="tablist" role="tablist">
         {tabs.map((id) => (
           <span key={id}>
             <button
@@ -48,11 +48,17 @@ export function TerminalTabs() {
       </div>
       {/* Each tab keeps its own Terminal mounted (hidden, not unmounted) so its
           PTY session and scrollback survive tab switches. */}
-      {tabs.map((id) => (
-        <div key={id} style={{ display: id === active ? 'block' : 'none' }}>
-          <Terminal />
-        </div>
-      ))}
+      <div className="terminal-content">
+        {tabs.map((id) => (
+          <div
+            key={id}
+            className="terminal-slot"
+            style={{ display: id === active ? 'block' : 'none' }}
+          >
+            <Terminal />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

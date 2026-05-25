@@ -16,23 +16,29 @@ export default function App() {
   }, []);
 
   return (
-    <div style={{ padding: 32, fontFamily: 'sans-serif' }}>
-      <header style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-        <h1>Strix IDE</h1>
+    <div className="app">
+      <header className="titlebar">
+        <span className="app-title">Strix IDE</span>
         <GitStatusBar rootPath={root} />
       </header>
-      <div style={{ display: 'flex', gap: 16 }}>
-        {root ? (
-          <FileTree rootPath={root} onSelectFile={(node) => setSelectedPath(node.path)} />
-        ) : (
-          <p>Opening workspace…</p>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="workbench">
+        <aside className="sidebar">
+          {root ? (
+            <FileTree rootPath={root} onSelectFile={(node) => setSelectedPath(node.path)} />
+          ) : (
+            <p className="muted">Opening workspace…</p>
+          )}
+        </aside>
+        <main className="editor-pane">
           <FileViewer path={selectedPath} buffer={buffer} />
-        </div>
-        <AiPanel filePath={selectedPath} fileContent={buffer.draft} />
+        </main>
+        <aside className="ai-pane">
+          <AiPanel filePath={selectedPath} fileContent={buffer.draft} />
+        </aside>
       </div>
-      <TerminalTabs />
+      <section className="panel">
+        <TerminalTabs />
+      </section>
     </div>
   );
 }

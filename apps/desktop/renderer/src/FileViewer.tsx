@@ -4,25 +4,39 @@ import type { FileBuffer } from './useFileBuffer';
 
 export function FileViewer({ path, buffer }: { path: string | null; buffer: FileBuffer }) {
   if (!path) {
-    return <p>No file selected</p>;
+    return <p className="empty-state">No file selected</p>;
   }
   if (buffer.loading) {
-    return <div role="status">Loading…</div>;
+    return (
+      <div className="empty-state" role="status">
+        Loading…
+      </div>
+    );
   }
   if (buffer.error) {
-    return <div role="alert">{buffer.error}</div>;
+    return (
+      <div className="empty-state" role="alert">
+        {buffer.error}
+      </div>
+    );
   }
 
   return (
-    <div>
-      <div style={{ height: 400, width: '100%' }}>
+    <div className="file-viewer">
+      <div className="toolbar">
+        <button type="button" onClick={buffer.save} disabled={!buffer.dirty || buffer.saving}>
+          {buffer.saving ? 'Saving…' : 'Save'}
+        </button>
+        {buffer.dirty && (
+          <span className="dirty-dot" aria-label="unsaved changes">
+            ● unsaved
+          </span>
+        )}
+        {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
+      </div>
+      <div className="editor-host">
         <CodeEditor value={buffer.draft} language={languageForPath(path)} onChange={buffer.setDraft} />
       </div>
-      <button type="button" onClick={buffer.save} disabled={!buffer.dirty || buffer.saving}>
-        Save
-      </button>
-      {buffer.dirty && <span aria-label="unsaved changes">●</span>}
-      {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
     </div>
   );
 }
