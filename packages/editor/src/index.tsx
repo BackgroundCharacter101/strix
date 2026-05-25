@@ -14,6 +14,8 @@ export interface CodeEditorProps {
   onCursorChange?: (pos: CursorPosition) => void;
   /** Resolve generated code for a `# generate: ...` line (§8.5). */
   onGenerate?: (description: string, fileContent: string, language: string) => Promise<string>;
+  /** Called once the editor mounts; return a cleanup run on dispose (e.g. LSP). */
+  onEditorMount?: (...args: Parameters<OnMount>) => void | (() => void);
 }
 
 // Extract the description from a `# generate: ...` or `// generate: ...` line.
@@ -31,11 +33,17 @@ export function CodeEditor({
   onChange,
   onCursorChange,
   onGenerate,
+  onEditorMount,
 }: CodeEditorProps) {
   const handleMount: OnMount = (editor, monaco) => {
     editor.onDidChangeCursorPosition((e) =>
       onCursorChange?.({ line: e.position.lineNumber, column: e.position.column }),
     );
+
+    const dispose = onEditorMount?.(editor, monaco);
+    if (typeof dispose === 'function') {
+      editor.onDidDispose(dispose);
+    }
 
     // §8.5 Generate from comment: Ctrl/Cmd+G on a `# generate: ...` line
     // inserts the generated code on the following line.

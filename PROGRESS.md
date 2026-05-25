@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 93 tests / 24 files.**
+  **all green: 98 tests / 25 files.**
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -143,7 +143,7 @@ strix/ (folder: tabea)
 | 2 | Editor, file tree, tabs, open/save, syntax | ✅ |
 | 3 | FreeLLMAPI deployed (locally, no Pi) | ✅ (provider keys = user) |
 | 4 | AI gateway + all §8 editor features | ✅ chat (§8.2), explain (§8.3), vuln (§8.7), autocomplete (§8.1), Fix/Refactor diff (§8.4/§8.6), generate-from-comment (§8.5), model picker, persistent context |
-| 5 | Terminal + LSP | 🟡 terminal ✅; LSP backend ✅; **monaco-languageclient renderer wiring not done** |
+| 5 | Terminal + LSP | ✅ terminal; LSP backend + **renderer diagnostics** (lightweight LspClient → Monaco markers, §6.5). Hover/go-to-def not done; needs a language server installed to see live |
 | 6 | Yjs collaboration | ⛔ not started |
 | 7 | Hex viewer / CTF / vuln linter | ⛔ not started |
 | 8 | Packaging / installers | ⛔ not started |
@@ -188,8 +188,10 @@ strix/ (folder: tabea)
 ## 9. Open items / next candidates
 
 - **AI:** user adds provider key(s) at :3001 for real answers (auth is fixed).
-- **LSP:** wire `monaco-languageclient` in the renderer to the `lsp:*` bridge
-  (needs a language server installed, e.g. `pip install python-lsp-server`).
+- **LSP diagnostics DONE** (`renderer/src/lspClient.ts` → Monaco markers via
+  FileViewer `onEditorMount`). To see squiggles live: install a server (e.g.
+  `pip install python-lsp-server`) and open a matching file. Hover / go-to-def
+  / code actions are still TODO (would extend LspClient).
 - **Phase 4 is DONE** (all §8 AI editor features). They need a provider key +
   live window to see real output. Files: `AiPanel.tsx` (chat/explain/vuln,
   model picker, context), `autocomplete.ts` (§8.1), `CodeProposal.tsx` +
@@ -207,6 +209,9 @@ strix/ (folder: tabea)
 
 ## 10. Recent commit trail (newest first)
 
+- Phase 5 LSP diagnostics (§6.5): `lspClient.ts` (handshake + diagnostics→
+  Monaco markers) wired via FileViewer `onEditorMount`
+- Phase 4 generate-from-comment (§8.5): editor `parseGenerateComment` + Ctrl+G
 - Phase 4 Fix/Refactor diff proposals (§8.4/§8.6): editor `DiffViewer`,
   `CodeProposal`, AiPanel Fix/Refactor → apply to active buffer
 - Phase 4 inline autocomplete (§8.1): ai-gateway `complete()` + Monaco

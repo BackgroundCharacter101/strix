@@ -1,7 +1,9 @@
 import React from 'react';
+import type * as Monaco from 'monaco-editor';
 import { CodeEditor, languageForPath } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
 import type { FileBuffer } from './useFileBuffer';
+import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
 
 export function FileViewer({
   path,
@@ -52,6 +54,29 @@ export function FileViewer({
           onGenerate={(description, fileContent) =>
             complete('generate', { filePath: path, fileContent, userMessage: description })
           }
+          onEditorMount={(editor, monaco) => {
+            const language = languageForLsp(path);
+            const model = editor.getModel();
+            if (!language || !model) return;
+            const client = new LspClient(window.strix.lsp, {
+              language,
+              uri: model.uri.toString(),
+              languageId: model.getLanguageId(),
+              text: model.getValue(),
+              onDiagnostics: (diags) =>
+                monaco.editor.setModelMarkers(
+                  model,
+                  'strix-lsp',
+                  lspToMonacoMarkers(diags) as Monaco.editor.IMarkerData[],
+                ),
+            });
+            void client.start();
+            const sub = editor.onDidChangeModelContent(() => client.didChange(model.getValue()));
+            return () => {
+              sub.dispose();
+              client.stop();
+            };
+          }}
         />
       </div>
     </div>
