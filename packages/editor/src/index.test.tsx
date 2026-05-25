@@ -25,7 +25,20 @@ vi.mock('@monaco-editor/react', () => ({
   ),
 }));
 
-import { CodeEditor, DiffViewer, languageForPath } from './index';
+import { CodeEditor, DiffViewer, languageForPath, parseGenerateComment } from './index';
+
+describe('parseGenerateComment', () => {
+  it('extracts the description from generate comments', () => {
+    expect(parseGenerateComment('# generate: a fibonacci function')).toBe('a fibonacci function');
+    expect(parseGenerateComment('// generate: parse args')).toBe('parse args');
+    expect(parseGenerateComment('   //  GENERATE:  trim spaces  ')).toBe('trim spaces');
+  });
+
+  it('returns null for non-generate lines', () => {
+    expect(parseGenerateComment('const x = 1;')).toBeNull();
+    expect(parseGenerateComment('# just a comment')).toBeNull();
+  });
+});
 
 describe('languageForPath', () => {
   it('maps known extensions to Monaco language ids', () => {

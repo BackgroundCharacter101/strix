@@ -1,5 +1,6 @@
 import React from 'react';
 import { CodeEditor, languageForPath } from '@strix/editor';
+import { complete } from '@strix/ai-gateway';
 import type { FileBuffer } from './useFileBuffer';
 
 export function FileViewer({
@@ -48,6 +49,9 @@ export function FileViewer({
           language={languageForPath(path)}
           onChange={buffer.setDraft}
           onCursorChange={onCursorChange}
+          onGenerate={(description, fileContent) =>
+            complete('generate', { filePath: path, fileContent, userMessage: description })
+          }
         />
       </div>
     </div>

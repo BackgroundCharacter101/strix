@@ -12,6 +12,14 @@ export interface CodeEditorProps {
   readOnly?: boolean;
   onChange?: (value: string) => void;
   onCursorChange?: (pos: CursorPosition) => void;
+  /** Resolve generated code for a `# generate: ...` line (§8.5). */
+  onGenerate?: (description: string, fileContent: string, language: string) => Promise<string>;
+}
+
+// Extract the description from a `# generate: ...` or `// generate: ...` line.
+export function parseGenerateComment(line: string): string | null {
+  const m = /(?:#|\/\/)\s*generate:\s*(.+?)\s*$/i.exec(line);
+  return m ? m[1].trim() : null;
 }
 
 // Thin wrapper around Monaco (via @monaco-editor/react) so the rest of the
@@ -22,11 +30,36 @@ export function CodeEditor({
   readOnly,
   onChange,
   onCursorChange,
+  onGenerate,
 }: CodeEditorProps) {
-  const handleMount: OnMount = (editor) => {
+  const handleMount: OnMount = (editor, monaco) => {
     editor.onDidChangeCursorPosition((e) =>
       onCursorChange?.({ line: e.position.lineNumber, column: e.position.column }),
     );
+
+    // §8.5 Generate from comment: Ctrl/Cmd+G on a `# generate: ...` line
+    // inserts the generated code on the following line.
+    editor.addAction({
+      id: 'strix.generateFromComment',
+      label: 'Strix: Generate from comment',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyG],
+      run: async (ed) => {
+        const position = ed.getPosition();
+        const model = ed.getModel();
+        if (!position || !model || !onGenerate) return;
+        const description = parseGenerateComment(model.getLineContent(position.lineNumber));
+        if (!description) return;
+        const code = await onGenerate(description, model.getValue(), model.getLanguageId());
+        if (!code) return;
+        const col = model.getLineMaxColumn(position.lineNumber);
+        ed.executeEdits('strix.generate', [
+          {
+            range: new monaco.Range(position.lineNumber, col, position.lineNumber, col),
+            text: '\n' + code,
+          },
+        ]);
+      },
+    });
   };
 
   return (
