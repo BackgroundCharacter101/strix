@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
+import { EditorTabs } from './src/EditorTabs';
 import { AiPanel } from './src/AiPanel';
 import { GitStatusBar } from './src/GitStatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
-import { useFileBuffer } from './src/useFileBuffer';
+import { useEditorTabs } from './src/useEditorTabs';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const buffer = useFileBuffer(selectedPath);
+  const tabs = useEditorTabs();
 
   useEffect(() => {
     window.strix.workspace.root().then(setRoot);
@@ -24,16 +24,17 @@ export default function App() {
       <div className="workbench">
         <aside className="sidebar">
           {root ? (
-            <FileTree rootPath={root} onSelectFile={(node) => setSelectedPath(node.path)} />
+            <FileTree rootPath={root} onSelectFile={(node) => tabs.open(node.path)} />
           ) : (
             <p className="muted">Opening workspace…</p>
           )}
         </aside>
         <main className="editor-pane">
-          <FileViewer path={selectedPath} buffer={buffer} />
+          <EditorTabs tabs={tabs} />
+          <FileViewer path={tabs.activePath} buffer={tabs.active} />
         </main>
         <aside className="ai-pane">
-          <AiPanel filePath={selectedPath} fileContent={buffer.draft} />
+          <AiPanel filePath={tabs.activePath} fileContent={tabs.active?.draft ?? ''} />
         </aside>
       </div>
       <section className="panel">

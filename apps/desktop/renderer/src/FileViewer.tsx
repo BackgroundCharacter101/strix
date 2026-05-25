@@ -2,8 +2,14 @@ import React from 'react';
 import { CodeEditor, languageForPath } from '@strix/editor';
 import type { FileBuffer } from './useFileBuffer';
 
-export function FileViewer({ path, buffer }: { path: string | null; buffer: FileBuffer }) {
-  if (!path) {
+export function FileViewer({
+  path,
+  buffer,
+}: {
+  path: string | null;
+  buffer: FileBuffer | null;
+}) {
+  if (!path || !buffer) {
     return <p className="empty-state">No file selected</p>;
   }
   if (buffer.loading) {
