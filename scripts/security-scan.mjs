@@ -23,6 +23,10 @@ const SECRET_RULES = [
 // Files/dirs excluded from secret scanning (own ruleset, lockfiles with hashes).
 const SCAN_SKIP = [/^package-lock\.json$/, /^scripts\/security-scan\.mjs$/, /\.(png|jpg|jpeg|gif|ico|woff2?|webp)$/i];
 
+// Obvious placeholders/examples — not real secrets (used to suppress false
+// positives from the generic "Hardcoded credential" rule in docs/samples).
+const PLACEHOLDER = /your[-_]|example|placeholder|change[-_]?me|xxxx|<[^>]+>|redacted|dummy|sample|\bunified-key\b|\.\.\./i;
+
 // Files that must never be committed.
 const FORBIDDEN = [/(^|\/)\.env$/, /(^|\/)\.env\.(?!example$).+/];
 
@@ -47,9 +51,10 @@ for (const file of files) {
   const lines = content.split('\n');
   for (const rule of SECRET_RULES) {
     for (let i = 0; i < lines.length; i++) {
-      if (rule.re.test(lines[i])) {
-        findings.push(`${file}:${i + 1}: possible ${rule.name}`);
-      }
+      if (!rule.re.test(lines[i])) continue;
+      // The generic credential rule yields false positives on doc placeholders.
+      if (rule.name === 'Hardcoded credential' && PLACEHOLDER.test(lines[i])) continue;
+      findings.push(`${file}:${i + 1}: possible ${rule.name}`);
     }
   }
 }
