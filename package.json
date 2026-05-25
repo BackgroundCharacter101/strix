@@ -13,6 +13,8 @@
         "lint": "eslint .",
         "test": "vitest run",
         "test:watch": "vitest",
+        "watch": "tsc --build --watch",
+        "watch:types": "tsc --build --watch",
         "bootstrap": "npm install"
     },
     "devDependencies": {
