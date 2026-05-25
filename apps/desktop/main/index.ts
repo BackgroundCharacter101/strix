@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { registerIpcHandlers } from './ipc.js';
+import { startAiServer, stopAiServer } from './aiServer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,7 +50,12 @@ function createWindow() {
 
 app.whenReady().then(() => {
     registerIpcHandlers();
+    startAiServer(__dirname);
     createWindow();
+});
+
+app.on('will-quit', () => {
+    stopAiServer();
 });
 
 app.on('window-all-closed', () => {
