@@ -15,6 +15,10 @@
         "test:watch": "vitest",
         "watch": "tsc --build --watch",
         "watch:types": "tsc --build --watch",
+        "security": "node scripts/security-scan.mjs",
+        "security:audit": "npm audit --omit=dev",
+        "security:ci": "node scripts/security-scan.mjs && npm audit --omit=dev --audit-level=critical",
+        "prepare": "git config core.hooksPath .githooks || exit 0",
         "bootstrap": "npm install"
     },
     "devDependencies": {

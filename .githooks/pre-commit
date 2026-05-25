@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Strix commit-time security gate. Secret scan is a hard block; the dependency
+# audit is best-effort locally (needs network) and hard-enforced in CI.
+echo "[strix] security scan (secrets / forbidden files)…"
+npm run -s security || {
+  echo "[strix] commit blocked: security scan found issues."
+  exit 1
+}
+
+echo "[strix] dependency audit (critical)…"
+npm audit --omit=dev --audit-level=critical >/dev/null 2>&1 || \
+  echo "[strix] WARN: dependency audit reported issues or could not run (offline?). CI enforces this."
+
+exit 0
