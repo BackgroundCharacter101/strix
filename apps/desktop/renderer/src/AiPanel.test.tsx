@@ -1,13 +1,20 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
-const { runTask, configureAi } = vi.hoisted(() => ({
+const { runTask, configureAi, complete } = vi.hoisted(() => ({
   runTask: vi.fn(),
   configureAi: vi.fn(),
+  complete: vi.fn(),
 }));
-vi.mock('@strix/ai-gateway', () => ({ runTask, configureAi }));
+vi.mock('@strix/ai-gateway', () => ({ runTask, configureAi, complete }));
+vi.mock('@strix/editor', () => ({
+  languageForPath: () => 'typescript',
+  DiffViewer: ({ original, modified }: { original: string; modified: string }) => (
+    <div aria-label="diff" data-original={original} data-modified={modified} />
+  ),
+}));
 
 import { AiPanel } from './AiPanel';
 import { makeStrixApi } from '../test-utils';
@@ -15,6 +22,7 @@ import { makeStrixApi } from '../test-utils';
 beforeEach(() => {
   runTask.mockReset();
   configureAi.mockReset();
+  complete.mockReset();
   localStorage.clear();
   window.strix = makeStrixApi({
     ai: {
@@ -90,6 +98,30 @@ describe('AiPanel', () => {
         { model: 'auto' },
       ),
     );
+  });
+
+  it('proposes a refactor diff and applies it to the editor', async () => {
+    complete.mockResolvedValue('const refactored = true;');
+    const onApplyEdit = vi.fn();
+    render(
+      <AiPanel filePath="/ws/a.ts" fileContent="const old = 1;" onApplyEdit={onApplyEdit} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refactor' }));
+
+    const proposal = await screen.findByLabelText('proposed change');
+    expect(complete).toHaveBeenCalledWith(
+      'refactor',
+      expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const old = 1;' }),
+      { model: 'auto' },
+    );
+    expect(within(proposal).getByLabelText('diff')).toHaveAttribute(
+      'data-modified',
+      'const refactored = true;',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(onApplyEdit).toHaveBeenCalledWith('const refactored = true;');
   });
 
   it('restores a persisted conversation from localStorage', () => {

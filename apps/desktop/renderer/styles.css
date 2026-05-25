@@ -299,6 +299,28 @@ body {
   border: 1px solid var(--border);
 }
 
+.ai-proposal {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ai-proposal-diff {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ai-proposal-actions {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-top: 1px solid var(--border);
+}
+
 .ai-pane textarea {
   width: 100%;
   resize: vertical;

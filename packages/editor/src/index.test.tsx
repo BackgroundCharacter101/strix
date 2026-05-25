@@ -20,9 +20,12 @@ vi.mock('@monaco-editor/react', () => ({
       onChange={(e) => onChange?.(e.target.value)}
     />
   ),
+  DiffEditor: ({ original, modified }: { original?: string; modified?: string }) => (
+    <div aria-label="diff" data-original={original} data-modified={modified} />
+  ),
 }));
 
-import { CodeEditor, languageForPath } from './index';
+import { CodeEditor, DiffViewer, languageForPath } from './index';
 
 describe('languageForPath', () => {
   it('maps known extensions to Monaco language ids', () => {
@@ -47,5 +50,14 @@ describe('CodeEditor', () => {
 
     fireEvent.change(editor, { target: { value: 'bye' } });
     expect(onChange).toHaveBeenCalledWith('bye');
+  });
+});
+
+describe('DiffViewer', () => {
+  it('passes original and modified text to the diff editor', () => {
+    render(<DiffViewer original="const a = 1;" modified="const a = 2;" language="typescript" />);
+    const diff = screen.getByLabelText('diff');
+    expect(diff).toHaveAttribute('data-original', 'const a = 1;');
+    expect(diff).toHaveAttribute('data-modified', 'const a = 2;');
   });
 });

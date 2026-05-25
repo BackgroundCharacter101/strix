@@ -1,5 +1,5 @@
 import React from 'react';
-import Editor, { type OnMount } from '@monaco-editor/react';
+import Editor, { DiffEditor, type OnMount } from '@monaco-editor/react';
 
 export interface CursorPosition {
   line: number;
@@ -41,6 +41,29 @@ export function CodeEditor({
       }}
       onChange={(next) => onChange?.(next ?? '')}
       onMount={handleMount}
+    />
+  );
+}
+
+export interface DiffViewerProps {
+  original: string;
+  modified: string;
+  language?: string;
+}
+
+// Read-only inline diff (original vs an AI-proposed change).
+export function DiffViewer({ original, modified, language }: DiffViewerProps) {
+  return (
+    <DiffEditor
+      original={original}
+      modified={modified}
+      language={language}
+      options={{
+        readOnly: true,
+        renderSideBySide: false,
+        minimap: { enabled: false },
+        automaticLayout: true,
+      }}
     />
   );
 }

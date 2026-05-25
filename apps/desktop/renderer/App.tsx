@@ -43,7 +43,11 @@ export default function App() {
         </main>
         <div className="resizer resizer-x" onPointerDown={aiPanel.onPointerDown} />
         <aside className="ai-pane" style={{ width: aiPanel.size }}>
-          <AiPanel filePath={tabs.activePath} fileContent={tabs.active?.draft ?? ''} />
+          <AiPanel
+            filePath={tabs.activePath}
+            fileContent={tabs.active?.draft ?? ''}
+            onApplyEdit={(content) => tabs.active?.setDraft(content)}
+          />
         </aside>
       </div>
       <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />

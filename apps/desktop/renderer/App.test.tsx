@@ -15,6 +15,7 @@ vi.mock('@strix/editor', () => ({
       onChange={(e) => onChange?.(e.target.value)}
     />
   ),
+  DiffViewer: () => <div aria-label="diff" />,
 }));
 
 import App from './App';
