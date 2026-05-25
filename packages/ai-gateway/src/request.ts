@@ -39,3 +39,25 @@ export async function runTask(
   const stream = await ai.chat.completions.create(params);
   await streamToPanel(stream, callbacks.onToken, callbacks.onDone);
 }
+
+// Run a task and resolve with the full text (no streaming UI). Used for
+// inline autocomplete and other one-shot completions.
+export async function complete(
+  task: TaskType,
+  opts: BuildPromptOptions,
+  settings: RunTaskSettings = {},
+): Promise<string> {
+  let text = '';
+  await runTask(
+    task,
+    opts,
+    {
+      onToken: (token) => {
+        text += token;
+      },
+      onDone: () => {},
+    },
+    settings,
+  );
+  return text;
+}

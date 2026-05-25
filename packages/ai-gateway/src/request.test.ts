@@ -6,7 +6,7 @@ vi.mock('./client', () => ({
   ai: { chat: { completions: { create } } },
 }));
 
-import { runTask } from './request';
+import { runTask, complete } from './request';
 
 function chunk(content?: string, model?: string): ChatCompletionChunk {
   return {
@@ -72,5 +72,12 @@ describe('runTask', () => {
       { model: 'groq/llama-3.3-70b' },
     );
     expect(create.mock.calls[0][0].model).toBe('groq/llama-3.3-70b');
+  });
+
+  it('complete() returns the full text and caps autocomplete tokens', async () => {
+    create.mockResolvedValue(toStream([chunk('const '), chunk('x = 1;')]));
+    const text = await complete('autocomplete', { filePath: 'a.ts', fileContent: 'const ' });
+    expect(text).toBe('const x = 1;');
+    expect(create.mock.calls[0][0].max_tokens).toBe(150);
   });
 });

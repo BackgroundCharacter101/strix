@@ -1,5 +1,6 @@
 import * as monaco from 'monaco-editor';
 import { loader } from '@monaco-editor/react';
+import { registerAutocomplete } from './autocomplete';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -39,3 +40,6 @@ self.MonacoEnvironment = {
 
 // Point @monaco-editor/react at the bundled monaco instead of its CDN loader.
 loader.config({ monaco });
+
+// AI inline autocomplete (ghost text).
+registerAutocomplete();

@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 87 tests / 23 files.**
+  **all green: 88 tests / 23 files.**
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -93,7 +93,7 @@ strix/ (folder: tabea)
 ├── packages/
 │   ├── ai-gateway/   @strix/ai-gateway — client(configureAi), tasks, context
 │   │                 (buildPrompt), stream(streamToPanel), status(StatusTracker),
-│   │                 request(runTask + model override), types(TaskType, ChatMessage)
+│   │                 request(runTask + model override + complete()), types(TaskType, ChatMessage)
 │   ├── editor/       @strix/editor — CodeEditor (wraps @monaco-editor/react),
 │   │                 languageForPath, exposes onCursorChange
 │   ├── terminal/ lsp/ collab/ ui/   (placeholders — logic lives in apps/desktop/main)
@@ -142,7 +142,7 @@ strix/ (folder: tabea)
 | 1 | Monorepo, tooling, CI | ✅ |
 | 2 | Editor, file tree, tabs, open/save, syntax | ✅ |
 | 3 | FreeLLMAPI deployed (locally, no Pi) | ✅ (provider keys = user) |
-| 4 | AI gateway, chat/explain/fix | 🟡 chat/explain/vuln + model picker + context done; **inline autocomplete & fix-diff UI not built** |
+| 4 | AI gateway, chat/explain/fix | 🟡 chat/explain/vuln + model picker + context + **inline autocomplete (§8.1)** done; **fix-diff / generate-from-comment / refactor UI not built** |
 | 5 | Terminal + LSP | 🟡 terminal ✅; LSP backend ✅; **monaco-languageclient renderer wiring not done** |
 | 6 | Yjs collaboration | ⛔ not started |
 | 7 | Hex viewer / CTF / vuln linter | ⛔ not started |
@@ -190,7 +190,9 @@ strix/ (folder: tabea)
 - **AI:** user adds provider key(s) at :3001 for real answers (auth is fixed).
 - **LSP:** wire `monaco-languageclient` in the renderer to the `lsp:*` bridge
   (needs a language server installed, e.g. `pip install python-lsp-server`).
-- **Phase 4 remainder:** inline autocomplete (ghost text) + fix-diff UI.
+- **Phase 4 remainder:** fix-diff UI (§8.4), generate-from-comment (§8.5),
+  refactor (§8.6). (Inline autocomplete §8.1 done — needs a provider key + live
+  window to see ghost text; `renderer/src/autocomplete.ts` + `monaco-setup.ts`.)
 - **Hardening:** add Content-Security-Policy; upgrade Electron (1 high CVE) &
   DOMPurify; consider proxying AI through main to keep the key out of the bundle.
 - **Phase 8 (packaging):** electron-builder → installable .exe (would need `node`
@@ -202,6 +204,9 @@ strix/ (folder: tabea)
 
 ## 10. Recent commit trail (newest first)
 
+- Phase 4 inline autocomplete (§8.1): ai-gateway `complete()` + Monaco
+  inline-completions provider (`renderer/src/autocomplete.ts`)
+- `459aa1b` Add PROGRESS.md handoff doc
 - `2a6896b` AI panel: live auth, manual model picker, persistent context
 - `cac5ee5` Auto-start vendored FreeLLMAPI from Strix
 - `...` Vendor FreeLLMAPI; security gate; LSP; resizable panels; status bar;

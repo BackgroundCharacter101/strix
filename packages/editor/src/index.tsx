@@ -33,7 +33,12 @@ export function CodeEditor({
     <Editor
       value={value}
       language={language}
-      options={{ readOnly, minimap: { enabled: false }, automaticLayout: true }}
+      options={{
+        readOnly,
+        minimap: { enabled: false },
+        automaticLayout: true,
+        inlineSuggest: { enabled: true },
+      }}
       onChange={(next) => onChange?.(next ?? '')}
       onMount={handleMount}
     />
