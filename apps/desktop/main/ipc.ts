@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 import { buildFileTree, readFileContents, writeFileContents } from './fs.js';
 import { getGitStatus } from './git.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
+import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
@@ -31,4 +32,14 @@ export function registerIpcHandlers(): void {
       terminals.resize(id, cols, rows),
   );
   ipcMain.on('terminal:kill', (_event, { id }: { id: string }) => terminals.kill(id));
+
+  const lsp = new LspManager();
+  ipcMain.handle('lsp:start', (event, language: Language) =>
+    lsp.start(language, {}, (id, message) => event.sender.send('lsp:message', { id, message })),
+  );
+  ipcMain.on(
+    'lsp:send',
+    (_event, { id, message }: { id: string; message: JsonRpcMessage }) => lsp.send(id, message),
+  );
+  ipcMain.on('lsp:stop', (_event, { id }: { id: string }) => lsp.stop(id));
 }

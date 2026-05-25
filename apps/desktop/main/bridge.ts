@@ -1,6 +1,7 @@
 import type { FileNode } from './fs';
 import type { GitStatus } from './git';
 import type { TerminalCreateOptions } from './terminal';
+import type { Language, JsonRpcMessage } from './lsp';
 
 // Shape of the API exposed to the renderer via contextBridge (window.strix).
 // Kept separate from preload so renderer code can import these types without
@@ -28,9 +29,17 @@ export interface StrixTerminalApi {
   onExit(cb: (e: { id: string; exitCode: number }) => void): () => void;
 }
 
+export interface StrixLspApi {
+  start(language: Language): Promise<string>;
+  send(id: string, message: JsonRpcMessage): void;
+  stop(id: string): void;
+  onMessage(cb: (e: { id: string; message: JsonRpcMessage }) => void): () => void;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
   git: StrixGitApi;
   terminal: StrixTerminalApi;
+  lsp: StrixLspApi;
 }

@@ -8,6 +8,7 @@ interface StrixApiOverrides {
   workspace?: Partial<StrixApi['workspace']>;
   git?: Partial<StrixApi['git']>;
   terminal?: Partial<StrixApi['terminal']>;
+  lsp?: Partial<StrixApi['lsp']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -36,6 +37,12 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       onData: vi.fn(() => () => {}),
       onExit: vi.fn(() => () => {}),
     },
+    lsp: {
+      start: vi.fn(async (): Promise<string> => 'lsp-1'),
+      send: vi.fn(),
+      stop: vi.fn(),
+      onMessage: vi.fn(() => () => {}),
+    },
   };
 
   return {
@@ -43,5 +50,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     workspace: { ...base.workspace, ...overrides.workspace },
     git: { ...base.git, ...overrides.git },
     terminal: { ...base.terminal, ...overrides.terminal },
+    lsp: { ...base.lsp, ...overrides.lsp },
   };
 }

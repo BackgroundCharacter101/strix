@@ -29,6 +29,17 @@ const api: StrixApi = {
       return () => ipcRenderer.removeListener('terminal:exit', handler);
     },
   },
+  lsp: {
+    start: (language) => ipcRenderer.invoke('lsp:start', language),
+    send: (id, message) => ipcRenderer.send('lsp:send', { id, message }),
+    stop: (id) => ipcRenderer.send('lsp:stop', { id }),
+    onMessage: (cb) => {
+      const handler = (_event: unknown, e: { id: string; message: Record<string, unknown> }) =>
+        cb(e);
+      ipcRenderer.on('lsp:message', handler);
+      return () => ipcRenderer.removeListener('lsp:message', handler);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);
