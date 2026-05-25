@@ -133,8 +133,26 @@ body {
   height: 260px;
   flex: 0 0 auto;
   background: var(--bg);
-  border-top: 1px solid var(--border);
   overflow: hidden;
+}
+
+/* ---- Resizers ----------------------------------------------------------- */
+.resizer {
+  flex: 0 0 4px;
+  background: var(--border);
+}
+
+.resizer-x {
+  cursor: col-resize;
+}
+
+.resizer-y {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.resizer:hover {
+  background: var(--accent);
 }
 
 .muted {
