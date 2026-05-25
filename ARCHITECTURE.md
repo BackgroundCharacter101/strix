@@ -215,7 +215,7 @@ Status bar updates: "AI: groq/llama-3.3-70b · 4,210 tokens today"
 ## 5. Monorepo Structure
 
 ```
-your-ide/
+strix/
 │
 ├── apps/
 │   └── desktop/                    ← Electron application
@@ -269,15 +269,17 @@ your-ide/
 │   └── ...                         ← FreeLLMAPI source (runs on Pi 5)
 │
 ├── docs/
-│   ├── ARCHITECTURE.md             ← This file
 │   ├── SETUP.md                    ← Dev environment setup guide
 │   └── HOMELAB.md                  ← Pi 5 deployment guide
 │
 ├── .github/
+│   ├── agents/                     ← strix-* agent workflow definitions
 │   └── workflows/
 │       ├── ci.yml                  ← Lint + test on every PR
 │       └── release.yml             ← Build installer on version tag
 │
+├── ARCHITECTURE.md                 ← This file (source of truth, repo root)
+├── AGENTS.md                       ← Agent workflow registry
 ├── turbo.json                      ← Turborepo pipeline config
 ├── package.json                    ← Root workspace
 └── .env.example                    ← FREELLMAPI_URL, COLLAB_SERVER_URL
@@ -320,9 +322,15 @@ This is the single point of contact between the IDE and the AI. It wraps the **O
 ```typescript
 import OpenAI from 'openai';
 
+// AI calls run directly from the Electron renderer (see §6.7), where `process`
+// may be undefined and the OpenAI SDK requires an explicit browser opt-in.
+const env: Record<string, string | undefined> =
+  typeof process !== 'undefined' ? process.env : {};
+
 export const ai = new OpenAI({
-  baseURL: process.env.FREELLMAPI_URL ?? 'http://localhost:3001/v1',
-  apiKey: process.env.FREELLMAPI_KEY ?? 'freellmapi-your-unified-key',
+  baseURL: env.FREELLMAPI_URL ?? 'http://localhost:3001/v1',
+  apiKey: env.FREELLMAPI_KEY ?? 'freellmapi-your-unified-key',
+  dangerouslyAllowBrowser: true,
 });
 ```
 
