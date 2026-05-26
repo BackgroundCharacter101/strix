@@ -7,9 +7,30 @@ export interface StatusBarProps {
   path: string | null;
   dirty: boolean;
   cursor: { line: number; column: number };
+  content?: string;
 }
 
-export function StatusBar({ rootPath, path, dirty, cursor }: StatusBarProps) {
+// Windows files use CRLF; everything else LF. Detect from the buffer.
+function detectEol(content: string): string {
+  return content.includes('\r\n') ? 'CRLF' : 'LF';
+}
+
+// Report the dominant indentation unit (tabs, or the smallest space indent seen).
+function detectIndent(content: string): string {
+  const lines = content.split('\n');
+  let min = 0;
+  for (const line of lines) {
+    if (/^\t/.test(line)) return 'Tab Size: 4';
+    const m = /^( +)\S/.exec(line);
+    if (m) {
+      const n = m[1].length;
+      if (min === 0 || n < min) min = n;
+    }
+  }
+  return `Spaces: ${min || 2}`;
+}
+
+export function StatusBar({ rootPath, path, dirty, cursor, content = '' }: StatusBarProps) {
   return (
     <footer className="statusbar" aria-label="status bar">
       <div className="statusbar-section statusbar-left">
@@ -21,9 +42,9 @@ export function StatusBar({ rootPath, path, dirty, cursor }: StatusBarProps) {
             <span className="statusbar-item">
               Ln {cursor.line}, Col {cursor.column}
             </span>
-            <span className="statusbar-item">Spaces: 2</span>
+            <span className="statusbar-item">{detectIndent(content)}</span>
             <span className="statusbar-item">UTF-8</span>
-            <span className="statusbar-item">CRLF</span>
+            <span className="statusbar-item">{detectEol(content)}</span>
             <span className="statusbar-item">{languageForPath(path)}</span>
             {dirty && (
               <span className="statusbar-item dirty-dot" aria-label="unsaved changes">

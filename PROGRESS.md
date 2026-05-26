@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 104 tests / 26 files.**
+  **all green: 109 tests / 27 files.**
 
 GUI polish (user wanted all, ALL DONE): [1] collapsible file tree + badges ✅;
 [2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅;
@@ -63,6 +63,10 @@ Design-token system ✅: `renderer/tokens.css` (imported first in main.tsx) hold
 TWO layers — primitive palette/scales + semantic tokens (`--bg`, `--text`,
 `--accent`, `--space-*`, `--radius-*`, `--text-*`, file-type `--c-*`). `styles.css`
 consumes ONLY semantic tokens (no raw hex). Re-theming = edit tokens.css.
+GUI pass 3 ✅: status bar now shows REAL values — EOL (CRLF/LF) + indentation
+(Tabs / Spaces:N) detected from the active buffer (`StatusBar` gets `content`).
+Added `Breadcrumbs.tsx` (token-styled path bar above the editor, workspace-
+relative segments + file badge on the leaf). 109 tests / 27 files.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)

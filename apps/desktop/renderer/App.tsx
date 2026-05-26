@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
 import { EditorTabs } from './src/EditorTabs';
+import { Breadcrumbs } from './src/Breadcrumbs';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
@@ -77,6 +78,7 @@ export default function App() {
             )}
             <main className="editor-pane">
               <EditorTabs tabs={tabs} />
+              {tabs.activePath && <Breadcrumbs rootPath={root} path={tabs.activePath} />}
               <FileViewer path={tabs.activePath} buffer={tabs.active} onCursorChange={setCursor} />
             </main>
             {showAi && (
@@ -107,6 +109,7 @@ export default function App() {
         path={tabs.activePath}
         dirty={tabs.active?.dirty ?? false}
         cursor={cursor}
+        content={tabs.active?.draft ?? ''}
       />
     </div>
   );

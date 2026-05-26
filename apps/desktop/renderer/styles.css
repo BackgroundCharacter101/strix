@@ -228,6 +228,42 @@ body {
   background: var(--bg-hover);
 }
 
+/* ---- Breadcrumbs -------------------------------------------------------- */
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: var(--space-2) var(--space-6);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.breadcrumb-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.breadcrumb-seg[data-leaf='true'] {
+  color: var(--text);
+}
+
+.breadcrumb-sep {
+  color: var(--icon-muted);
+  margin: 0 var(--space-1);
+}
+
+.breadcrumb-badge {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+}
+
 .ai-pane {
   width: 340px;
   flex: 0 0 auto;
@@ -366,41 +402,32 @@ body {
   padding: 0 3px;
 }
 
-/* ---- File-type badge colours (tree + tabs) ------------------------------ */
-.tree-badge[data-ext='ts'],
-.tab-badge[data-ext='ts'] {
+/* ---- File-type badge colours (tree + tabs + breadcrumbs) ---------------- */
+[data-ext='ts'] {
   color: var(--c-ts);
 }
-.tree-badge[data-ext='js'],
-.tab-badge[data-ext='js'] {
+[data-ext='js'] {
   color: var(--c-js);
 }
-.tree-badge[data-ext='json'],
-.tab-badge[data-ext='json'] {
+[data-ext='json'] {
   color: var(--c-json);
 }
-.tree-badge[data-ext='css'],
-.tab-badge[data-ext='css'] {
+[data-ext='css'] {
   color: var(--c-css);
 }
-.tree-badge[data-ext='html'],
-.tab-badge[data-ext='html'] {
+[data-ext='html'] {
   color: var(--c-html);
 }
-.tree-badge[data-ext='md'],
-.tab-badge[data-ext='md'] {
+[data-ext='md'] {
   color: var(--c-md);
 }
-.tree-badge[data-ext='py'],
-.tab-badge[data-ext='py'] {
+[data-ext='py'] {
   color: var(--c-py);
 }
-.tree-badge[data-ext='sh'],
-.tab-badge[data-ext='sh'] {
+[data-ext='sh'] {
   color: var(--c-sh);
 }
-.tree-badge[data-ext='yml'],
-.tab-badge[data-ext='yml'] {
+[data-ext='yml'] {
   color: var(--c-yml);
 }
 
