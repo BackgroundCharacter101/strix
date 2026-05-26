@@ -18,7 +18,7 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [palette, setPalette] = useState<null | 'files'>(null);
+  const [palette, setPalette] = useState<null | 'files' | 'commands'>(null);
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const tabs = useEditorTabs();
 
@@ -73,13 +73,31 @@ export default function App() {
           break;
         case 'p':
           e.preventDefault();
-          void openQuickFiles();
+          if (e.shiftKey) {
+            setPalette('commands');
+          } else {
+            void openQuickFiles();
+          }
           break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [tabs, openQuickFiles]);
+
+  const commands: { id: string; label: string; detail: string; run: () => void }[] = [
+    { id: 'view.explorer', label: 'View: Toggle Explorer', detail: 'Ctrl+B', run: () => setShowSidebar((v) => !v) },
+    { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
+    { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
+    { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
+    {
+      id: 'view.closeEditor',
+      label: 'View: Close Editor',
+      detail: 'Ctrl+W',
+      run: () => tabs.activePath && tabs.close(tabs.activePath),
+    },
+    { id: 'file.quickOpen', label: 'Go to File…', detail: 'Ctrl+P', run: () => void openQuickFiles() },
+  ];
 
   return (
     <div className="app">
@@ -177,6 +195,17 @@ export default function App() {
           onSelect={(item) => {
             tabs.open(item.id);
             setPalette(null);
+          }}
+          onClose={() => setPalette(null)}
+        />
+      )}
+      {palette === 'commands' && (
+        <Palette
+          items={commands.map((c) => ({ id: c.id, label: c.label, detail: c.detail }))}
+          placeholder="Type a command…"
+          onSelect={(item) => {
+            setPalette(null);
+            commands.find((c) => c.id === item.id)?.run();
           }}
           onClose={() => setPalette(null)}
         />

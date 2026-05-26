@@ -107,6 +107,22 @@ describe('App', () => {
     expect(await screen.findByText('ws')).toBeInTheDocument();
   });
 
+  it('runs a command from the Ctrl+Shift+P palette', async () => {
+    root.mockResolvedValue('/ws');
+    tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });
+
+    render(<App />);
+    expect(await screen.findByText('ws')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'P', ctrlKey: true, shiftKey: true });
+    const input = await screen.findByLabelText('Type a command…');
+    fireEvent.change(input, { target: { value: 'Toggle Explorer' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    // The command hid the sidebar (root folder no longer rendered).
+    expect(screen.queryByText('ws')).not.toBeInTheDocument();
+  });
+
   it('shows the git branch and dirty count for the workspace', async () => {
     root.mockResolvedValue('/ws');
     tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });
