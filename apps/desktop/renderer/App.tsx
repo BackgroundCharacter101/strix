@@ -3,11 +3,11 @@ import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
 import { EditorTabs } from './src/EditorTabs';
 import { AiPanel } from './src/AiPanel';
-import { GitStatusBar } from './src/GitStatusBar';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
+import { FilesIcon, SparkleIcon, TerminalIcon } from './src/icons';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -29,7 +29,6 @@ export default function App() {
     <div className="app">
       <header className="titlebar">
         <span className="app-title">Strix IDE</span>
-        <GitStatusBar rootPath={root} />
       </header>
       <div className="app-body">
         <nav className="activity-bar" aria-label="panels">
@@ -37,25 +36,28 @@ export default function App() {
             type="button"
             aria-label="Toggle files"
             aria-pressed={showSidebar}
+            title="Explorer"
             onClick={() => setShowSidebar((v) => !v)}
           >
-            ▤
+            <FilesIcon />
           </button>
           <button
             type="button"
             aria-label="Toggle AI"
             aria-pressed={showAi}
+            title="AI assistant"
             onClick={() => setShowAi((v) => !v)}
           >
-            ✦
+            <SparkleIcon />
           </button>
           <button
             type="button"
             aria-label="Toggle terminal"
             aria-pressed={showTerminal}
+            title="Terminal"
             onClick={() => setShowTerminal((v) => !v)}
           >
-            ▟
+            <TerminalIcon />
           </button>
         </nav>
         <div className="app-main">
@@ -63,6 +65,7 @@ export default function App() {
             {showSidebar && (
               <>
                 <aside className="sidebar" style={{ width: sidebar.size }}>
+                  <div className="sidebar-header">Explorer</div>
                   {root ? (
                     <FileTree rootPath={root} onSelectFile={(node) => tabs.open(node.path)} />
                   ) : (
@@ -99,7 +102,12 @@ export default function App() {
           )}
         </div>
       </div>
-      <StatusBar path={tabs.activePath} dirty={tabs.active?.dirty ?? false} cursor={cursor} />
+      <StatusBar
+        rootPath={root}
+        path={tabs.activePath}
+        dirty={tabs.active?.dirty ?? false}
+        cursor={cursor}
+      />
     </div>
   );
 }

@@ -16,7 +16,26 @@ export function FileViewer({
   onCursorChange?: (pos: { line: number; column: number }) => void;
 }) {
   if (!path || !buffer) {
-    return <p className="empty-state">No file selected</p>;
+    return (
+      <div className="empty-state welcome">
+        <div className="welcome-logo">Strix</div>
+        <p className="welcome-tagline">AI-native code editor</p>
+        <ul className="welcome-hints">
+          <li>
+            <span>Open a file</span>
+            <kbd>click in the Explorer</kbd>
+          </li>
+          <li>
+            <span>Generate code from a comment</span>
+            <kbd>Ctrl+G</kbd>
+          </li>
+          <li>
+            <span>Ask the AI assistant</span>
+            <kbd>panel on the right</kbd>
+          </li>
+        </ul>
+      </div>
+    );
   }
   if (buffer.loading) {
     return (

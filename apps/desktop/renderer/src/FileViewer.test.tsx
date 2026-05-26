@@ -33,9 +33,9 @@ function makeBuffer(overrides: Partial<FileBuffer> = {}): FileBuffer {
 }
 
 describe('FileViewer', () => {
-  it('shows a placeholder when no file is selected', () => {
+  it('shows a welcome placeholder when no file is selected', () => {
     render(<FileViewer path={null} buffer={makeBuffer()} />);
-    expect(screen.getByText('No file selected')).toBeInTheDocument();
+    expect(screen.getByText('AI-native code editor')).toBeInTheDocument();
   });
 
   it('shows the loading and error states', () => {
