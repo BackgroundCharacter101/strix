@@ -10,6 +10,9 @@ export interface StrixFsApi {
   read(filePath: string): Promise<string>;
   write(filePath: string, content: string): Promise<void>;
   tree(rootPath: string): Promise<FileNode>;
+  create(targetPath: string, type: 'file' | 'directory'): Promise<void>;
+  rename(from: string, to: string): Promise<void>;
+  remove(targetPath: string): Promise<void>;
 }
 
 export interface StrixWorkspaceApi {

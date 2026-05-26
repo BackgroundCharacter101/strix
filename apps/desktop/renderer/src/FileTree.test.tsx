@@ -9,10 +9,19 @@ import type { FileNode } from '../../main/fs';
 const tree = vi.fn<[string], Promise<FileNode>>();
 const read = vi.fn<[string], Promise<string>>();
 const write = vi.fn<[string, string], Promise<void>>();
+const create = vi.fn<[string, 'file' | 'directory'], Promise<void>>();
+const rename = vi.fn<[string, string], Promise<void>>();
+const remove = vi.fn<[string], Promise<void>>();
 
 beforeEach(() => {
   tree.mockReset();
-  window.strix = makeStrixApi({ fs: { tree, read, write } });
+  create.mockReset();
+  rename.mockReset();
+  remove.mockReset();
+  create.mockResolvedValue();
+  rename.mockResolvedValue();
+  remove.mockResolvedValue();
+  window.strix = makeStrixApi({ fs: { tree, read, write, create, rename, remove } });
 });
 
 const sample: FileNode = {
@@ -81,5 +90,29 @@ describe('FileTree', () => {
 
     expect(onSelectFile).toHaveBeenCalledTimes(1);
     expect(onSelectFile.mock.calls[0][0].path).toBe('/root/src/index.ts');
+  });
+
+  it('deletes a file via the context menu after confirmation', async () => {
+    tree.mockResolvedValue(sample);
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<FileTree rootPath="/root" />);
+
+    fireEvent.contextMenu(await screen.findByText('readme.md'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+
+    expect(remove).toHaveBeenCalledWith('/root/readme.md');
+    confirmSpy.mockRestore();
+  });
+
+  it('creates a new file from the context menu', async () => {
+    tree.mockResolvedValue(sample);
+    render(<FileTree rootPath="/root" />);
+
+    fireEvent.contextMenu(await screen.findByText('src')); // a directory
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New File…' }));
+    fireEvent.change(screen.getByLabelText('New file name'), { target: { value: 'x.ts' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(create).toHaveBeenCalledWith('/root/src/x.ts', 'file');
   });
 });

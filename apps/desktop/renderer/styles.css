@@ -383,6 +383,81 @@ body {
   font-size: var(--text-sm);
 }
 
+/* ---- Naming dialog ------------------------------------------------------ */
+.dialog {
+  width: 420px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}
+
+.dialog-input {
+  font-size: var(--text-base);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* ---- Context menu ------------------------------------------------------- */
+.context-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+}
+
+.context-menu {
+  position: fixed;
+  min-width: 180px;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
+}
+
+.context-item {
+  all: unset;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.context-item:hover {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.context-item[data-danger='true'] {
+  color: var(--danger);
+}
+
+.context-item[data-danger='true']:hover {
+  background: var(--danger-bg);
+  color: var(--white);
+}
+
 .statusbar {
   display: flex;
   align-items: stretch;

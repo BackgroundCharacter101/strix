@@ -24,6 +24,25 @@ export async function writeFileContents(filePath: string, content: string): Prom
   await fs.writeFile(filePath, content, 'utf8');
 }
 
+export async function createEntry(targetPath: string, type: 'file' | 'directory'): Promise<void> {
+  if (type === 'directory') {
+    await fs.mkdir(targetPath, { recursive: true });
+  } else {
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    // 'wx' fails if the file already exists, so we never clobber existing work.
+    await fs.writeFile(targetPath, '', { flag: 'wx' });
+  }
+}
+
+export async function renameEntry(from: string, to: string): Promise<void> {
+  await fs.mkdir(path.dirname(to), { recursive: true });
+  await fs.rename(from, to);
+}
+
+export async function removeEntry(targetPath: string): Promise<void> {
+  await fs.rm(targetPath, { recursive: true, force: true });
+}
+
 export async function buildFileTree(
   rootPath: string,
   options: FileTreeOptions = {},

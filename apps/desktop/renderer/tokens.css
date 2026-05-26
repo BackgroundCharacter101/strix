@@ -108,6 +108,8 @@
 
   /* Feedback */
   --dirty: var(--amber-300);
+  --danger: #e85c5c;
+  --danger-bg: #6e2222;
 
   /* Scrollbars */
   --scrollbar: var(--gray-500);

@@ -2,7 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { buildFileTree, readFileContents, writeFileContents } from './fs';
+import {
+  buildFileTree,
+  readFileContents,
+  writeFileContents,
+  createEntry,
+  renameEntry,
+  removeEntry,
+} from './fs';
 
 let tmp: string;
 
@@ -25,6 +32,43 @@ describe('readFileContents / writeFileContents', () => {
     const file = path.join(tmp, 'nested', 'deep', 'a.txt');
     await writeFileContents(file, 'x');
     expect(await readFileContents(file)).toBe('x');
+  });
+});
+
+describe('createEntry / renameEntry / removeEntry', () => {
+  it('creates an empty file (and its parent dirs)', async () => {
+    const file = path.join(tmp, 'a', 'b', 'new.ts');
+    await createEntry(file, 'file');
+    expect(await readFileContents(file)).toBe('');
+  });
+
+  it('refuses to clobber an existing file', async () => {
+    const file = path.join(tmp, 'keep.ts');
+    await writeFileContents(file, 'precious');
+    await expect(createEntry(file, 'file')).rejects.toThrow();
+    expect(await readFileContents(file)).toBe('precious');
+  });
+
+  it('creates a directory', async () => {
+    const dir = path.join(tmp, 'newdir');
+    await createEntry(dir, 'directory');
+    expect((await fs.stat(dir)).isDirectory()).toBe(true);
+  });
+
+  it('renames an entry', async () => {
+    const from = path.join(tmp, 'old.ts');
+    const to = path.join(tmp, 'renamed.ts');
+    await writeFileContents(from, 'data');
+    await renameEntry(from, to);
+    expect(await readFileContents(to)).toBe('data');
+    await expect(fs.stat(from)).rejects.toThrow();
+  });
+
+  it('removes files and directories recursively', async () => {
+    const dir = path.join(tmp, 'gone');
+    await writeFileContents(path.join(dir, 'inner.ts'), 'x');
+    await removeEntry(dir);
+    await expect(fs.stat(dir)).rejects.toThrow();
   });
 });
 

@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 109 tests / 27 files.**
+  **all green: 122 tests / 28 files.**
 
 GUI polish (user wanted all, ALL DONE): [1] collapsible file tree + badges ✅;
 [2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅;
@@ -66,7 +66,22 @@ consumes ONLY semantic tokens (no raw hex). Re-theming = edit tokens.css.
 GUI pass 3 ✅: status bar now shows REAL values — EOL (CRLF/LF) + indentation
 (Tabs / Spaces:N) detected from the active buffer (`StatusBar` gets `content`).
 Added `Breadcrumbs.tsx` (token-styled path bar above the editor, workspace-
-relative segments + file badge on the leaf). 109 tests / 27 files.
+relative segments + file badge on the leaf).
+"Simple but VS Code standard" punch list ✅ (all 7):
+  1. File-type SVG glyphs (`icons.tsx` FileGlyph/FolderGlyph; shared `FileIcon`
+     in FileTree) across tree/tabs/breadcrumbs, tinted by `[data-ext]`.
+  2. Active-file highlight in Explorer (`FileTree` `activePath` → selected row).
+  3. Global keyboard shortcuts (App keydown): Ctrl+S save, Ctrl+B sidebar,
+     Ctrl+` terminal, Ctrl+W close tab, Ctrl+P quick open, Ctrl+Shift+P palette.
+  4. Quick Open — `Palette.tsx` reusable overlay (filter + arrow/enter/esc);
+     Ctrl+P flattens the tree into a fuzzy file finder.
+  5. Command Palette — same Palette, Ctrl+Shift+P, runs registered commands.
+  6. Problems indicator — `FileViewer` subscribes to Monaco `onDidChangeMarkers`,
+     reports error/warning counts up to `StatusBar` (bottom-left).
+  7. Explorer context menu + file ops — `ContextMenu.tsx` + `PromptDialog.tsx`
+     (Electron blocks window.prompt). NEW BRIDGE METHODS: `fs.create(path,type)`,
+     `fs.rename(from,to)`, `fs.remove(path)` (main `fs.ts`, ipc `file:create|rename|remove`,
+     preload, test-utils). Delete uses window.confirm. Tree reloads via `useFileTree.reload`.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -125,7 +140,7 @@ strix/ (folder: tabea)
 ```
 
 ### The IPC bridge — `window.strix` (typed in `apps/desktop/main/bridge.ts`)
-- `fs.read(path)` · `fs.write(path, content)` · `fs.tree(root)`
+- `fs.read(path)` · `fs.write(path, content)` · `fs.tree(root)` · `fs.create(path, 'file'|'directory')` · `fs.rename(from, to)` · `fs.remove(path)`
 - `workspace.root()`  → process.cwd()
 - `git.status(root)`  → `{ isRepo, branch, files[] }`
 - `terminal.create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` · `onData(cb)` · `onExit(cb)`

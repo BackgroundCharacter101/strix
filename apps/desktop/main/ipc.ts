@@ -1,5 +1,12 @@
 import { ipcMain } from 'electron';
-import { buildFileTree, readFileContents, writeFileContents } from './fs.js';
+import {
+  buildFileTree,
+  readFileContents,
+  writeFileContents,
+  createEntry,
+  renameEntry,
+  removeEntry,
+} from './fs.js';
 import { getGitStatus } from './git.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
@@ -12,6 +19,11 @@ export function registerIpcHandlers(): void {
     writeFileContents(filePath, content),
   );
   ipcMain.handle('file:tree', (_event, rootPath: string) => buildFileTree(rootPath));
+  ipcMain.handle('file:create', (_event, targetPath: string, type: 'file' | 'directory') =>
+    createEntry(targetPath, type),
+  );
+  ipcMain.handle('file:rename', (_event, from: string, to: string) => renameEntry(from, to));
+  ipcMain.handle('file:remove', (_event, targetPath: string) => removeEntry(targetPath));
   ipcMain.handle('workspace:root', () => process.cwd());
   ipcMain.handle('git:status', (_event, rootPath: string) => getGitStatus(rootPath));
 
