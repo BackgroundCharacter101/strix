@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 98 tests / 25 files.**
+  **all green: 101 tests / 26 files.**
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -144,7 +144,7 @@ strix/ (folder: tabea)
 | 3 | FreeLLMAPI deployed (locally, no Pi) | ✅ (provider keys = user) |
 | 4 | AI gateway + all §8 editor features | ✅ chat (§8.2), explain (§8.3), vuln (§8.7), autocomplete (§8.1), Fix/Refactor diff (§8.4/§8.6), generate-from-comment (§8.5), model picker, persistent context |
 | 5 | Terminal + LSP | ✅ terminal; LSP backend + **renderer diagnostics** (lightweight LspClient → Monaco markers, §6.5). Hover/go-to-def not done; needs a language server installed to see live |
-| 6 | Yjs collaboration | ⛔ not started |
+| 6 | Yjs collaboration | ✅ opt-in (`collab.ts`; COLLAB_SERVER_URL + `npm run collab:start`) |
 | 7 | Hex viewer / CTF / vuln linter | ⛔ not started |
 | 8 | Packaging / installers | ⛔ not started |
 
@@ -197,7 +197,9 @@ strix/ (folder: tabea)
   model picker, context), `autocomplete.ts` (§8.1), `CodeProposal.tsx` +
   editor `DiffViewer` (§8.4/§8.6), editor `parseGenerateComment` + Ctrl+G
   action wired in `FileViewer` (§8.5).
-- **Next phases:** 5 (LSP→Monaco wiring), 6 (collab), 7 (cybersec), 8 (packaging).
+- **Next phases:** 7 (cybersec panels: hex viewer / CTF / vuln linter),
+  8 (packaging/installers). LSP hover/go-to-def still TODO. Collab is opt-in
+  & needs `npm run collab:start` + COLLAB_SERVER_URL + 2 clients to verify.
 - **Hardening:** add Content-Security-Policy; upgrade Electron (1 high CVE) &
   DOMPurify; consider proxying AI through main to keep the key out of the bundle.
 - **Phase 8 (packaging):** electron-builder → installable .exe (would need `node`
@@ -209,6 +211,9 @@ strix/ (folder: tabea)
 
 ## 10. Recent commit trail (newest first)
 
+- Phase 6 Yjs collaboration (§6.6, opt-in): `collab.ts` (connectCollab via
+  dynamic-imported yjs/y-websocket/y-monaco + awareness), `window.strix.collab.url`
+  (COLLAB_SERVER_URL), FileViewer wiring, `collab:start` script
 - `ccd7198` Fix LSP spawn on Windows (shell:true → resolves .cmd/.exe shims
   like typescript-language-server / pylsp). Servers are installed on the host
   (pip python-lsp-server + npm -g typescript-language-server).

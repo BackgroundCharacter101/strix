@@ -10,6 +10,7 @@ interface StrixApiOverrides {
   terminal?: Partial<StrixApi['terminal']>;
   lsp?: Partial<StrixApi['lsp']>;
   ai?: Partial<StrixApi['ai']>;
+  collab?: Partial<StrixApi['collab']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -48,6 +49,9 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'test-key' })),
       models: vi.fn(async (): Promise<string[]> => ['auto']),
     },
+    collab: {
+      url: vi.fn(async (): Promise<string | null> => null),
+    },
   };
 
   return {
@@ -57,5 +61,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     terminal: { ...base.terminal, ...overrides.terminal },
     lsp: { ...base.lsp, ...overrides.lsp },
     ai: { ...base.ai, ...overrides.ai },
+    collab: { ...base.collab, ...overrides.collab },
   };
 }

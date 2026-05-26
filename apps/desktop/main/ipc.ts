@@ -61,6 +61,9 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  // Collaboration is opt-in: set COLLAB_SERVER_URL to enable (off by default).
+  ipcMain.handle('collab:url', () => process.env.COLLAB_SERVER_URL ?? null);
+
   ipcMain.handle('ai:models', async () => {
     try {
       const apiKey = await fetchKey();

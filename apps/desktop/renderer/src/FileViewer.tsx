@@ -4,6 +4,7 @@ import { CodeEditor, languageForPath } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
 import type { FileBuffer } from './useFileBuffer';
 import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
+import { connectCollab, roomForPath, pickUserColor } from './collab';
 
 export function FileViewer({
   path,
@@ -55,27 +56,48 @@ export function FileViewer({
             complete('generate', { filePath: path, fileContent, userMessage: description })
           }
           onEditorMount={(editor, monaco) => {
-            const language = languageForLsp(path);
             const model = editor.getModel();
-            if (!language || !model) return;
-            const client = new LspClient(window.strix.lsp, {
-              language,
-              uri: model.uri.toString(),
-              languageId: model.getLanguageId(),
-              text: model.getValue(),
-              onDiagnostics: (diags) =>
-                monaco.editor.setModelMarkers(
+            if (!model) return;
+            const disposers: (() => void)[] = [];
+
+            // LSP diagnostics (§6.5)
+            const language = languageForLsp(path);
+            if (language) {
+              const client = new LspClient(window.strix.lsp, {
+                language,
+                uri: model.uri.toString(),
+                languageId: model.getLanguageId(),
+                text: model.getValue(),
+                onDiagnostics: (diags) =>
+                  monaco.editor.setModelMarkers(
+                    model,
+                    'strix-lsp',
+                    lspToMonacoMarkers(diags) as Monaco.editor.IMarkerData[],
+                  ),
+              });
+              void client.start();
+              const sub = editor.onDidChangeModelContent(() => client.didChange(model.getValue()));
+              disposers.push(() => {
+                sub.dispose();
+                client.stop();
+              });
+            }
+
+            // Real-time collaboration (§6.6) — opt-in via COLLAB_SERVER_URL
+            void window.strix.collab.url().then((url) => {
+              if (!url) return;
+              disposers.push(
+                connectCollab({
+                  url,
+                  room: roomForPath(path),
                   model,
-                  'strix-lsp',
-                  lspToMonacoMarkers(diags) as Monaco.editor.IMarkerData[],
-                ),
+                  editor,
+                  user: { name: 'You', color: pickUserColor(path) },
+                }),
+              );
             });
-            void client.start();
-            const sub = editor.onDidChangeModelContent(() => client.didChange(model.getValue()));
-            return () => {
-              sub.dispose();
-              client.stop();
-            };
+
+            return () => disposers.forEach((d) => d());
           }}
         />
       </div>

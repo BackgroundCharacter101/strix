@@ -23,7 +23,8 @@
       "Bash(echo \"check-ignore exit: $?\")",
       "Bash(echo \"SCAN_EXIT:$?\")",
       "Bash(curl -s -m 5 http://localhost:3001/api/settings/api-key)",
-      "Bash(echo \"--- exit:$? ---\")"
+      "Bash(echo \"--- exit:$? ---\")",
+      "Bash(git commit *)"
     ]
   }
 }

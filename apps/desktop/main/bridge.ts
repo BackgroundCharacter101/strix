@@ -41,6 +41,10 @@ export interface StrixAiApi {
   models(): Promise<string[]>;
 }
 
+export interface StrixCollabApi {
+  url(): Promise<string | null>;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
@@ -48,4 +52,5 @@ export interface StrixApi {
   terminal: StrixTerminalApi;
   lsp: StrixLspApi;
   ai: StrixAiApi;
+  collab: StrixCollabApi;
 }

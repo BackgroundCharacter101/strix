@@ -44,6 +44,9 @@ const api: StrixApi = {
     config: () => ipcRenderer.invoke('ai:config'),
     models: () => ipcRenderer.invoke('ai:models'),
   },
+  collab: {
+    url: () => ipcRenderer.invoke('collab:url'),
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);
