@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import type { FileNode } from '../main/fs';
 import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
 import { EditorTabs } from './src/EditorTabs';
-import { Breadcrumbs } from './src/Breadcrumbs';
+import { Breadcrumbs, relativeSegments } from './src/Breadcrumbs';
+import { Palette, type PaletteItem } from './src/Palette';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
@@ -16,7 +18,27 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
+  const [palette, setPalette] = useState<null | 'files'>(null);
+  const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const tabs = useEditorTabs();
+
+  // Load and flatten the workspace tree into Quick Open entries.
+  const openQuickFiles = useCallback(async () => {
+    if (!root) return;
+    const tree = await window.strix.fs.tree(root);
+    const items: PaletteItem[] = [];
+    const walk = (n: FileNode) => {
+      if (n.type === 'file') {
+        const segs = relativeSegments(root, n.path);
+        items.push({ id: n.path, label: n.name, detail: segs.slice(0, -1).join('/'), icon: n.name });
+      } else {
+        n.children?.forEach(walk);
+      }
+    };
+    walk(tree);
+    setFileItems(items);
+    setPalette('files');
+  }, [root]);
 
   const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500 });
   const aiPanel = useResizable(340, { axis: 'x', direction: -1, min: 220, max: 600 });
@@ -49,11 +71,15 @@ export default function App() {
             tabs.close(tabs.activePath);
           }
           break;
+        case 'p':
+          e.preventDefault();
+          void openQuickFiles();
+          break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [tabs]);
+  }, [tabs, openQuickFiles]);
 
   return (
     <div className="app">
@@ -144,6 +170,17 @@ export default function App() {
         cursor={cursor}
         content={tabs.active?.draft ?? ''}
       />
+      {palette === 'files' && (
+        <Palette
+          items={fileItems}
+          placeholder="Search files by name…"
+          onSelect={(item) => {
+            tabs.open(item.id);
+            setPalette(null);
+          }}
+          onClose={() => setPalette(null)}
+        />
+      )}
     </div>
   );
 }
