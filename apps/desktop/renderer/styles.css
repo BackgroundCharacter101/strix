@@ -111,10 +111,23 @@ body {
 .editor-tab[data-active='true'] button[role='tab'] {
   background: var(--bg);
   color: var(--text);
+  box-shadow: inset 0 2px 0 var(--accent);
 }
 
-.editor-tab button[aria-label^='close'] {
+.editor-tab .tab-badge {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 6px;
+}
+
+.editor-tab .tab-dirty {
+  color: #e2c08d;
+}
+
+.editor-tab .tab-close {
   padding: 6px 6px;
+  color: var(--text-muted);
 }
 
 .editor-tab button:hover:not(:disabled) {

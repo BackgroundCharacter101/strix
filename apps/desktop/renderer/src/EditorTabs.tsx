@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EditorTabsApi } from './useEditorTabs';
+import { fileBadge } from './FileTree';
 
 function basename(path: string): string {
   const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
@@ -13,26 +14,39 @@ export function EditorTabs({ tabs }: { tabs: EditorTabsApi }) {
 
   return (
     <div className="editor-tabs" role="tablist">
-      {tabs.tabs.map((path) => (
-        <span key={path} className="editor-tab" data-active={path === tabs.activePath}>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={path === tabs.activePath}
-            onClick={() => tabs.activate(path)}
+      {tabs.tabs.map((path) => {
+        const name = basename(path);
+        return (
+          <span
+            key={path}
+            className="editor-tab"
+            data-active={path === tabs.activePath}
+            // Middle-click closes the tab (common IDE shortcut).
+            onAuxClick={(e) => {
+              if (e.button === 1) tabs.close(path);
+            }}
           >
-            {basename(path)}
-            {tabs.isDirty(path) ? ' ●' : ''}
-          </button>
-          <button
-            type="button"
-            aria-label={`close ${basename(path)}`}
-            onClick={() => tabs.close(path)}
-          >
-            ×
-          </button>
-        </span>
-      ))}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={path === tabs.activePath}
+              onClick={() => tabs.activate(path)}
+            >
+              <span className="tab-badge">{fileBadge(name)}</span>
+              {name}
+              {tabs.isDirty(path) ? <span className="tab-dirty"> ●</span> : null}
+            </button>
+            <button
+              type="button"
+              className="tab-close"
+              aria-label={`close ${name}`}
+              onClick={() => tabs.close(path)}
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
     </div>
   );
 }
