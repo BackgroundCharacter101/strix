@@ -93,6 +93,20 @@ describe('App', () => {
     expect(await screen.findByText('ws')).toBeInTheDocument();
   });
 
+  it('toggles the sidebar with the Ctrl+B shortcut', async () => {
+    root.mockResolvedValue('/ws');
+    tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });
+
+    render(<App />);
+    expect(await screen.findByText('ws')).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'b', ctrlKey: true });
+    expect(screen.queryByText('ws')).not.toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: 'b', ctrlKey: true });
+    expect(await screen.findByText('ws')).toBeInTheDocument();
+  });
+
   it('shows the git branch and dirty count for the workspace', async () => {
     root.mockResolvedValue('/ws');
     tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });

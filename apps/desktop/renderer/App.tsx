@@ -26,6 +26,35 @@ export default function App() {
     window.strix.workspace.root().then(setRoot);
   }, []);
 
+  // Global keyboard shortcuts (VS Code-style).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      switch (e.key.toLowerCase()) {
+        case 's':
+          e.preventDefault();
+          void tabs.active?.save();
+          break;
+        case 'b':
+          e.preventDefault();
+          setShowSidebar((v) => !v);
+          break;
+        case '`':
+          e.preventDefault();
+          setShowTerminal((v) => !v);
+          break;
+        case 'w':
+          if (tabs.activePath) {
+            e.preventDefault();
+            tabs.close(tabs.activePath);
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tabs]);
+
   return (
     <div className="app">
       <header className="titlebar">
