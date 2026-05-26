@@ -53,6 +53,22 @@ export function GitBranchIcon({ size = 14 }: IconProps) {
   );
 }
 
+export function ErrorIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm2.5 9.1-1.4 1.4L8 9.4l-1.1 1.1-1.4-1.4L6.6 8 5.5 6.9l1.4-1.4L8 6.6l1.1-1.1 1.4 1.4L9.4 8l1.1 1.1z" />
+    </svg>
+  );
+}
+
+export function WarningIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M8 1.5 15 14H1L8 1.5zm-.8 4.5v3.4h1.6V6H7.2zm0 4.4V12h1.6v-1.6H7.2z" />
+    </svg>
+  );
+}
+
 // A filled document glyph with a folded corner — used for files (tinted by type).
 export function FileGlyph({ size = 15 }: IconProps) {
   return (

@@ -20,6 +20,7 @@ export default function App() {
   const [showTerminal, setShowTerminal] = useState(true);
   const [palette, setPalette] = useState<null | 'files' | 'commands'>(null);
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
+  const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const tabs = useEditorTabs();
 
   // Load and flatten the workspace tree into Quick Open entries.
@@ -156,7 +157,12 @@ export default function App() {
             <main className="editor-pane">
               <EditorTabs tabs={tabs} />
               {tabs.activePath && <Breadcrumbs rootPath={root} path={tabs.activePath} />}
-              <FileViewer path={tabs.activePath} buffer={tabs.active} onCursorChange={setCursor} />
+              <FileViewer
+                path={tabs.activePath}
+                buffer={tabs.active}
+                onCursorChange={setCursor}
+                onMarkersChange={setProblems}
+              />
             </main>
             {showAi && (
               <>
@@ -187,6 +193,7 @@ export default function App() {
         dirty={tabs.active?.dirty ?? false}
         cursor={cursor}
         content={tabs.active?.draft ?? ''}
+        problems={tabs.activePath ? problems : { errors: 0, warnings: 0 }}
       />
       {palette === 'files' && (
         <Palette

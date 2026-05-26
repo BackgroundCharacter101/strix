@@ -1,6 +1,7 @@
 import React from 'react';
 import { languageForPath } from '@strix/editor';
 import { GitStatusBar } from './GitStatusBar';
+import { ErrorIcon, WarningIcon } from './icons';
 
 export interface StatusBarProps {
   rootPath: string | null;
@@ -8,6 +9,7 @@ export interface StatusBarProps {
   dirty: boolean;
   cursor: { line: number; column: number };
   content?: string;
+  problems?: { errors: number; warnings: number };
 }
 
 // Windows files use CRLF; everything else LF. Detect from the buffer.
@@ -30,11 +32,22 @@ function detectIndent(content: string): string {
   return `Spaces: ${min || 2}`;
 }
 
-export function StatusBar({ rootPath, path, dirty, cursor, content = '' }: StatusBarProps) {
+export function StatusBar({
+  rootPath,
+  path,
+  dirty,
+  cursor,
+  content = '',
+  problems = { errors: 0, warnings: 0 },
+}: StatusBarProps) {
   return (
     <footer className="statusbar" aria-label="status bar">
       <div className="statusbar-section statusbar-left">
         <GitStatusBar rootPath={rootPath} />
+        <span className="statusbar-item statusbar-problems" aria-label="problems">
+          <ErrorIcon /> {problems.errors}
+          <WarningIcon /> {problems.warnings}
+        </span>
       </div>
       <div className="statusbar-section statusbar-right">
         {path ? (

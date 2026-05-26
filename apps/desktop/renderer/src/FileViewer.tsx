@@ -10,10 +10,12 @@ export function FileViewer({
   path,
   buffer,
   onCursorChange,
+  onMarkersChange,
 }: {
   path: string | null;
   buffer: FileBuffer | null;
   onCursorChange?: (pos: { line: number; column: number }) => void;
+  onMarkersChange?: (counts: { errors: number; warnings: number }) => void;
 }) {
   if (!path || !buffer) {
     return (
@@ -78,6 +80,23 @@ export function FileViewer({
             const model = editor.getModel();
             if (!model) return;
             const disposers: (() => void)[] = [];
+
+            // Report error/warning counts to the status bar's Problems item.
+            if (onMarkersChange) {
+              const report = () => {
+                const markers = monaco.editor.getModelMarkers({});
+                let errors = 0;
+                let warnings = 0;
+                for (const m of markers) {
+                  if (m.severity === monaco.MarkerSeverity.Error) errors++;
+                  else if (m.severity === monaco.MarkerSeverity.Warning) warnings++;
+                }
+                onMarkersChange({ errors, warnings });
+              };
+              const markerSub = monaco.editor.onDidChangeMarkers(report);
+              report();
+              disposers.push(() => markerSub.dispose());
+            }
 
             // LSP diagnostics (§6.5)
             const language = languageForLsp(path);

@@ -415,6 +415,18 @@ body {
   margin-right: 1px;
 }
 
+.statusbar-problems {
+  gap: 3px;
+}
+
+.statusbar-problems svg {
+  margin-left: 4px;
+}
+
+.statusbar-problems svg:first-child {
+  margin-left: 0;
+}
+
 .statusbar-muted {
   opacity: 0.85;
 }
