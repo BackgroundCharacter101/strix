@@ -11,10 +11,48 @@
   --selection: #094771;
   --font-ui: 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Cascadia Code', 'Consolas', monospace;
+  --radius: 5px;
+  --scrollbar: #4a4a4a;
+  --scrollbar-hover: #5c5c5c;
 }
 
 * {
   box-sizing: border-box;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+/* ---- Scrollbars --------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-hover);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 html,
@@ -29,6 +67,8 @@ body {
   color: var(--text);
   font-family: var(--font-ui);
   font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 /* ---- App shell ---------------------------------------------------------- */
@@ -52,7 +92,8 @@ body {
 
 .app-title {
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
+  color: #fff;
 }
 
 .titlebar [aria-label='git status'] {
@@ -92,10 +133,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: var(--radius);
   color: var(--text-muted);
   cursor: pointer;
   font-size: 15px;
+  transition: background 0.12s ease, color 0.12s ease;
 }
 
 .activity-bar button:hover {
@@ -201,6 +243,7 @@ body {
 .resizer {
   flex: 0 0 4px;
   background: var(--border);
+  transition: background 0.12s ease;
 }
 
 .resizer-x {
@@ -257,6 +300,7 @@ body {
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;
+  transition: background 0.1s ease;
 }
 
 .tree-row:hover {
@@ -481,6 +525,10 @@ button {
   padding: 4px 10px;
   font-size: 12px;
   cursor: pointer;
+}
+
+button {
+  transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
 }
 
 button:hover:not(:disabled) {
