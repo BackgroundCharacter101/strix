@@ -176,42 +176,57 @@ body {
 .sidebar ul {
   list-style: none;
   margin: 0;
-  padding-left: 14px;
+  padding-left: 12px;
 }
 
 .sidebar > ul {
-  padding-left: 4px;
+  padding-left: 2px;
 }
 
-.sidebar li {
-  line-height: 1.7;
-}
-
-.sidebar li[data-type='directory'] > span {
-  color: var(--text);
-  font-weight: 600;
-  cursor: default;
-  display: inline-block;
-  padding: 0 4px;
-}
-
-.sidebar li[data-type='file'] > button {
+.tree-row {
   all: unset;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
   width: calc(100% - 4px);
-  padding: 1px 6px;
+  padding: 2px 6px;
   border-radius: 3px;
   color: var(--text);
   cursor: pointer;
   font-size: 13px;
+  white-space: nowrap;
 }
 
-.sidebar li[data-type='file'] > button:hover {
+.tree-row:hover {
   background: #2a2d2e;
 }
 
-.sidebar li[data-type='file'] > button:focus-visible {
+.tree-row:focus-visible {
   outline: 1px solid var(--accent);
+}
+
+.tree-folder {
+  font-weight: 600;
+}
+
+.tree-chevron {
+  width: 10px;
+  flex: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.tree-badge {
+  flex: 0 0 auto;
+  min-width: 20px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 3px;
+  padding: 0 3px;
 }
 
 /* ---- Editor ------------------------------------------------------------- */

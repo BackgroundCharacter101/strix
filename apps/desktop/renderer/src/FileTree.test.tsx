@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FileTree } from './FileTree';
+import { FileTree, fileBadge } from './FileTree';
 import { makeStrixApi } from '../test-utils';
 import type { FileNode } from '../../main/fs';
 
@@ -30,15 +30,33 @@ const sample: FileNode = {
   ],
 };
 
+describe('fileBadge', () => {
+  it('maps extensions to short type badges', () => {
+    expect(fileBadge('a.ts')).toBe('TS');
+    expect(fileBadge('a.py')).toBe('PY');
+    expect(fileBadge('LICENSE')).toBe('·');
+  });
+});
+
 describe('FileTree', () => {
-  it('loads the tree for the given root and renders nested nodes', async () => {
+  it('shows root children but keeps subfolders collapsed until clicked', async () => {
     tree.mockResolvedValue(sample);
     render(<FileTree rootPath="/root" />);
 
-    expect(await screen.findByText('index.ts')).toBeInTheDocument();
-    expect(screen.getByText('src')).toBeInTheDocument();
+    // Root is expanded: its direct children are visible.
+    expect(await screen.findByText('src')).toBeInTheDocument();
     expect(screen.getByText('readme.md')).toBeInTheDocument();
+    // 'src' starts collapsed, so its child is hidden.
+    expect(screen.queryByText('index.ts')).not.toBeInTheDocument();
     expect(tree).toHaveBeenCalledWith('/root');
+
+    // Expanding 'src' reveals it.
+    fireEvent.click(screen.getByText('src'));
+    expect(screen.getByText('index.ts')).toBeInTheDocument();
+
+    // Collapsing hides it again.
+    fireEvent.click(screen.getByText('src'));
+    expect(screen.queryByText('index.ts')).not.toBeInTheDocument();
   });
 
   it('shows a loading state until the tree resolves', () => {
@@ -58,7 +76,8 @@ describe('FileTree', () => {
     const onSelectFile = vi.fn();
     render(<FileTree rootPath="/root" onSelectFile={onSelectFile} />);
 
-    fireEvent.click(await screen.findByText('index.ts'));
+    fireEvent.click(await screen.findByText('src')); // expand the folder first
+    fireEvent.click(screen.getByText('index.ts'));
 
     expect(onSelectFile).toHaveBeenCalledTimes(1);
     expect(onSelectFile.mock.calls[0][0].path).toBe('/root/src/index.ts');
