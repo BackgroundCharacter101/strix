@@ -199,6 +199,9 @@ body {
 }
 
 .editor-tab button[role='tab'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 10px;
 }
 
@@ -400,6 +403,23 @@ body {
   background: var(--overlay-subtle);
   border-radius: 3px;
   padding: 0 3px;
+}
+
+/* ---- File / folder glyphs ----------------------------------------------- */
+.ftype-icon,
+.tree-folder-icon {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.ftype-icon svg,
+.tree-folder-icon svg {
+  display: block;
+}
+
+.tree-folder-icon {
+  color: var(--text-muted);
 }
 
 /* ---- File-type badge colours (tree + tabs + breadcrumbs) ---------------- */

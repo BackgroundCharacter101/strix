@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { FileNode } from '../../main/fs';
 import { useFileTree } from './useFileTree';
+import { FileGlyph, FolderGlyph } from './icons';
 
 // Map a filename to a normalized file-kind key (drives the badge colour in CSS).
 export function fileKind(name: string): string {
@@ -31,6 +32,15 @@ export function fileBadge(name: string): string {
   return map[fileKind(name)] ?? '·';
 }
 
+// Shared file glyph, tinted by file kind. Reused by tree, tabs, breadcrumbs.
+export function FileIcon({ name }: { name: string }) {
+  return (
+    <span className="ftype-icon" data-ext={fileKind(name)}>
+      <FileGlyph />
+    </span>
+  );
+}
+
 interface TreeNodeProps {
   node: FileNode;
   expanded: Set<string>;
@@ -43,9 +53,7 @@ function TreeNode({ node, expanded, onToggle, onSelectFile }: TreeNodeProps) {
     return (
       <li data-type="file">
         <button type="button" className="tree-row tree-file" onClick={() => onSelectFile?.(node)}>
-          <span className="tree-badge" data-ext={fileKind(node.name)}>
-            {fileBadge(node.name)}
-          </span>
+          <FileIcon name={node.name} />
           {node.name}
         </button>
       </li>
@@ -62,6 +70,9 @@ function TreeNode({ node, expanded, onToggle, onSelectFile }: TreeNodeProps) {
         onClick={() => onToggle(node.path)}
       >
         <span className="tree-chevron">{isOpen ? '▾' : '▸'}</span>
+        <span className="tree-folder-icon">
+          <FolderGlyph open={isOpen} />
+        </span>
         {node.name}
       </button>
       {isOpen && node.children && node.children.length > 0 && (

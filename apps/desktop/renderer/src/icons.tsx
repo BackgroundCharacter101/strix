@@ -52,3 +52,28 @@ export function GitBranchIcon({ size = 14 }: IconProps) {
     </svg>
   );
 }
+
+// A filled document glyph with a folded corner — used for files (tinted by type).
+export function FileGlyph({ size = 15 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M9.4 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.6L9.4 1zM9 2.2 11.8 5H9V2.2z" />
+    </svg>
+  );
+}
+
+export function FolderGlyph({ open = false, size = 15 }: IconProps & { open?: boolean }) {
+  if (open) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+        <path d="M1.5 3.5a1 1 0 0 1 1-1h3.1l1.2 1.2h5.7a1 1 0 0 1 1 1V6H4.2a1 1 0 0 0-.96.73L1.6 12.4 1.5 12V3.5z" />
+        <path d="M4.2 7h10.6a.6.6 0 0 1 .58.77l-1.3 4.6a1 1 0 0 1-.96.73H2.6a.6.6 0 0 1-.58-.77l1.2-4.6A1 1 0 0 1 4.2 7z" />
+      </svg>
+    );
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+      <path d="M1.5 3.6a1 1 0 0 1 1-1h3.1l1.2 1.2h6.2a1 1 0 0 1 1 1v7.1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1V3.6z" />
+    </svg>
+  );
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { fileBadge, fileKind } from './FileTree';
+import { FileIcon } from './FileTree';
 
 // Split an absolute file path into workspace-relative segments, with the
 // workspace folder name as the first crumb (matches VS Code's breadcrumbs).
@@ -25,11 +25,7 @@ export function Breadcrumbs({ rootPath, path }: { rootPath: string | null; path:
       {segments.map((seg, i) => (
         <span key={`${seg}-${i}`} className="breadcrumb-seg" data-leaf={i === lastIndex}>
           {i > 0 && <span className="breadcrumb-sep">›</span>}
-          {i === lastIndex && (
-            <span className="breadcrumb-badge" data-ext={fileKind(seg)}>
-              {fileBadge(seg)}
-            </span>
-          )}
+          {i === lastIndex && <FileIcon name={seg} />}
           {seg}
         </span>
       ))}
