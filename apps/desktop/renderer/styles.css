@@ -378,6 +378,15 @@ body {
   background: var(--bg-hover);
 }
 
+.tree-row[data-active='true'] {
+  background: var(--selection);
+  color: var(--white);
+}
+
+.tree-row[data-active='true']:hover {
+  background: var(--selection);
+}
+
 .tree-row:focus-visible {
   outline: 1px solid var(--accent);
 }

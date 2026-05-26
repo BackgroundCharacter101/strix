@@ -44,15 +44,23 @@ export function FileIcon({ name }: { name: string }) {
 interface TreeNodeProps {
   node: FileNode;
   expanded: Set<string>;
+  activePath?: string | null;
   onToggle: (path: string) => void;
   onSelectFile?: (node: FileNode) => void;
 }
 
-function TreeNode({ node, expanded, onToggle, onSelectFile }: TreeNodeProps) {
+function TreeNode({ node, expanded, activePath, onToggle, onSelectFile }: TreeNodeProps) {
   if (node.type === 'file') {
+    const active = node.path === activePath;
     return (
       <li data-type="file">
-        <button type="button" className="tree-row tree-file" onClick={() => onSelectFile?.(node)}>
+        <button
+          type="button"
+          className="tree-row tree-file"
+          data-active={active}
+          aria-current={active ? 'true' : undefined}
+          onClick={() => onSelectFile?.(node)}
+        >
           <FileIcon name={node.name} />
           {node.name}
         </button>
@@ -82,6 +90,7 @@ function TreeNode({ node, expanded, onToggle, onSelectFile }: TreeNodeProps) {
               key={child.path}
               node={child}
               expanded={expanded}
+              activePath={activePath}
               onToggle={onToggle}
               onSelectFile={onSelectFile}
             />
@@ -94,10 +103,11 @@ function TreeNode({ node, expanded, onToggle, onSelectFile }: TreeNodeProps) {
 
 export interface FileTreeProps {
   rootPath: string;
+  activePath?: string | null;
   onSelectFile?: (node: FileNode) => void;
 }
 
-export function FileTree({ rootPath, onSelectFile }: FileTreeProps) {
+export function FileTree({ rootPath, activePath, onSelectFile }: FileTreeProps) {
   const { tree, loading, error } = useFileTree(rootPath);
   // Root starts expanded; other folders start collapsed.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set([rootPath]));
@@ -125,7 +135,13 @@ export function FileTree({ rootPath, onSelectFile }: FileTreeProps) {
 
   return (
     <ul aria-label="File tree" className="tree">
-      <TreeNode node={tree} expanded={expanded} onToggle={toggle} onSelectFile={onSelectFile} />
+      <TreeNode
+        node={tree}
+        expanded={expanded}
+        activePath={activePath}
+        onToggle={toggle}
+        onSelectFile={onSelectFile}
+      />
     </ul>
   );
 }

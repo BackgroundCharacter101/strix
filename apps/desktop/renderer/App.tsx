@@ -68,7 +68,11 @@ export default function App() {
                 <aside className="sidebar" style={{ width: sidebar.size }}>
                   <div className="sidebar-header">Explorer</div>
                   {root ? (
-                    <FileTree rootPath={root} onSelectFile={(node) => tabs.open(node.path)} />
+                    <FileTree
+                      rootPath={root}
+                      activePath={tabs.activePath}
+                      onSelectFile={(node) => tabs.open(node.path)}
+                    />
                   ) : (
                     <p className="muted">Opening workspace…</p>
                   )}
