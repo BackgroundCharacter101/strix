@@ -1,0 +1,121 @@
+/* =========================================================================
+   Strix design tokens
+   -------------------------------------------------------------------------
+   Two layers:
+     1. PRIMITIVES — the raw palette / scales. Never reference these directly
+        in component CSS; they exist only to feed the semantic layer.
+     2. SEMANTIC   — intent-named tokens (--color-bg, --space-4, …). Component
+        styles in styles.css consume ONLY these. Re-theming = edit this file.
+   ========================================================================= */
+
+:root {
+  /* ---- Primitive palette ------------------------------------------------ */
+  --gray-900: #1e1e1e;
+  --gray-850: #252526;
+  --gray-800: #2a2d2e;
+  --gray-700: #323233;
+  --gray-650: #333333;
+  --gray-600: #3c3c3c;
+  --gray-500: #4a4a4a;
+  --gray-450: #5c5c5c;
+  --gray-300: #858585;
+  --gray-250: #8a8a8a;
+  --gray-100: #cccccc;
+  --white: #ffffff;
+
+  --blue-700: #094771;
+  --blue-600: #0e639c;
+  --blue-500: #1177bb;
+  --blue-400: #007acc;
+  --blue-300: #1f8ad2;
+  --blue-200: #4db5ff;
+
+  --amber-300: #e2c08d;
+
+  /* File-type accents (badges) */
+  --c-ts: #4db5ff;
+  --c-js: #e8d44d;
+  --c-json: #d9b34d;
+  --c-css: #56a3f5;
+  --c-html: #e87040;
+  --c-md: #6aa6c8;
+  --c-py: #7fc2e8;
+  --c-sh: #8fd45a;
+  --c-yml: #c98a8a;
+
+  /* ---- Spacing scale (4px base) ----------------------------------------- */
+  --space-0: 0;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 14px;
+  --space-8: 16px;
+  --space-10: 20px;
+
+  /* ---- Radius scale ----------------------------------------------------- */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+
+  /* ---- Typography ------------------------------------------------------- */
+  --font-ui: 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Cascadia Code', 'Consolas', monospace;
+  --text-2xs: 9px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-lg: 15px;
+  --text-hero: 56px;
+  --weight-normal: 400;
+  --weight-medium: 600;
+  --weight-bold: 700;
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+
+  /* ---- Motion ----------------------------------------------------------- */
+  --ease: 0.12s ease;
+
+  /* =======================================================================
+     SEMANTIC TOKENS — the only ones component styles should reference.
+     ======================================================================= */
+
+  /* Surfaces */
+  --bg: var(--gray-900);
+  --bg-elevated: var(--gray-850);
+  --bg-titlebar: var(--gray-700);
+  --bg-activity: var(--gray-650);
+  --bg-input: var(--gray-600);
+  --bg-hover: var(--gray-800);
+
+  /* Lines & text */
+  --border: var(--gray-600);
+  --text: var(--gray-100);
+  --text-muted: var(--gray-250);
+  --icon-muted: var(--gray-300);
+
+  /* Brand / interactive */
+  --accent: var(--blue-600);
+  --accent-hover: var(--blue-500);
+  --selection: var(--blue-700);
+
+  /* Status bar */
+  --statusbar: var(--blue-400);
+  --statusbar-hover: var(--blue-300);
+
+  /* Feedback */
+  --dirty: var(--amber-300);
+
+  /* Scrollbars */
+  --scrollbar: var(--gray-500);
+  --scrollbar-hover: var(--gray-450);
+
+  /* Subtle white overlay (badge pills, chips) */
+  --overlay-subtle: rgba(255, 255, 255, 0.07);
+
+  /* Back-compat alias (older rules used --radius) */
+  --radius: var(--radius-md);
+}

@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, architecture, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues.**
-> Last updated: 2026-05-25
+> Last updated: 2026-05-26
 
 ---
 
@@ -59,6 +59,10 @@ GUI pass 2 ✅: colour-coded file-type badges (tree + tabs, `fileKind()` →
 `data-ext` → CSS); AI panel redesign (uppercase header w/ sparkle, empty-state
 hint, chat bubbles restyled, primary Send + secondary file-action row,
 auto-scroll thread).
+Design-token system ✅: `renderer/tokens.css` (imported first in main.tsx) holds
+TWO layers — primitive palette/scales + semantic tokens (`--bg`, `--text`,
+`--accent`, `--space-*`, `--radius-*`, `--text-*`, file-type `--c-*`). `styles.css`
+consumes ONLY semantic tokens (no raw hex). Re-theming = edit tokens.css.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -223,6 +227,12 @@ strix/ (folder: tabea)
 
 ## 10. Recent commit trail (newest first)
 
+- **Design tokens layer** (2026-05-26): new `apps/desktop/renderer/tokens.css`
+  defines a two-tier system — raw palette primitives (`--gray-900`, `--blue-600`,
+  `--c-ts`, …, spacing/radius/type scales) feeding semantic tokens (`--bg`,
+  `--accent`, `--dirty`, `--text-muted`, …). `main.tsx` imports it before
+  `styles.css`; `styles.css` no longer defines its own `:root` and consumes
+  ONLY semantic tokens (zero raw hex). Re-theming = edit `tokens.css` only.
 - Phase 6 Yjs collaboration (§6.6, opt-in): `collab.ts` (connectCollab via
   dynamic-imported yjs/y-websocket/y-monaco + awareness), `window.strix.collab.url`
   (COLLAB_SERVER_URL), FileViewer wiring, `collab:start` script
