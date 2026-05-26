@@ -46,10 +46,10 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 102 tests / 26 files.**
+  **all green: 104 tests / 26 files.**
 
 GUI polish in progress (user wants all): [1] collapsible file tree + badges ✅;
-[2] editor-tab polish, [3] IDE chrome (activity bar/panel toggles), [4] theming — TODO.
+[2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅; [4] theming — TODO.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)

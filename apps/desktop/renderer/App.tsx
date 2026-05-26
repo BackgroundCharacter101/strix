@@ -12,6 +12,9 @@ import { useResizable } from './src/useResizable';
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showAi, setShowAi] = useState(true);
+  const [showTerminal, setShowTerminal] = useState(true);
   const tabs = useEditorTabs();
 
   const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500 });
@@ -28,32 +31,74 @@ export default function App() {
         <span className="app-title">Strix IDE</span>
         <GitStatusBar rootPath={root} />
       </header>
-      <div className="workbench">
-        <aside className="sidebar" style={{ width: sidebar.size }}>
-          {root ? (
-            <FileTree rootPath={root} onSelectFile={(node) => tabs.open(node.path)} />
-          ) : (
-            <p className="muted">Opening workspace…</p>
+      <div className="app-body">
+        <nav className="activity-bar" aria-label="panels">
+          <button
+            type="button"
+            aria-label="Toggle files"
+            aria-pressed={showSidebar}
+            onClick={() => setShowSidebar((v) => !v)}
+          >
+            ▤
+          </button>
+          <button
+            type="button"
+            aria-label="Toggle AI"
+            aria-pressed={showAi}
+            onClick={() => setShowAi((v) => !v)}
+          >
+            ✦
+          </button>
+          <button
+            type="button"
+            aria-label="Toggle terminal"
+            aria-pressed={showTerminal}
+            onClick={() => setShowTerminal((v) => !v)}
+          >
+            ▟
+          </button>
+        </nav>
+        <div className="app-main">
+          <div className="workbench">
+            {showSidebar && (
+              <>
+                <aside className="sidebar" style={{ width: sidebar.size }}>
+                  {root ? (
+                    <FileTree rootPath={root} onSelectFile={(node) => tabs.open(node.path)} />
+                  ) : (
+                    <p className="muted">Opening workspace…</p>
+                  )}
+                </aside>
+                <div className="resizer resizer-x" onPointerDown={sidebar.onPointerDown} />
+              </>
+            )}
+            <main className="editor-pane">
+              <EditorTabs tabs={tabs} />
+              <FileViewer path={tabs.activePath} buffer={tabs.active} onCursorChange={setCursor} />
+            </main>
+            {showAi && (
+              <>
+                <div className="resizer resizer-x" onPointerDown={aiPanel.onPointerDown} />
+                <aside className="ai-pane" style={{ width: aiPanel.size }}>
+                  <AiPanel
+                    filePath={tabs.activePath}
+                    fileContent={tabs.active?.draft ?? ''}
+                    onApplyEdit={(content) => tabs.active?.setDraft(content)}
+                  />
+                </aside>
+              </>
+            )}
+          </div>
+          {showTerminal && (
+            <>
+              <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
+              <section className="panel" style={{ height: terminal.size }}>
+                <TerminalTabs />
+              </section>
+            </>
           )}
-        </aside>
-        <div className="resizer resizer-x" onPointerDown={sidebar.onPointerDown} />
-        <main className="editor-pane">
-          <EditorTabs tabs={tabs} />
-          <FileViewer path={tabs.activePath} buffer={tabs.active} onCursorChange={setCursor} />
-        </main>
-        <div className="resizer resizer-x" onPointerDown={aiPanel.onPointerDown} />
-        <aside className="ai-pane" style={{ width: aiPanel.size }}>
-          <AiPanel
-            filePath={tabs.activePath}
-            fileContent={tabs.active?.draft ?? ''}
-            onApplyEdit={(content) => tabs.active?.setDraft(content)}
-          />
-        </aside>
+        </div>
       </div>
-      <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
-      <section className="panel" style={{ height: terminal.size }}>
-        <TerminalTabs />
-      </section>
       <StatusBar path={tabs.activePath} dirty={tabs.active?.dirty ?? false} cursor={cursor} />
     </div>
   );

@@ -79,6 +79,20 @@ describe('App', () => {
     expect(read).toHaveBeenCalledWith('/ws/a.ts');
   });
 
+  it('toggles the file-tree sidebar from the activity bar', async () => {
+    root.mockResolvedValue('/ws');
+    tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });
+
+    render(<App />);
+    expect(await screen.findByText('ws')).toBeInTheDocument(); // root folder in the tree
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle files' }));
+    expect(screen.queryByText('ws')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle files' }));
+    expect(await screen.findByText('ws')).toBeInTheDocument();
+  });
+
   it('shows the git branch and dirty count for the workspace', async () => {
     root.mockResolvedValue('/ws');
     tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });

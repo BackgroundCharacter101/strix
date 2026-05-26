@@ -24,7 +24,9 @@
       "Bash(echo \"SCAN_EXIT:$?\")",
       "Bash(curl -s -m 5 http://localhost:3001/api/settings/api-key)",
       "Bash(echo \"--- exit:$? ---\")",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(npx vitest *)",
+      "Bash(npm -w @strix/desktop run build:renderer)"
     ]
   }
 }
