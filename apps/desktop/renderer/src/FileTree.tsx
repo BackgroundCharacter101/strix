@@ -2,16 +2,24 @@ import React, { useState } from 'react';
 import type { FileNode } from '../../main/fs';
 import { useFileTree } from './useFileTree';
 
+// Map a filename to a normalized file-kind key (drives the badge colour in CSS).
+export function fileKind(name: string): string {
+  const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
+  const alias: Record<string, string> = {
+    tsx: 'ts',
+    jsx: 'js',
+    mjs: 'js',
+    cjs: 'js',
+    yaml: 'yml',
+  };
+  return alias[ext] ?? ext;
+}
+
 // Short type badge shown before a file name (a lightweight "icon").
 export function fileBadge(name: string): string {
-  const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase();
   const map: Record<string, string> = {
     ts: 'TS',
-    tsx: 'TS',
     js: 'JS',
-    jsx: 'JS',
-    mjs: 'JS',
-    cjs: 'JS',
     json: '{}',
     md: 'MD',
     css: '#',
@@ -19,9 +27,8 @@ export function fileBadge(name: string): string {
     py: 'PY',
     sh: 'SH',
     yml: 'YML',
-    yaml: 'YML',
   };
-  return map[ext] ?? '·';
+  return map[fileKind(name)] ?? '·';
 }
 
 interface TreeNodeProps {
@@ -36,7 +43,9 @@ function TreeNode({ node, expanded, onToggle, onSelectFile }: TreeNodeProps) {
     return (
       <li data-type="file">
         <button type="button" className="tree-row tree-file" onClick={() => onSelectFile?.(node)}>
-          <span className="tree-badge">{fileBadge(node.name)}</span>
+          <span className="tree-badge" data-ext={fileKind(node.name)}>
+            {fileBadge(node.name)}
+          </span>
           {node.name}
         </button>
       </li>

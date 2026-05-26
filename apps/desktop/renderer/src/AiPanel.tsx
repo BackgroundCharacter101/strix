@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { runTask, complete, configureAi, type TaskType, type ChatMessage } from '@strix/ai-gateway';
 import { CodeProposal } from './CodeProposal';
+import { SparkleIcon } from './icons';
 
 const HISTORY_KEY = 'strix.ai.history';
 
@@ -30,6 +31,7 @@ export function AiPanel({
   const [routedVia, setRoutedVia] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [proposal, setProposal] = useState<{ original: string; suggested: string } | null>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   // Point the AI client at the running FreeLLMAPI and load its model list.
   useEffect(() => {
@@ -45,6 +47,12 @@ export function AiPanel({
       /* ignore quota/availability errors */
     }
   }, [history]);
+
+  // Keep the conversation pinned to the latest message as it streams in.
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [history, streaming]);
 
   const fileReady = filePath !== null;
 
@@ -112,6 +120,21 @@ export function AiPanel({
 
   return (
     <section className="ai-pane-content" aria-label="AI chat">
+      <header className="ai-pane-header">
+        <span className="ai-pane-title">
+          <SparkleIcon size={15} />
+          AI Assistant
+        </span>
+        <button
+          type="button"
+          className="ai-ghost-btn"
+          onClick={clearHistory}
+          disabled={busy || history.length === 0}
+        >
+          Clear
+        </button>
+      </header>
+
       <div className="ai-toolbar">
         <select aria-label="model" value={model} onChange={(e) => setModel(e.target.value)}>
           {models.map((m) => (
@@ -120,9 +143,6 @@ export function AiPanel({
             </option>
           ))}
         </select>
-        <button type="button" onClick={clearHistory} disabled={busy || history.length === 0}>
-          Clear
-        </button>
       </div>
 
       {proposal ? (
@@ -137,40 +157,64 @@ export function AiPanel({
           onDismiss={() => setProposal(null)}
         />
       ) : (
-        <div className="ai-thread" aria-label="AI conversation">
-          {history.map((m, i) => (
-            <div key={i} className={`ai-msg ai-${m.role}`}>
-              {m.content}
+        <div className="ai-thread" aria-label="AI conversation" ref={threadRef}>
+          {history.length === 0 && !streaming ? (
+            <div className="ai-empty">
+              <SparkleIcon size={26} />
+              <p>Ask anything about your code.</p>
+              <p className="ai-empty-hint">
+                {fileReady
+                  ? 'Use Explain, Check security, Fix or Refactor on the open file.'
+                  : 'Open a file to unlock the per-file actions below.'}
+              </p>
             </div>
-          ))}
-          {streaming && <div className="ai-msg ai-assistant">{streaming}</div>}
+          ) : (
+            <>
+              {history.map((m, i) => (
+                <div key={i} className={`ai-msg ai-${m.role}`}>
+                  {m.content}
+                </div>
+              ))}
+              {streaming && <div className="ai-msg ai-assistant">{streaming}</div>}
+            </>
+          )}
         </div>
       )}
 
-      <textarea
-        aria-label="Ask AI"
-        placeholder="Ask about this file…"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-      <div className="ai-actions">
-        <button type="button" onClick={() => run('chat')} disabled={busy || input.length === 0}>
-          Send
-        </button>
-        <button type="button" onClick={() => run('explain')} disabled={busy || !fileReady}>
-          Explain
-        </button>
-        <button type="button" onClick={() => run('vuln_check')} disabled={busy || !fileReady}>
-          Check security
-        </button>
-        <button type="button" onClick={() => propose('fix')} disabled={busy || !fileReady}>
-          Fix
-        </button>
-        <button type="button" onClick={() => propose('refactor')} disabled={busy || !fileReady}>
-          Refactor
-        </button>
+      {routedVia && <div className="ai-routed">Routed via: {routedVia}</div>}
+
+      <div className="ai-composer">
+        <textarea
+          aria-label="Ask AI"
+          placeholder="Ask about this file…"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <div className="ai-actions">
+          <button
+            type="button"
+            className="ai-primary-btn"
+            onClick={() => run('chat')}
+            disabled={busy || input.length === 0}
+          >
+            {busy ? 'Working…' : 'Send'}
+          </button>
+        </div>
+        <div className="ai-actions ai-file-actions">
+          <button type="button" onClick={() => run('explain')} disabled={busy || !fileReady}>
+            Explain
+          </button>
+          <button type="button" onClick={() => run('vuln_check')} disabled={busy || !fileReady}>
+            Check security
+          </button>
+          <button type="button" onClick={() => propose('fix')} disabled={busy || !fileReady}>
+            Fix
+          </button>
+          <button type="button" onClick={() => propose('refactor')} disabled={busy || !fileReady}>
+            Refactor
+          </button>
+        </div>
       </div>
-      {routedVia && <footer className="ai-routed">Routed via: {routedVia}</footer>}
     </section>
   );
 }

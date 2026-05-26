@@ -55,6 +55,10 @@ VS Code makeover ✅: SVG activity-bar icons (48px + left accent bar), EXPLORER
 sidebar header, git branch moved to bottom-left status bar (with branch icon),
 rich right-side status items (Ln/Col · Spaces · UTF-8 · CRLF · language),
 clean title bar (git removed), VS Code-style welcome screen on empty editor.
+GUI pass 2 ✅: colour-coded file-type badges (tree + tabs, `fileKind()` →
+`data-ext` → CSS); AI panel redesign (uppercase header w/ sparkle, empty-state
+hint, chat bubbles restyled, primary Send + secondary file-action row,
+auto-scroll thread).
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)

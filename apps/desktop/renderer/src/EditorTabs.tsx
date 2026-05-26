@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EditorTabsApi } from './useEditorTabs';
-import { fileBadge } from './FileTree';
+import { fileBadge, fileKind } from './FileTree';
 
 function basename(path: string): string {
   const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
@@ -32,7 +32,9 @@ export function EditorTabs({ tabs }: { tabs: EditorTabsApi }) {
               aria-selected={path === tabs.activePath}
               onClick={() => tabs.activate(path)}
             >
-              <span className="tab-badge">{fileBadge(name)}</span>
+              <span className="tab-badge" data-ext={fileKind(name)}>
+                {fileBadge(name)}
+              </span>
               {name}
               {tabs.isDirty(path) ? <span className="tab-dirty"> ●</span> : null}
             </button>
