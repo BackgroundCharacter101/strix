@@ -31,7 +31,13 @@ export interface LspProcess {
 export type SpawnLsp = (command: string, args: string[], opts: { cwd: string }) => LspProcess;
 
 const defaultSpawn: SpawnLsp = (command, args, opts) => {
-  const child = nodeSpawn(command, args, { cwd: opts.cwd, stdio: 'pipe' });
+  // On Windows the servers are .cmd/.exe shims (typescript-language-server,
+  // pylsp); spawn needs a shell to resolve them via PATHEXT.
+  const child = nodeSpawn(command, args, {
+    cwd: opts.cwd,
+    stdio: 'pipe',
+    shell: process.platform === 'win32',
+  });
   return {
     stdin: { write: (data) => void child.stdin.write(data) },
     stdout: { on: (event, cb) => void child.stdout.on(event, cb) },
