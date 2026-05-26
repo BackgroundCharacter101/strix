@@ -209,6 +209,9 @@ strix/ (folder: tabea)
 
 ## 10. Recent commit trail (newest first)
 
+- `ccd7198` Fix LSP spawn on Windows (shell:true → resolves .cmd/.exe shims
+  like typescript-language-server / pylsp). Servers are installed on the host
+  (pip python-lsp-server + npm -g typescript-language-server).
 - Phase 5 LSP diagnostics (§6.5): `lspClient.ts` (handshake + diagnostics→
   Monaco markers) wired via FileViewer `onEditorMount`
 - Phase 4 generate-from-comment (§8.5): editor `parseGenerateComment` + Ctrl+G
