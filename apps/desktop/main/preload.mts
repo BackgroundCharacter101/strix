@@ -53,6 +53,9 @@ const api: StrixApi = {
   collab: {
     url: () => ipcRenderer.invoke('collab:url'),
   },
+  search: {
+    find: (query) => ipcRenderer.invoke('search:find', query),
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);

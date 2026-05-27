@@ -33,6 +33,26 @@ export function SparkleIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function SearchIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="10.5" cy="10.5" r="6" />
+      <line x1="20" y1="20" x2="15" y2="15" />
+    </svg>
+  );
+}
+
+export function SourceControlIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="6" cy="6" r="2.4" />
+      <circle cx="6" cy="18" r="2.4" />
+      <circle cx="17" cy="12" r="2.4" />
+      <path d="M6 8.4v7.2M8.3 6h4.4a2 2 0 0 1 2 2v1.6" />
+    </svg>
+  );
+}
+
 export function TerminalIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

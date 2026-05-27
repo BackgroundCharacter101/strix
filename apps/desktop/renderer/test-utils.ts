@@ -11,6 +11,7 @@ interface StrixApiOverrides {
   lsp?: Partial<StrixApi['lsp']>;
   ai?: Partial<StrixApi['ai']>;
   collab?: Partial<StrixApi['collab']>;
+  search?: Partial<StrixApi['search']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -60,6 +61,9 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     collab: {
       url: vi.fn(async (): Promise<string | null> => null),
     },
+    search: {
+      find: vi.fn(async () => []),
+    },
   };
 
   return {
@@ -70,5 +74,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     lsp: { ...base.lsp, ...overrides.lsp },
     ai: { ...base.ai, ...overrides.ai },
     collab: { ...base.collab, ...overrides.collab },
+    search: { ...base.search, ...overrides.search },
   };
 }

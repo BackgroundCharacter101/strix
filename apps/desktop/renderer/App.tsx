@@ -6,12 +6,13 @@ import { EditorTabs } from './src/EditorTabs';
 import { Breadcrumbs, relativeSegments } from './src/Breadcrumbs';
 import { Palette, type PaletteItem } from './src/Palette';
 import { PromptDialog } from './src/PromptDialog';
+import { SearchView } from './src/SearchView';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
-import { FilesIcon, SparkleIcon, TerminalIcon } from './src/icons';
+import { FilesIcon, SearchIcon, SparkleIcon, TerminalIcon } from './src/icons';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -19,6 +20,7 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
+  const [sidebarView, setSidebarView] = useState<'explorer' | 'search'>('explorer');
   const [palette, setPalette] = useState<null | 'files' | 'commands'>(null);
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
@@ -37,6 +39,7 @@ export default function App() {
     const dir = await window.strix.workspace.open();
     if (dir) setRoot(dir);
   }, []);
+
 
   const openFile = useCallback(async () => {
     const filePath = await window.strix.workspace.openFile();
@@ -145,17 +148,35 @@ export default function App() {
           e.preventDefault();
           void openFile();
           break;
+        case 'f':
+          if (e.shiftKey) {
+            e.preventDefault();
+            setSidebarView('search');
+            setShowSidebar(true);
+          }
+          break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [tabs, openQuickFiles, openFile]);
 
+  // Activity-bar view switch: re-clicking the active view hides the sidebar.
+  const selectView = (view: 'explorer' | 'search') => {
+    if (showSidebar && sidebarView === view) {
+      setShowSidebar(false);
+    } else {
+      setSidebarView(view);
+      setShowSidebar(true);
+    }
+  };
+
   const commands: { id: string; label: string; detail: string; run: () => void }[] = [
     { id: 'workspace.openFile', label: 'File: Open File…', detail: 'Ctrl+O', run: () => void openFile() },
     { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
     { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
-    { id: 'view.explorer', label: 'View: Toggle Explorer', detail: 'Ctrl+B', run: () => setShowSidebar((v) => !v) },
+    { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
+    { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
@@ -181,12 +202,21 @@ export default function App() {
         <nav className="activity-bar" aria-label="panels">
           <button
             type="button"
-            aria-label="Toggle files"
-            aria-pressed={showSidebar}
+            aria-label="Explorer"
+            aria-pressed={showSidebar && sidebarView === 'explorer'}
             title="Explorer"
-            onClick={() => setShowSidebar((v) => !v)}
+            onClick={() => selectView('explorer')}
           >
             <FilesIcon />
+          </button>
+          <button
+            type="button"
+            aria-label="Search"
+            aria-pressed={showSidebar && sidebarView === 'search'}
+            title="Search (Ctrl+Shift+F)"
+            onClick={() => selectView('search')}
+          >
+            <SearchIcon />
           </button>
           <button
             type="button"
@@ -212,8 +242,10 @@ export default function App() {
             {showSidebar && (
               <>
                 <aside className="sidebar" style={{ width: sidebar.size }}>
-                  <div className="sidebar-header">Explorer</div>
-                  {root ? (
+                  <div className="sidebar-header">{sidebarView === 'search' ? 'Search' : 'Explorer'}</div>
+                  {sidebarView === 'search' ? (
+                    <SearchView onOpen={(p) => tabs.open(p)} />
+                  ) : root ? (
                     <FileTree
                       key={root}
                       rootPath={root}

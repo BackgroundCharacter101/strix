@@ -15,6 +15,7 @@ import {
   cloneRepo,
 } from './workspace.js';
 import { BrowserWindow } from 'electron';
+import { searchInFiles } from './search.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 
@@ -41,6 +42,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('workspace:clone', (event, url: string) =>
     cloneRepo(BrowserWindow.fromWebContents(event.sender), url),
   );
+  ipcMain.handle('search:find', (_event, query: string) => searchInFiles(getRoot(), query));
   ipcMain.handle('git:status', (_event, rootPath: string) => getGitStatus(rootPath));
 
   const terminals = new TerminalManager();

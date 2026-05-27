@@ -86,10 +86,10 @@ describe('App', () => {
     render(<App />);
     expect(await screen.findByText('ws')).toBeInTheDocument(); // root folder in the tree
 
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle files' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Explorer' }));
     expect(screen.queryByText('ws')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle files' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Explorer' }));
     expect(await screen.findByText('ws')).toBeInTheDocument();
   });
 
@@ -116,10 +116,10 @@ describe('App', () => {
 
     fireEvent.keyDown(window, { key: 'P', ctrlKey: true, shiftKey: true });
     const input = await screen.findByLabelText('Type a command…');
-    fireEvent.change(input, { target: { value: 'Toggle Explorer' } });
+    fireEvent.change(input, { target: { value: 'View: Explorer' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    // The command hid the sidebar (root folder no longer rendered).
+    // The command hid the sidebar (Explorer was already active → toggled off).
     expect(screen.queryByText('ws')).not.toBeInTheDocument();
   });
 

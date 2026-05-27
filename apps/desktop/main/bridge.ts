@@ -1,5 +1,6 @@
 import type { FileNode } from './fs';
 import type { GitStatus } from './git';
+import type { SearchMatch } from './search';
 import type { TerminalCreateOptions } from './terminal';
 import type { Language, JsonRpcMessage } from './lsp';
 
@@ -54,6 +55,10 @@ export interface StrixCollabApi {
   url(): Promise<string | null>;
 }
 
+export interface StrixSearchApi {
+  find(query: string): Promise<SearchMatch[]>;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
@@ -62,4 +67,5 @@ export interface StrixApi {
   lsp: StrixLspApi;
   ai: StrixAiApi;
   collab: StrixCollabApi;
+  search: StrixSearchApi;
 }
