@@ -11,17 +11,42 @@ export function FileViewer({
   buffer,
   onCursorChange,
   onMarkersChange,
+  onOpenFolder,
+  onOpenFile,
+  onCloneRepo,
 }: {
   path: string | null;
   buffer: FileBuffer | null;
   onCursorChange?: (pos: { line: number; column: number }) => void;
   onMarkersChange?: (counts: { errors: number; warnings: number }) => void;
+  onOpenFolder?: () => void;
+  onOpenFile?: () => void;
+  onCloneRepo?: () => void;
 }) {
   if (!path || !buffer) {
     return (
       <div className="empty-state welcome">
         <div className="welcome-logo">Strix</div>
         <p className="welcome-tagline">AI-native code editor</p>
+        {(onOpenFolder || onOpenFile || onCloneRepo) && (
+          <div className="welcome-actions">
+            {onOpenFolder && (
+              <button type="button" onClick={onOpenFolder}>
+                Open Folder
+              </button>
+            )}
+            {onCloneRepo && (
+              <button type="button" onClick={onCloneRepo}>
+                Clone Repository…
+              </button>
+            )}
+            {onOpenFile && (
+              <button type="button" className="ai-ghost-btn" onClick={onOpenFile}>
+                Open File…
+              </button>
+            )}
+          </div>
+        )}
         <ul className="welcome-hints">
           <li>
             <span>Open a file</span>

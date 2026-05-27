@@ -8,6 +8,13 @@ import {
   removeEntry,
 } from './fs.js';
 import { getGitStatus } from './git.js';
+import {
+  getRoot,
+  openFolderDialog,
+  openFileDialog,
+  cloneRepo,
+} from './workspace.js';
+import { BrowserWindow } from 'electron';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 
@@ -24,7 +31,16 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle('file:rename', (_event, from: string, to: string) => renameEntry(from, to));
   ipcMain.handle('file:remove', (_event, targetPath: string) => removeEntry(targetPath));
-  ipcMain.handle('workspace:root', () => process.cwd());
+  ipcMain.handle('workspace:root', () => getRoot());
+  ipcMain.handle('workspace:open', (event) =>
+    openFolderDialog(BrowserWindow.fromWebContents(event.sender)),
+  );
+  ipcMain.handle('workspace:openFile', (event) =>
+    openFileDialog(BrowserWindow.fromWebContents(event.sender)),
+  );
+  ipcMain.handle('workspace:clone', (event, url: string) =>
+    cloneRepo(BrowserWindow.fromWebContents(event.sender), url),
+  );
   ipcMain.handle('git:status', (_event, rootPath: string) => getGitStatus(rootPath));
 
   const terminals = new TerminalManager();

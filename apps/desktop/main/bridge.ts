@@ -17,6 +17,12 @@ export interface StrixFsApi {
 
 export interface StrixWorkspaceApi {
   root(): Promise<string>;
+  // Opens a native folder picker; sets and returns the new root, or null if cancelled.
+  open(): Promise<string | null>;
+  // Opens a native file picker; returns the chosen file path, or null if cancelled.
+  openFile(): Promise<string | null>;
+  // Clones a git repo into a chosen parent dir; returns the new repo root, or null.
+  clone(url: string): Promise<string | null>;
 }
 
 export interface StrixGitApi {

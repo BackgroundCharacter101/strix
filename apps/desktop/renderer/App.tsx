@@ -23,6 +23,11 @@ export default function App() {
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const tabs = useEditorTabs();
 
+  const openFolder = useCallback(async () => {
+    const dir = await window.strix.workspace.open();
+    if (dir) setRoot(dir);
+  }, []);
+
   // Load and flatten the workspace tree into Quick Open entries.
   const openQuickFiles = useCallback(async () => {
     if (!root) return;
@@ -87,6 +92,7 @@ export default function App() {
   }, [tabs, openQuickFiles]);
 
   const commands: { id: string; label: string; detail: string; run: () => void }[] = [
+    { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
     { id: 'view.explorer', label: 'View: Toggle Explorer', detail: 'Ctrl+B', run: () => setShowSidebar((v) => !v) },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
@@ -143,6 +149,7 @@ export default function App() {
                   <div className="sidebar-header">Explorer</div>
                   {root ? (
                     <FileTree
+                      key={root}
                       rootPath={root}
                       activePath={tabs.activePath}
                       onSelectFile={(node) => tabs.open(node.path)}
@@ -162,6 +169,7 @@ export default function App() {
                 buffer={tabs.active}
                 onCursorChange={setCursor}
                 onMarkersChange={setProblems}
+                onOpenFolder={openFolder}
               />
             </main>
             {showAi && (

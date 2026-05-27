@@ -28,7 +28,12 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       rename: vi.fn(async (): Promise<void> => {}),
       remove: vi.fn(async (): Promise<void> => {}),
     },
-    workspace: { root: vi.fn(async (): Promise<string> => '/') },
+    workspace: {
+      root: vi.fn(async (): Promise<string> => '/'),
+      open: vi.fn(async (): Promise<string | null> => null),
+      openFile: vi.fn(async (): Promise<string | null> => null),
+      clone: vi.fn(async (): Promise<string | null> => null),
+    },
     git: {
       status: vi.fn(
         async (): Promise<GitStatus> => ({ isRepo: false, branch: null, files: [] }),

@@ -676,6 +676,12 @@ body {
   color: var(--text-muted);
 }
 
+.welcome-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
 .welcome-hints {
   list-style: none;
   margin: 0;
