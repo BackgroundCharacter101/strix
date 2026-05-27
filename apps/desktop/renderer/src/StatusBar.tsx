@@ -17,19 +17,27 @@ function detectEol(content: string): string {
   return content.includes('\r\n') ? 'CRLF' : 'LF';
 }
 
-// Report the dominant indentation unit (tabs, or the smallest space indent seen).
+// Report the dominant indentation unit: tabs, or the most common small (1-8)
+// space indent. Capping at 8 avoids ASCII-art/aligned lines skewing the result.
 function detectIndent(content: string): string {
-  const lines = content.split('\n');
-  let min = 0;
-  for (const line of lines) {
+  const counts = new Map<number, number>();
+  for (const line of content.split('\n')) {
     if (/^\t/.test(line)) return 'Tab Size: 4';
     const m = /^( +)\S/.exec(line);
     if (m) {
       const n = m[1].length;
-      if (min === 0 || n < min) min = n;
+      if (n >= 1 && n <= 8) counts.set(n, (counts.get(n) ?? 0) + 1);
     }
   }
-  return `Spaces: ${min || 2}`;
+  let best = 4;
+  let bestCount = -1;
+  for (const [n, c] of counts) {
+    if (c > bestCount) {
+      best = n;
+      bestCount = c;
+    }
+  }
+  return `Spaces: ${best}`;
 }
 
 export function StatusBar({
