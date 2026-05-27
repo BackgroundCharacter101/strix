@@ -23,6 +23,13 @@ export default function App() {
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [recents, setRecents] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('strix.recentFolders') ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
   const tabs = useEditorTabs();
 
   const openFolder = useCallback(async () => {
@@ -70,6 +77,20 @@ export default function App() {
   useEffect(() => {
     window.strix.workspace.root().then(setRoot);
   }, []);
+
+  // Track recently opened folders (most-recent first, capped, persisted).
+  useEffect(() => {
+    if (!root) return;
+    setRecents((prev) => {
+      const next = [root, ...prev.filter((p) => p !== root)].slice(0, 8);
+      try {
+        localStorage.setItem('strix.recentFolders', JSON.stringify(next));
+      } catch {
+        /* ignore quota/availability errors */
+      }
+      return next;
+    });
+  }, [root]);
 
   // Global keyboard shortcuts (VS Code-style).
   useEffect(() => {
@@ -127,6 +148,9 @@ export default function App() {
       run: () => tabs.activePath && tabs.close(tabs.activePath),
     },
     { id: 'file.quickOpen', label: 'Go to File…', detail: 'Ctrl+P', run: () => void openQuickFiles() },
+    ...recents
+      .filter((p) => p !== root)
+      .map((p) => ({ id: `recent:${p}`, label: `Open Recent: ${p}`, detail: '', run: () => setRoot(p) })),
   ];
 
   return (
