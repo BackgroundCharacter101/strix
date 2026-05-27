@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 122 tests / 28 files.**
+  **all green: 127 tests / 29 files.**
 
 GUI polish (user wanted all, ALL DONE): [1] collapsible file tree + badges ✅;
 [2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅;
@@ -82,6 +82,18 @@ relative segments + file badge on the leaf).
      (Electron blocks window.prompt). NEW BRIDGE METHODS: `fs.create(path,type)`,
      `fs.rename(from,to)`, `fs.remove(path)` (main `fs.ts`, ipc `file:create|rename|remove`,
      preload, test-utils). Delete uses window.confirm. Tree reloads via `useFileTree.reload`.
+Workspace features batch ✅:
+  - Open Folder (`workspace.open`, mutable `main/workspace.ts` currentRoot) +
+    welcome button + cmd; FileTree keyed on `root` so it remounts on switch.
+  - Clone from GitHub (`workspace.clone` → isomorphic-git http/node shallow clone)
+    via URL PromptDialog; welcome + cmd. `repoNameFromUrl` is its own tested module.
+  - Open File (`workspace.openFile`) — Ctrl+O / welcome / cmd.
+  - Recent folders — localStorage `strix.recentFolders` (cap 8) → palette entries.
+  - Save All — `useEditorTabs.saveAll()` (writes all dirty buffers); Ctrl+K S chord + cmd.
+SECURITY: added a CSP meta tag in `renderer/index.html` (no 'unsafe-eval';
+  style 'unsafe-inline'; worker self+blob; connect self + :3001 + ws :1234) to
+  clear the Electron insecure-CSP warning. **NEEDS LIVE CHECK**: if the editor
+  renders blank, widen script-src (add 'unsafe-eval') or remove the meta tag.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -141,7 +153,7 @@ strix/ (folder: tabea)
 
 ### The IPC bridge — `window.strix` (typed in `apps/desktop/main/bridge.ts`)
 - `fs.read(path)` · `fs.write(path, content)` · `fs.tree(root)` · `fs.create(path, 'file'|'directory')` · `fs.rename(from, to)` · `fs.remove(path)`
-- `workspace.root()`  → process.cwd()
+- `workspace.root()` (mutable, in `main/workspace.ts`) · `workspace.open()` (folder picker) · `workspace.openFile()` (file picker) · `workspace.clone(url)` (isomorphic-git shallow clone)
 - `git.status(root)`  → `{ isRepo, branch, files[] }`
 - `terminal.create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` · `onData(cb)` · `onExit(cb)`
 - `lsp.start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)`

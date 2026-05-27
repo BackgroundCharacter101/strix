@@ -4,6 +4,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--
+    Content-Security-Policy. Deliberately omits 'unsafe-eval' (the token
+    Electron's insecure-CSP warning flags); bundled Monaco does not need it.
+    'unsafe-inline' is allowed for styles only (Monaco injects <style>).
+    connect-src allows the local FreeLLMAPI (:3001) and the optional collab
+    websocket (:1234). If the editor ever renders blank, widen script-src or
+    remove this tag to diagnose.
+  -->
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self' http://localhost:3001 ws://localhost:1234;"
+  />
   <title>Strix IDE</title>
 </head>
 
