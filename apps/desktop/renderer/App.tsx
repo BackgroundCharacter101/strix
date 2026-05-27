@@ -30,6 +30,11 @@ export default function App() {
     if (dir) setRoot(dir);
   }, []);
 
+  const openFile = useCallback(async () => {
+    const filePath = await window.strix.workspace.openFile();
+    if (filePath) tabs.open(filePath);
+  }, [tabs]);
+
   const cloneRepo = useCallback(async (url: string) => {
     setCloneOpen(false);
     try {
@@ -97,13 +102,18 @@ export default function App() {
             void openQuickFiles();
           }
           break;
+        case 'o':
+          e.preventDefault();
+          void openFile();
+          break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [tabs, openQuickFiles]);
+  }, [tabs, openQuickFiles, openFile]);
 
   const commands: { id: string; label: string; detail: string; run: () => void }[] = [
+    { id: 'workspace.openFile', label: 'File: Open File…', detail: 'Ctrl+O', run: () => void openFile() },
     { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
     { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
     { id: 'view.explorer', label: 'View: Toggle Explorer', detail: 'Ctrl+B', run: () => setShowSidebar((v) => !v) },
@@ -183,6 +193,7 @@ export default function App() {
                 onCursorChange={setCursor}
                 onMarkersChange={setProblems}
                 onOpenFolder={openFolder}
+                onOpenFile={openFile}
                 onCloneRepo={() => setCloneOpen(true)}
               />
             </main>
