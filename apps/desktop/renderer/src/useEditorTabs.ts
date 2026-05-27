@@ -16,6 +16,7 @@ export interface EditorTabsApi {
   open(path: string): void;
   activate(path: string): void;
   close(path: string): void;
+  saveAll(): Promise<void>;
 }
 
 // Manages the set of open files, the active tab, and a per-path buffer
@@ -97,6 +98,27 @@ export function useEditorTabs(): EditorTabsApi {
     }
   }, [activePath, bufs]);
 
+  const saveAll = useCallback(async () => {
+    const dirtyEntries = Object.entries(bufs).filter(([, b]) => b.draft !== b.saved);
+    if (dirtyEntries.length === 0) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await Promise.all(dirtyEntries.map(([path, b]) => window.strix.fs.write(path, b.draft)));
+      setBufs((prev) => {
+        const next = { ...prev };
+        for (const [path, b] of dirtyEntries) {
+          if (next[path]) next[path] = { ...next[path], saved: b.draft };
+        }
+        return next;
+      });
+    } catch (e: unknown) {
+      setSaveError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }, [bufs]);
+
   const isDirty = useCallback(
     (path: string) => {
       const buf = bufs[path];
@@ -119,5 +141,5 @@ export function useEditorTabs(): EditorTabsApi {
       }
     : null;
 
-  return { tabs, activePath, active, isDirty, open, activate, close };
+  return { tabs, activePath, active, isDirty, open, activate, close, saveAll };
 }

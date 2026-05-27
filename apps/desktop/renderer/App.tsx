@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { FileNode } from '../main/fs';
 import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
@@ -31,6 +31,7 @@ export default function App() {
     }
   });
   const tabs = useEditorTabs();
+  const chordRef = useRef(false);
 
   const openFolder = useCallback(async () => {
     const dir = await window.strix.workspace.open();
@@ -95,7 +96,24 @@ export default function App() {
   // Global keyboard shortcuts (VS Code-style).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Ctrl+K then S — Save All chord.
+      if (chordRef.current) {
+        chordRef.current = false;
+        if (e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          void tabs.saveAll();
+          return;
+        }
+      }
       if (!e.ctrlKey && !e.metaKey) return;
+      if (e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        chordRef.current = true;
+        window.setTimeout(() => {
+          chordRef.current = false;
+        }, 1500);
+        return;
+      }
       switch (e.key.toLowerCase()) {
         case 's':
           e.preventDefault();
@@ -141,6 +159,7 @@ export default function App() {
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
+    { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
     {
       id: 'view.closeEditor',
       label: 'View: Close Editor',
