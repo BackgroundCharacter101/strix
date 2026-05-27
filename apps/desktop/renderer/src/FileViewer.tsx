@@ -16,6 +16,7 @@ export function FileViewer({
   onOpenFile,
   onCloneRepo,
   editorOptions,
+  registerFormat,
 }: {
   path: string | null;
   buffer: FileBuffer | null;
@@ -25,6 +26,8 @@ export function FileViewer({
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
   editorOptions?: EditorOptions;
+  // Hands a "format the document" callback up to App (null on unmount).
+  registerFormat?: (run: (() => void) | null) => void;
 }) {
   const [showPreview, setShowPreview] = useState(true);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
@@ -125,6 +128,14 @@ export function FileViewer({
             const model = editor.getModel();
             if (!model) return;
             const disposers: (() => void)[] = [];
+
+            // Expose a Format Document action to App-level commands/shortcuts.
+            if (registerFormat) {
+              registerFormat(() => {
+                void editor.getAction('editor.action.formatDocument')?.run();
+              });
+              disposers.push(() => registerFormat(null));
+            }
 
             // Report error/warning counts to the status bar's Problems item.
             if (onMarkersChange) {

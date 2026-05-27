@@ -50,6 +50,10 @@ export default function App() {
   });
   const tabs = useEditorTabs();
   const chordRef = useRef(false);
+  const formatRef = useRef<(() => void) | null>(null);
+  const registerFormat = useCallback((fn: (() => void) | null) => {
+    formatRef.current = fn;
+  }, []);
 
   const openFolder = useCallback(async () => {
     const dir = await window.strix.workspace.open();
@@ -115,6 +119,12 @@ export default function App() {
   // Global keyboard shortcuts (VS Code-style).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Shift+Alt+F — Format Document (no Ctrl, so handle before the guard).
+      if (e.altKey && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        formatRef.current?.();
+        return;
+      }
       // Ctrl+K then S — Save All chord.
       if (chordRef.current) {
         chordRef.current = false;
@@ -207,6 +217,7 @@ export default function App() {
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
     { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
+    { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
     {
       id: 'view.closeEditor',
       label: 'View: Close Editor',
@@ -337,6 +348,7 @@ export default function App() {
                       wordWrap: settings.wordWrap,
                       minimap: settings.minimap,
                     }}
+                    registerFormat={registerFormat}
                   />
                 </>
               )}

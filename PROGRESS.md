@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 127 tests / 29 files.**
+  **all green: 139 tests / 34 files.**
 
 GUI polish (user wanted all, ALL DONE): [1] collapsible file tree + badges ✅;
 [2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅;
@@ -92,8 +92,23 @@ Workspace features batch ✅:
   - Save All — `useEditorTabs.saveAll()` (writes all dirty buffers); Ctrl+K S chord + cmd.
 SECURITY: added a CSP meta tag in `renderer/index.html` (no 'unsafe-eval';
   style 'unsafe-inline'; worker self+blob; connect self + :3001 + ws :1234) to
-  clear the Electron insecure-CSP warning. **NEEDS LIVE CHECK**: if the editor
-  renders blank, widen script-src (add 'unsafe-eval') or remove the meta tag.
+  clear the Electron insecure-CSP warning. VERIFIED LIVE (editor renders, warning gone).
+Top-tier batch ✅:
+  - Fix: indentation detection picks most-common small (1-8) indent, not min.
+  - Find in Files: `main/search.ts` (walk+match, ignores/binary/caps), `search.find`
+    bridge; activity bar is now a VIEW SWITCHER (Explorer/Search/SCM); `SearchView`.
+  - Source Control view: `SourceControlView` lists git changes; click → read-only
+    diff vs HEAD via new `git.fileHead` bridge (isomorphic-git readBlob) + `DiffView`.
+  - Markdown preview: dependency-free `markdown.tsx` → React elements (no XSS;
+    js: links downgraded). `.md` files get a Preview/Edit toggle.
+  - Settings: `useSettings` (localStorage) + `SettingsDialog` (gear in activity bar):
+    theme (dark/light via `[data-theme]` token overrides), font size, tab size,
+    word wrap, minimap. Flow to Monaco via CodeEditor `editorOptions` prop.
+  - Format Document: Shift+Alt+F + command, via FileViewer `registerFormat` →
+    Monaco `editor.action.formatDocument`.
+NEW SHORTCUTS: Ctrl+O open file, Ctrl+Shift+F search, Ctrl+K S save-all,
+  Shift+Alt+F format. NEW BRIDGE: `search.find`, `git.fileHead`,
+  `workspace.open/openFile/clone`.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
@@ -154,7 +169,8 @@ strix/ (folder: tabea)
 ### The IPC bridge — `window.strix` (typed in `apps/desktop/main/bridge.ts`)
 - `fs.read(path)` · `fs.write(path, content)` · `fs.tree(root)` · `fs.create(path, 'file'|'directory')` · `fs.rename(from, to)` · `fs.remove(path)`
 - `workspace.root()` (mutable, in `main/workspace.ts`) · `workspace.open()` (folder picker) · `workspace.openFile()` (file picker) · `workspace.clone(url)` (isomorphic-git shallow clone)
-- `git.status(root)`  → `{ isRepo, branch, files[] }`
+- `git.status(root)`  → `{ isRepo, branch, files[] }` · `git.fileHead(path)` → committed content (for diffs)
+- `search.find(query)` → `{ path, line, text }[]` (workspace-wide substring search)
 - `terminal.create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` · `onData(cb)` · `onExit(cb)`
 - `lsp.start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)`
 - `ai.config()` → `{ baseURL, apiKey }` (live from FreeLLMAPI) · `ai.models()` → string[]
