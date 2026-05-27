@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type * as Monaco from 'monaco-editor';
 import { CodeEditor, languageForPath } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
 import type { FileBuffer } from './useFileBuffer';
 import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
+import { MarkdownPreview } from './MarkdownPreview';
 
 export function FileViewer({
   path,
@@ -23,6 +24,9 @@ export function FileViewer({
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
 }) {
+  const [showPreview, setShowPreview] = useState(true);
+  const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
+
   if (!path || !buffer) {
     return (
       <div className="empty-state welcome">
@@ -91,8 +95,21 @@ export function FileViewer({
           </span>
         )}
         {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
+        {isMarkdown && (
+          <button
+            type="button"
+            className="ai-ghost-btn toolbar-right"
+            aria-pressed={showPreview}
+            onClick={() => setShowPreview((v) => !v)}
+          >
+            {showPreview ? 'Edit' : 'Preview'}
+          </button>
+        )}
       </div>
       <div className="editor-host">
+        {isMarkdown && showPreview ? (
+          <MarkdownPreview content={buffer.draft} />
+        ) : (
         <CodeEditor
           value={buffer.draft}
           language={languageForPath(path)}
@@ -163,6 +180,7 @@ export function FileViewer({
             return () => disposers.forEach((d) => d());
           }}
         />
+        )}
       </div>
     </div>
   );

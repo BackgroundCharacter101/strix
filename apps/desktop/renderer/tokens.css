@@ -101,6 +101,7 @@
   --accent: var(--blue-600);
   --accent-hover: var(--blue-500);
   --selection: var(--blue-700);
+  --link: var(--blue-200);
 
   /* Status bar */
   --statusbar: var(--blue-400);
