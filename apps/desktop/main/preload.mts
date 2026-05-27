@@ -18,6 +18,7 @@ const api: StrixApi = {
   },
   git: {
     status: (rootPath) => ipcRenderer.invoke('git:status', rootPath),
+    fileHead: (filePath) => ipcRenderer.invoke('git:fileHead', filePath),
   },
   terminal: {
     create: (opts) => ipcRenderer.invoke('terminal:create', opts),

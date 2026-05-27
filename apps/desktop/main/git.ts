@@ -1,5 +1,6 @@
 import git from 'isomorphic-git';
 import * as fs from 'fs';
+import * as path from 'path';
 
 export interface GitFileChange {
   path: string;
@@ -36,5 +37,19 @@ export async function getGitStatus(dir: string): Promise<GitStatus> {
   } catch {
     // Not a git repository (or .git unreadable).
     return { isRepo: false, branch: null, files: [] };
+  }
+}
+
+// The committed (HEAD) content of a file, for diffing against the working copy.
+// Returns '' for untracked/new files or any error.
+export async function getFileHeadContent(filePath: string): Promise<string> {
+  try {
+    const root = await git.findRoot({ fs, filepath: path.dirname(filePath) });
+    const filepath = path.relative(root, filePath).replace(/\\/g, '/');
+    const oid = await git.resolveRef({ fs, dir: root, ref: 'HEAD' });
+    const { blob } = await git.readBlob({ fs, dir: root, oid, filepath });
+    return new TextDecoder().decode(blob);
+  } catch {
+    return '';
   }
 }

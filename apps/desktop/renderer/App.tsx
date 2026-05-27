@@ -7,12 +7,20 @@ import { Breadcrumbs, relativeSegments } from './src/Breadcrumbs';
 import { Palette, type PaletteItem } from './src/Palette';
 import { PromptDialog } from './src/PromptDialog';
 import { SearchView } from './src/SearchView';
+import { SourceControlView } from './src/SourceControlView';
+import { DiffView } from './src/DiffView';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
-import { FilesIcon, SearchIcon, SparkleIcon, TerminalIcon } from './src/icons';
+import {
+  FilesIcon,
+  SearchIcon,
+  SourceControlIcon,
+  SparkleIcon,
+  TerminalIcon,
+} from './src/icons';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -20,7 +28,10 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [sidebarView, setSidebarView] = useState<'explorer' | 'search'>('explorer');
+  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm'>('explorer');
+  const [diff, setDiff] = useState<{ path: string; original: string; modified: string } | null>(
+    null,
+  );
   const [palette, setPalette] = useState<null | 'files' | 'commands'>(null);
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
@@ -162,7 +173,7 @@ export default function App() {
   }, [tabs, openQuickFiles, openFile]);
 
   // Activity-bar view switch: re-clicking the active view hides the sidebar.
-  const selectView = (view: 'explorer' | 'search') => {
+  const selectView = (view: 'explorer' | 'search' | 'scm') => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
     } else {
@@ -171,12 +182,21 @@ export default function App() {
     }
   };
 
+  const openDiff = async (absPath: string) => {
+    const [original, modified] = await Promise.all([
+      window.strix.git.fileHead(absPath),
+      window.strix.fs.read(absPath).catch(() => ''),
+    ]);
+    setDiff({ path: absPath, original, modified });
+  };
+
   const commands: { id: string; label: string; detail: string; run: () => void }[] = [
     { id: 'workspace.openFile', label: 'File: Open File…', detail: 'Ctrl+O', run: () => void openFile() },
     { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
     { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
+    { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
@@ -220,6 +240,15 @@ export default function App() {
           </button>
           <button
             type="button"
+            aria-label="Source Control"
+            aria-pressed={showSidebar && sidebarView === 'scm'}
+            title="Source Control"
+            onClick={() => selectView('scm')}
+          >
+            <SourceControlIcon />
+          </button>
+          <button
+            type="button"
             aria-label="Toggle AI"
             aria-pressed={showAi}
             title="AI assistant"
@@ -242,9 +271,17 @@ export default function App() {
             {showSidebar && (
               <>
                 <aside className="sidebar" style={{ width: sidebar.size }}>
-                  <div className="sidebar-header">{sidebarView === 'search' ? 'Search' : 'Explorer'}</div>
+                  <div className="sidebar-header">
+                    {sidebarView === 'search'
+                      ? 'Search'
+                      : sidebarView === 'scm'
+                        ? 'Source Control'
+                        : 'Explorer'}
+                  </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={(p) => tabs.open(p)} />
+                  ) : sidebarView === 'scm' ? (
+                    <SourceControlView rootPath={root} onOpenDiff={(abs) => void openDiff(abs)} />
                   ) : root ? (
                     <FileTree
                       key={root}
@@ -260,17 +297,28 @@ export default function App() {
               </>
             )}
             <main className="editor-pane">
-              <EditorTabs tabs={tabs} />
-              {tabs.activePath && <Breadcrumbs rootPath={root} path={tabs.activePath} />}
-              <FileViewer
-                path={tabs.activePath}
-                buffer={tabs.active}
-                onCursorChange={setCursor}
-                onMarkersChange={setProblems}
-                onOpenFolder={openFolder}
-                onOpenFile={openFile}
-                onCloneRepo={() => setCloneOpen(true)}
-              />
+              {diff ? (
+                <DiffView
+                  path={diff.path}
+                  original={diff.original}
+                  modified={diff.modified}
+                  onClose={() => setDiff(null)}
+                />
+              ) : (
+                <>
+                  <EditorTabs tabs={tabs} />
+                  {tabs.activePath && <Breadcrumbs rootPath={root} path={tabs.activePath} />}
+                  <FileViewer
+                    path={tabs.activePath}
+                    buffer={tabs.active}
+                    onCursorChange={setCursor}
+                    onMarkersChange={setProblems}
+                    onOpenFolder={openFolder}
+                    onOpenFile={openFile}
+                    onCloneRepo={() => setCloneOpen(true)}
+                  />
+                </>
+              )}
             </main>
             {showAi && (
               <>

@@ -699,6 +699,85 @@ body {
   color: var(--c-yml);
 }
 
+/* ---- Source control view ------------------------------------------------ */
+.scm-summary {
+  padding: var(--space-1) var(--space-5) var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.scm-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scm-row {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--text-base);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scm-row:hover {
+  background: var(--bg-hover);
+}
+
+.scm-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scm-status {
+  margin-left: auto;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-sm);
+}
+
+.scm-modified {
+  color: var(--dirty);
+}
+.scm-added {
+  color: var(--c-sh);
+}
+.scm-deleted {
+  color: var(--danger);
+}
+
+/* ---- Diff view ---------------------------------------------------------- */
+.diff-view {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.diff-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.diff-title {
+  font-size: var(--text-sm);
+}
+
+.diff-host {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* ---- Editor ------------------------------------------------------------- */
 .file-viewer {
   flex: 1 1 auto;

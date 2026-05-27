@@ -7,7 +7,7 @@ import {
   renameEntry,
   removeEntry,
 } from './fs.js';
-import { getGitStatus } from './git.js';
+import { getGitStatus, getFileHeadContent } from './git.js';
 import {
   getRoot,
   openFolderDialog,
@@ -44,6 +44,7 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle('search:find', (_event, query: string) => searchInFiles(getRoot(), query));
   ipcMain.handle('git:status', (_event, rootPath: string) => getGitStatus(rootPath));
+  ipcMain.handle('git:fileHead', (_event, filePath: string) => getFileHeadContent(filePath));
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>

@@ -39,6 +39,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       status: vi.fn(
         async (): Promise<GitStatus> => ({ isRepo: false, branch: null, files: [] }),
       ),
+      fileHead: vi.fn(async (): Promise<string> => ''),
     },
     terminal: {
       create: vi.fn(async (): Promise<string> => 'term-1'),
