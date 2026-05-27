@@ -125,7 +125,30 @@ body {
 }
 
 .activity-bar button[aria-pressed='true'] {
-  color: var(--white);
+  color: var(--text);
+}
+
+.activity-bar button.activity-bottom {
+  margin-top: auto;
+  margin-bottom: 4px;
+}
+
+/* ---- Settings dialog ---------------------------------------------------- */
+.settings-dialog {
+  width: 460px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  font-size: var(--text-base);
+}
+
+.settings-row select,
+.settings-row input[type='number'] {
+  width: 120px;
 }
 
 /* VS Code-style left accent bar on the active item. */
@@ -136,7 +159,7 @@ body {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--white);
+  background: var(--accent);
 }
 
 .workbench {

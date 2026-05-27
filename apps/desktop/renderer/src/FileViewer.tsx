@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type * as Monaco from 'monaco-editor';
-import { CodeEditor, languageForPath } from '@strix/editor';
+import { CodeEditor, languageForPath, type EditorOptions } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
 import type { FileBuffer } from './useFileBuffer';
 import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
@@ -15,6 +15,7 @@ export function FileViewer({
   onOpenFolder,
   onOpenFile,
   onCloneRepo,
+  editorOptions,
 }: {
   path: string | null;
   buffer: FileBuffer | null;
@@ -23,6 +24,7 @@ export function FileViewer({
   onOpenFolder?: () => void;
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
+  editorOptions?: EditorOptions;
 }) {
   const [showPreview, setShowPreview] = useState(true);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
@@ -113,6 +115,7 @@ export function FileViewer({
         <CodeEditor
           value={buffer.draft}
           language={languageForPath(path)}
+          editorOptions={editorOptions}
           onChange={buffer.setDraft}
           onCursorChange={onCursorChange}
           onGenerate={(description, fileContent) =>

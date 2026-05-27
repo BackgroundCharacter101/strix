@@ -6,6 +6,13 @@ export interface CursorPosition {
   column: number;
 }
 
+export interface EditorOptions {
+  fontSize?: number;
+  tabSize?: number;
+  wordWrap?: boolean;
+  minimap?: boolean;
+}
+
 export interface CodeEditorProps {
   value: string;
   language?: string;
@@ -16,6 +23,8 @@ export interface CodeEditorProps {
   onGenerate?: (description: string, fileContent: string, language: string) => Promise<string>;
   /** Called once the editor mounts; return a cleanup run on dispose (e.g. LSP). */
   onEditorMount?: (...args: Parameters<OnMount>) => void | (() => void);
+  /** User-configurable editor options (font size, tab size, word wrap, minimap). */
+  editorOptions?: EditorOptions;
 }
 
 // Extract the description from a `# generate: ...` or `// generate: ...` line.
@@ -34,6 +43,7 @@ export function CodeEditor({
   onCursorChange,
   onGenerate,
   onEditorMount,
+  editorOptions,
 }: CodeEditorProps) {
   const handleMount: OnMount = (editor, monaco) => {
     editor.onDidChangeCursorPosition((e) =>
@@ -76,9 +86,12 @@ export function CodeEditor({
       language={language}
       options={{
         readOnly,
-        minimap: { enabled: false },
+        minimap: { enabled: editorOptions?.minimap ?? false },
         automaticLayout: true,
         inlineSuggest: { enabled: true },
+        fontSize: editorOptions?.fontSize ?? 13,
+        tabSize: editorOptions?.tabSize ?? 2,
+        wordWrap: editorOptions?.wordWrap ? 'on' : 'off',
       }}
       onChange={(next) => onChange?.(next ?? '')}
       onMount={handleMount}

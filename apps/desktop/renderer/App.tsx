@@ -9,6 +9,8 @@ import { PromptDialog } from './src/PromptDialog';
 import { SearchView } from './src/SearchView';
 import { SourceControlView } from './src/SourceControlView';
 import { DiffView } from './src/DiffView';
+import { SettingsDialog } from './src/SettingsDialog';
+import { useSettings } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
@@ -16,6 +18,7 @@ import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
 import {
   FilesIcon,
+  GearIcon,
   SearchIcon,
   SourceControlIcon,
   SparkleIcon,
@@ -36,6 +39,8 @@ export default function App() {
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settings, updateSettings] = useSettings();
   const [recents, setRecents] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('strix.recentFolders') ?? '[]') as string[];
@@ -199,6 +204,7 @@ export default function App() {
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
+    { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
     { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
     {
@@ -265,6 +271,15 @@ export default function App() {
           >
             <TerminalIcon />
           </button>
+          <button
+            type="button"
+            className="activity-bottom"
+            aria-label="Settings"
+            title="Settings"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <GearIcon />
+          </button>
         </nav>
         <div className="app-main">
           <div className="workbench">
@@ -316,6 +331,12 @@ export default function App() {
                     onOpenFolder={openFolder}
                     onOpenFile={openFile}
                     onCloneRepo={() => setCloneOpen(true)}
+                    editorOptions={{
+                      fontSize: settings.fontSize,
+                      tabSize: settings.tabSize,
+                      wordWrap: settings.wordWrap,
+                      minimap: settings.minimap,
+                    }}
                   />
                 </>
               )}
@@ -379,6 +400,13 @@ export default function App() {
           confirmLabel="Clone"
           onSubmit={(url) => void cloneRepo(url)}
           onCancel={() => setCloneOpen(false)}
+        />
+      )}
+      {settingsOpen && (
+        <SettingsDialog
+          settings={settings}
+          onChange={updateSettings}
+          onClose={() => setSettingsOpen(false)}
         />
       )}
     </div>
