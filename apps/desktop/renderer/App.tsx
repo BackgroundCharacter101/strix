@@ -5,6 +5,7 @@ import { FileViewer } from './src/FileViewer';
 import { EditorTabs } from './src/EditorTabs';
 import { Breadcrumbs, relativeSegments } from './src/Breadcrumbs';
 import { Palette, type PaletteItem } from './src/Palette';
+import { PromptDialog } from './src/PromptDialog';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
@@ -21,11 +22,22 @@ export default function App() {
   const [palette, setPalette] = useState<null | 'files' | 'commands'>(null);
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
+  const [cloneOpen, setCloneOpen] = useState(false);
   const tabs = useEditorTabs();
 
   const openFolder = useCallback(async () => {
     const dir = await window.strix.workspace.open();
     if (dir) setRoot(dir);
+  }, []);
+
+  const cloneRepo = useCallback(async (url: string) => {
+    setCloneOpen(false);
+    try {
+      const dir = await window.strix.workspace.clone(url);
+      if (dir) setRoot(dir);
+    } catch (e) {
+      window.alert(`Clone failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }, []);
 
   // Load and flatten the workspace tree into Quick Open entries.
@@ -93,6 +105,7 @@ export default function App() {
 
   const commands: { id: string; label: string; detail: string; run: () => void }[] = [
     { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
+    { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
     { id: 'view.explorer', label: 'View: Toggle Explorer', detail: 'Ctrl+B', run: () => setShowSidebar((v) => !v) },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
@@ -170,6 +183,7 @@ export default function App() {
                 onCursorChange={setCursor}
                 onMarkersChange={setProblems}
                 onOpenFolder={openFolder}
+                onCloneRepo={() => setCloneOpen(true)}
               />
             </main>
             {showAi && (
@@ -223,6 +237,14 @@ export default function App() {
             commands.find((c) => c.id === item.id)?.run();
           }}
           onClose={() => setPalette(null)}
+        />
+      )}
+      {cloneOpen && (
+        <PromptDialog
+          title="Clone repository (git URL)"
+          confirmLabel="Clone"
+          onSubmit={(url) => void cloneRepo(url)}
+          onCancel={() => setCloneOpen(false)}
         />
       )}
     </div>
