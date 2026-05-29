@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 // xterm can't render in jsdom; stub the Terminal component.
 vi.mock('./src/Terminal', () => ({ Terminal: () => <div aria-label="terminal" /> }));
 
@@ -105,6 +105,30 @@ describe('App', () => {
 
     fireEvent.keyDown(window, { key: 'b', ctrlKey: true });
     expect(await screen.findByText('ws')).toBeInTheDocument();
+  });
+
+  it('routes native menu commands to the matching action', async () => {
+    root.mockResolvedValue('/ws');
+    tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });
+    // Capture the menu-command callback the app registers on mount.
+    let fire: ((id: string) => void) | undefined;
+    const onCommand = vi.fn((cb: (id: string) => void) => {
+      fire = cb;
+      return () => {};
+    });
+    window.strix = makeStrixApi({
+      fs: { tree, read, write: vi.fn<[string, string], Promise<void>>() },
+      workspace: { root },
+      git: { status: gitStatus },
+      menu: { onCommand },
+    });
+
+    render(<App />);
+    expect(await screen.findByText('ws')).toBeInTheDocument();
+
+    // The menu's "Explorer" command toggles the (already-open) sidebar off.
+    act(() => fire?.('view.explorer'));
+    expect(screen.queryByText('ws')).not.toBeInTheDocument();
   });
 
   it('runs a command from the Ctrl+Shift+P palette', async () => {

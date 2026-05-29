@@ -62,6 +62,11 @@ export interface StrixSearchApi {
   find(query: string): Promise<SearchMatch[]>;
 }
 
+export interface StrixMenuApi {
+  // Subscribe to native-menu commands (id matches the command palette). Returns an unsubscribe.
+  onCommand(cb: (id: string) => void): () => void;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
@@ -71,4 +76,5 @@ export interface StrixApi {
   ai: StrixAiApi;
   collab: StrixCollabApi;
   search: StrixSearchApi;
+  menu: StrixMenuApi;
 }

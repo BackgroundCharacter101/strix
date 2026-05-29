@@ -3,6 +3,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { registerIpcHandlers } from './ipc.js';
 import { startAiServer, stopAiServer } from './aiServer.js';
+import { buildAppMenu } from './menu.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,6 +47,7 @@ function createWindow() {
         console.log('Electron window created, loading built renderer', BUILT_INDEX);
     }
     mainWindow.webContents.openDevTools({ mode: 'right' });
+    buildAppMenu(mainWindow);
 }
 
 app.whenReady().then(() => {

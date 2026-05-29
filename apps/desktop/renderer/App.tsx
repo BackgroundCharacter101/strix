@@ -11,6 +11,7 @@ import { SourceControlView } from './src/SourceControlView';
 import { DiffView } from './src/DiffView';
 import { SettingsDialog } from './src/SettingsDialog';
 import { LanguagesDialog } from './src/LanguagesDialog';
+import { AboutDialog } from './src/AboutDialog';
 import { useSettings } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
@@ -43,7 +44,10 @@ export default function App() {
   const [cloneOpen, setCloneOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [settings, updateSettings] = useSettings();
+  // Latest runCommand, so the menu subscription (mounted once) never goes stale.
+  const runCommandRef = useRef<(id: string) => void>(() => {});
   const [recents, setRecents] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem('strix.recentFolders') ?? '[]') as string[];
@@ -190,6 +194,10 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [tabs, openQuickFiles, openFile]);
 
+  // Native application menu → run the matching command (via a ref so this
+  // subscription is set up once but always calls the latest handler).
+  useEffect(() => window.strix.menu.onCommand((id) => runCommandRef.current(id)), []);
+
   // Activity-bar view switch: re-clicking the active view hides the sidebar.
   const selectView = (view: 'explorer' | 'search' | 'scm') => {
     if (showSidebar && sidebarView === view) {
@@ -218,7 +226,7 @@ export default function App() {
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
-    { id: 'lang.manage', label: 'Languages: Installed Servers…', detail: '', run: () => setLanguagesOpen(true) },
+    { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => setLanguagesOpen(true) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
     { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
     { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
@@ -233,6 +241,20 @@ export default function App() {
       .filter((p) => p !== root)
       .map((p) => ({ id: `recent:${p}`, label: `Open Recent: ${p}`, detail: '', run: () => setRoot(p) })),
   ];
+
+  // Run a command by id — shared by the command palette and the native menu.
+  const runCommand = (id: string) => {
+    if (id === 'view.commandPalette') {
+      setPalette('commands');
+      return;
+    }
+    if (id === 'help.about') {
+      setAboutOpen(true);
+      return;
+    }
+    commands.find((c) => c.id === id)?.run();
+  };
+  runCommandRef.current = runCommand;
 
   return (
     <div className="app">
@@ -430,6 +452,7 @@ export default function App() {
         />
       )}
       {languagesOpen && <LanguagesDialog onClose={() => setLanguagesOpen(false)} />}
+      {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
     </div>
   );
 }

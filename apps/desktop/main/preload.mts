@@ -58,6 +58,13 @@ const api: StrixApi = {
   search: {
     find: (query) => ipcRenderer.invoke('search:find', query),
   },
+  menu: {
+    onCommand: (cb) => {
+      const handler = (_event: unknown, id: string) => cb(id);
+      ipcRenderer.on('menu:command', handler);
+      return () => ipcRenderer.removeListener('menu:command', handler);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);

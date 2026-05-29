@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 143 tests / 36 files.**
+  **`npm test`** (vitest) — **all green: 144 tests / 36 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -117,6 +117,18 @@ Shift+Alt+F format · Ctrl+G generate-from-comment (in editor).
 **Workspace**: Open Folder, Open File, Clone-from-GitHub (welcome screen +
 palette), recent folders.
 
+**Native application menu** (`main/menu.ts`): the File/Edit/View/Go/Help bar is
+a real Electron menu. App-behaviour items push a `menu:command` IPC carrying a
+command id (same ids as the palette); App routes them through `runCommand(id)`
+via `window.strix.menu.onCommand`. Edit uses native roles (undo/copy/paste).
+Items whose shortcut the renderer keydown already owns use
+`registerAccelerator: false` (shows the shortcut, lets the keystroke reach the
+renderer — no double-fire). Settings owns Ctrl+, natively. **About Strix**
+dialog (`AboutDialog`) reachable from Help.
+
+**No marketplace — "Languages & Extensions"** is the extensions home
+(`LanguagesDialog`): native language servers, not downloadable plugins.
+
 ---
 
 ## 5. Architecture — full file structure (as built)
@@ -131,6 +143,7 @@ strix/ (folder: tabea)
 │   │   ├── preload.mts    → preload.mjs (ESM). contextBridge → window.strix.
 │   │   ├── bridge.ts        StrixApi TYPES (shared with renderer; no runtime).
 │   │   ├── ipc.ts           registerIpcHandlers — ALL channels live here.
+│   │   ├── menu.ts          native application menu → menu:command IPC
 │   │   ├── fs.ts            read/write/buildFileTree + create/rename/remove (file:*)
 │   │   ├── git.ts           getGitStatus + getFileHeadContent (isomorphic-git)
 │   │   ├── workspace.ts     mutable currentRoot; Open Folder/File dialogs; clone
@@ -203,6 +216,7 @@ strix/ (folder: tabea)
   `hasServer(command)` → bool
 - **ai:** `config()` → `{baseURL, apiKey}` (live from FreeLLMAPI) · `models()` → string[]
 - **collab:** `url()` → string|null (COLLAB_SERVER_URL)
+- **menu:** `onCommand(cb)` → unsubscribe (native menu → renderer command ids)
 
 > **When you add a bridge method:** update `bridge.ts` (type), `preload.mts`
 > (impl), `ipc.ts` (handler), AND `renderer/test-utils.ts` `makeStrixApi`

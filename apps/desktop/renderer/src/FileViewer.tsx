@@ -62,7 +62,7 @@ export function FileViewer({
             )}
             {onLanguages && (
               <button type="button" className="ai-ghost-btn" onClick={onLanguages}>
-                Languages…
+                Languages & Extensions…
               </button>
             )}
           </div>

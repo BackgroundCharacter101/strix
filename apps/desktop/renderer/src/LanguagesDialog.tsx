@@ -27,10 +27,12 @@ export function LanguagesDialog({ onClose }: { onClose: () => void }) {
   return (
     <div className="palette-overlay" onMouseDown={onClose}>
       <div className="dialog languages-dialog" onMouseDown={(e) => e.stopPropagation()}>
-        <h2 className="dialog-title">Languages</h2>
+        <h2 className="dialog-title">Languages &amp; Extensions</h2>
         <p className="languages-note">
-          Syntax highlighting is built in for all of these. For IntelliSense and
-          error-checking, install the language server (it just needs to be on your PATH).
+          Strix uses native language servers instead of a plugin marketplace (safer —
+          no third-party code is downloaded or executed). Syntax highlighting is built
+          in for all of these; for IntelliSense and error-checking, install the language
+          server below — it just needs to be on your PATH.
         </p>
         <ul className="languages-list" aria-label="languages">
           {LANGUAGES.map((lang) => {
