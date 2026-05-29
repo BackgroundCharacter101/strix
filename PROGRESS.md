@@ -223,6 +223,13 @@ strix/ (folder: tabea)
   adding a theme = edit `tokens.css` only.
 - **Light theme** is a `:root[data-theme='light']` block remapping the semantic
   surface/text/line tokens; `useSettings` sets `document.documentElement.dataset.theme`.
+- **Brand identity = Strix amber** (`--accent: #e8a33d`, "owl eyes in the dark").
+  Amber fills use **`--accent-ink`** (near-black) for legible text, NOT white.
+  The status bar is the signature amber stripe (`--statusbar` + `--statusbar-ink`).
+  Selected rows use a translucent amber **wash** (`--selection`) + an amber accent
+  bar, keeping light text legible. There's an **owl logo** (`OwlIcon` in icons.tsx)
+  in the title bar and on the welcome screen; the "Strix" wordmark is an amber
+  gradient. If you change the accent, also revisit `--accent-ink`/`--statusbar-ink`.
 
 ---
 

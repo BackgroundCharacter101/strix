@@ -6,6 +6,7 @@ import type { FileBuffer } from './useFileBuffer';
 import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
 import { MarkdownPreview } from './MarkdownPreview';
+import { OwlIcon } from './icons';
 
 export function FileViewer({
   path,
@@ -37,6 +38,9 @@ export function FileViewer({
   if (!path || !buffer) {
     return (
       <div className="empty-state welcome">
+        <div className="welcome-mark">
+          <OwlIcon size={72} />
+        </div>
         <div className="welcome-logo">Strix</div>
         <p className="welcome-tagline">AI-native code editor</p>
         {(onOpenFolder || onOpenFile || onCloneRepo) && (

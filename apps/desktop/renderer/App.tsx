@@ -20,6 +20,7 @@ import { useResizable } from './src/useResizable';
 import {
   FilesIcon,
   GearIcon,
+  OwlIcon,
   SearchIcon,
   SourceControlIcon,
   SparkleIcon,
@@ -236,7 +237,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="titlebar">
-        <span className="app-title">Strix IDE</span>
+        <span className="app-brand">
+          <OwlIcon size={18} />
+          <span className="app-title">Strix</span>
+        </span>
       </header>
       <div className="app-body">
         <nav className="activity-bar" aria-label="panels">

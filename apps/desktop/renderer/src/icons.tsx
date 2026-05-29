@@ -17,6 +17,30 @@ const base = (size: number) => ({
   'aria-hidden': true,
 });
 
+// The Strix mark — a stylized owl face (the genus Strix is a true owl).
+// Ear tufts, round eyes with amber pupils, and a beak. Inherits currentColor
+// for the outline; eyes use the accent so the "owl eyes in the dark" identity
+// reads even at small sizes.
+export function OwlIcon({ size = 22 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+      <g fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round" strokeLinecap="round">
+        {/* ear tufts */}
+        <path d="M6.5 6.5 5 3.5l3.2 1.6M17.5 6.5 19 3.5l-3.2 1.6" />
+        {/* head / body */}
+        <path d="M12 4.8c4 0 6.6 2.8 6.6 7.1 0 4.6-2.9 7.8-6.6 7.8s-6.6-3.2-6.6-7.8c0-4.3 2.6-7.1 6.6-7.1z" />
+        {/* beak */}
+        <path d="M12 12.4 10.9 14h2.2L12 12.4z" fill="currentColor" />
+      </g>
+      {/* eyes */}
+      <circle cx="9" cy="10.6" r="2.4" fill="none" stroke="currentColor" strokeWidth={1.4} />
+      <circle cx="15" cy="10.6" r="2.4" fill="none" stroke="currentColor" strokeWidth={1.4} />
+      <circle cx="9" cy="10.6" r="1" fill="var(--accent)" />
+      <circle cx="15" cy="10.6" r="1" fill="var(--accent)" />
+    </svg>
+  );
+}
+
 export function FilesIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

@@ -30,7 +30,12 @@
   --blue-300: #1f8ad2;
   --blue-200: #4db5ff;
 
+  /* Strix signature amber ("owl eyes in the dark") */
+  --amber-600: #c9802a;
+  --amber-500: #e8a33d;
+  --amber-400: #f4b860;
   --amber-300: #e2c08d;
+  --amber-ink: #231a07; /* near-black text for legibility on amber fills */
 
   /* File-type accents (badges) */
   --c-ts: #4db5ff;
@@ -102,15 +107,17 @@
   --text-muted: var(--gray-250);
   --icon-muted: var(--gray-300);
 
-  /* Brand / interactive */
-  --accent: var(--blue-600);
-  --accent-hover: var(--blue-500);
-  --selection: var(--blue-700);
-  --link: var(--blue-200);
+  /* Brand / interactive — Strix amber */
+  --accent: var(--amber-500);
+  --accent-hover: var(--amber-400);
+  --accent-ink: var(--amber-ink); /* text/icon colour on top of accent fills */
+  --selection: rgba(232, 163, 61, 0.22); /* translucent amber wash for selected rows */
+  --link: var(--amber-400);
 
-  /* Status bar */
-  --statusbar: var(--blue-400);
-  --statusbar-hover: var(--blue-300);
+  /* Status bar — the signature amber stripe */
+  --statusbar: var(--amber-500);
+  --statusbar-hover: var(--amber-400);
+  --statusbar-ink: var(--amber-ink);
 
   /* Feedback */
   --dirty: var(--amber-300);
@@ -149,11 +156,11 @@
   --text-muted: #6a6a6a;
   --icon-muted: #6a6a6a;
 
-  --selection: #cfe3fb;
+  --selection: rgba(232, 163, 61, 0.28); /* amber wash on light surfaces */
   --scrollbar: #c4c4c4;
   --scrollbar-hover: #b0b0b0;
   --overlay-subtle: rgba(0, 0, 0, 0.06);
   --scrim: rgba(0, 0, 0, 0.25);
   --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.25);
-  --link: #0a66c2;
+  --link: var(--amber-600); /* darker amber for contrast on white */
 }
