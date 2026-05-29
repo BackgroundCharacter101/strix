@@ -1,9 +1,9 @@
 # Strix IDE — Progress & Handoff
 
 > **Read this first when resuming in a new session.** It captures the current
-> state, architecture, how to run, key decisions/gotchas, and what's left.
-> **Keep it updated as work continues.**
-> Last updated: 2026-05-26
+> state, full file structure, how to run, key decisions/gotchas, and what's left.
+> **Keep it updated as work continues** (standing task — update with every change).
+> Last updated: 2026-05-27
 
 ---
 
@@ -11,18 +11,23 @@
 
 **Strix** — a custom, Zed-inspired desktop IDE (Electron + React + TypeScript +
 Monaco) with a self-hosted AI backbone (**FreeLLMAPI**). The project was
-formerly named **tabea**; the on-disk folder is still `C:\Users\kavee\Documents\GitHub\tabea`
-but the project/package scope is `strix` / `@strix/*`.
+formerly named **tabea**; the on-disk folder is still
+`C:\Users\kavee\Documents\GitHub\tabea` but the project/package scope is
+`strix` / `@strix/*`.
 
 - **Stack:** Electron 32, React 19, TypeScript 5 (strict), Vite 6, Monaco,
   xterm.js, node-pty, isomorphic-git, OpenAI SDK → FreeLLMAPI. Vitest, ESLint
   (flat) + typescript-eslint, npm workspaces, Turborepo.
 - **GitHub:** `https://github.com/BackgroundCharacter101/strix` (private).
-- **Source of truth for design:** `ARCHITECTURE.md` (repo root). Agent roles:
-  `AGENTS.md` + `.github/agents/strix-*.agent.md`.
+  **64 commits ahead of origin/main** — user pushes manually (assistant `gh`
+  isn't authed).
+- **Design source of truth:** `ARCHITECTURE.md`. Agent roles: `AGENTS.md` +
+  `.github/agents/strix-*.agent.md`.
 
-**Scope the user wants: SIMPLE — the 4 core components only** (file tree,
-code/editor, terminal, AI panel). Don't add VS-Code-scale complexity unasked.
+**Original scope was "the 4 core components" (file tree, editor, terminal, AI
+panel).** The user has since explicitly asked to grow it toward a "simple but VS
+Code-standard / top-tier" IDE with its own visual character. Still avoid
+gratuitous complexity, but feature growth is now wanted.
 
 ---
 
@@ -32,206 +37,208 @@ code/editor, terminal, AI panel). Don't add VS-Code-scale complexity unasked.
 cd "C:\Users\kavee\Documents\GitHub\tabea"
 npm --workspace @strix/desktop run start
 ```
-This builds main + renderer, opens the Electron window, **and auto-starts
-FreeLLMAPI on :3001**. For the AI panel to answer you must also add a provider
-key once: open http://localhost:3001 → **Keys** → paste a free key (Groq /
-Gemini / OpenRouter / …).
+Builds main + renderer, opens the Electron window, **and auto-starts FreeLLMAPI
+on :3001**. For the AI panel to answer you must add a provider key once: open
+http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRouter).
 
-Other entry points: `npm run dev` (Vite renderer hot-reload; set
-`STRIX_DEV_URL=http://localhost:3000` and run `start` in a 2nd terminal),
-`npm run ai:setup` (install+build FreeLLMAPI), `npm run ai:start` (server only).
+- A **main-process change** (anything in `apps/desktop/main/**`) needs a full
+  restart; a renderer-only change can be picked up with **Ctrl+R** if a dev
+  server is running, otherwise rebuild.
+- Other entry points: `npm run dev` (Vite hot-reload; set
+  `STRIX_DEV_URL=http://localhost:3000` + run `start` in a 2nd terminal),
+  `npm run ai:setup` (install+build FreeLLMAPI), `npm run ai:start` (server only),
+  `npm run collab:start` (Yjs websocket server for opt-in collaboration).
 
 ---
 
 ## 3. Quality gates & scripts (root `package.json`)
 
-- `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 143 tests / 36 files.**
-
-GUI polish (user wanted all, ALL DONE): [1] collapsible file tree + badges ✅;
-[2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅;
-[4] theming (scrollbars, font smoothing, transitions) ✅.
-VS Code makeover ✅: SVG activity-bar icons (48px + left accent bar), EXPLORER
-sidebar header, git branch moved to bottom-left status bar (with branch icon),
-rich right-side status items (Ln/Col · Spaces · UTF-8 · CRLF · language),
-clean title bar (git removed), VS Code-style welcome screen on empty editor.
-GUI pass 2 ✅: colour-coded file-type badges (tree + tabs, `fileKind()` →
-`data-ext` → CSS); AI panel redesign (uppercase header w/ sparkle, empty-state
-hint, chat bubbles restyled, primary Send + secondary file-action row,
-auto-scroll thread).
-Design-token system ✅: `renderer/tokens.css` (imported first in main.tsx) holds
-TWO layers — primitive palette/scales + semantic tokens (`--bg`, `--text`,
-`--accent`, `--space-*`, `--radius-*`, `--text-*`, file-type `--c-*`). `styles.css`
-consumes ONLY semantic tokens (no raw hex). Re-theming = edit tokens.css.
-GUI pass 3 ✅: status bar now shows REAL values — EOL (CRLF/LF) + indentation
-(Tabs / Spaces:N) detected from the active buffer (`StatusBar` gets `content`).
-Added `Breadcrumbs.tsx` (token-styled path bar above the editor, workspace-
-relative segments + file badge on the leaf).
-"Simple but VS Code standard" punch list ✅ (all 7):
-  1. File-type SVG glyphs (`icons.tsx` FileGlyph/FolderGlyph; shared `FileIcon`
-     in FileTree) across tree/tabs/breadcrumbs, tinted by `[data-ext]`.
-  2. Active-file highlight in Explorer (`FileTree` `activePath` → selected row).
-  3. Global keyboard shortcuts (App keydown): Ctrl+S save, Ctrl+B sidebar,
-     Ctrl+` terminal, Ctrl+W close tab, Ctrl+P quick open, Ctrl+Shift+P palette.
-  4. Quick Open — `Palette.tsx` reusable overlay (filter + arrow/enter/esc);
-     Ctrl+P flattens the tree into a fuzzy file finder.
-  5. Command Palette — same Palette, Ctrl+Shift+P, runs registered commands.
-  6. Problems indicator — `FileViewer` subscribes to Monaco `onDidChangeMarkers`,
-     reports error/warning counts up to `StatusBar` (bottom-left).
-  7. Explorer context menu + file ops — `ContextMenu.tsx` + `PromptDialog.tsx`
-     (Electron blocks window.prompt). NEW BRIDGE METHODS: `fs.create(path,type)`,
-     `fs.rename(from,to)`, `fs.remove(path)` (main `fs.ts`, ipc `file:create|rename|remove`,
-     preload, test-utils). Delete uses window.confirm. Tree reloads via `useFileTree.reload`.
-Workspace features batch ✅:
-  - Open Folder (`workspace.open`, mutable `main/workspace.ts` currentRoot) +
-    welcome button + cmd; FileTree keyed on `root` so it remounts on switch.
-  - Clone from GitHub (`workspace.clone` → isomorphic-git http/node shallow clone)
-    via URL PromptDialog; welcome + cmd. `repoNameFromUrl` is its own tested module.
-  - Open File (`workspace.openFile`) — Ctrl+O / welcome / cmd.
-  - Recent folders — localStorage `strix.recentFolders` (cap 8) → palette entries.
-  - Save All — `useEditorTabs.saveAll()` (writes all dirty buffers); Ctrl+K S chord + cmd.
-SECURITY: added a CSP meta tag in `renderer/index.html` (no 'unsafe-eval';
-  style 'unsafe-inline'; worker self+blob; connect self + :3001 + ws :1234) to
-  clear the Electron insecure-CSP warning. VERIFIED LIVE (editor renders, warning gone).
-Top-tier batch ✅:
-  - Fix: indentation detection picks most-common small (1-8) indent, not min.
-  - Find in Files: `main/search.ts` (walk+match, ignores/binary/caps), `search.find`
-    bridge; activity bar is now a VIEW SWITCHER (Explorer/Search/SCM); `SearchView`.
-  - Source Control view: `SourceControlView` lists git changes; click → read-only
-    diff vs HEAD via new `git.fileHead` bridge (isomorphic-git readBlob) + `DiffView`.
-  - Markdown preview: dependency-free `markdown.tsx` → React elements (no XSS;
-    js: links downgraded). `.md` files get a Preview/Edit toggle.
-  - Settings: `useSettings` (localStorage) + `SettingsDialog` (gear in activity bar):
-    theme (dark/light via `[data-theme]` token overrides), font size, tab size,
-    word wrap, minimap. Flow to Monaco via CodeEditor `editorOptions` prop.
-  - Format Document: Shift+Alt+F + command, via FileViewer `registerFormat` →
-    Monaco `editor.action.formatDocument`.
-NEW SHORTCUTS: Ctrl+O open file, Ctrl+Shift+F search, Ctrl+K S save-all,
-  Shift+Alt+F format. NEW BRIDGE: `search.find`, `git.fileHead`,
-  `workspace.open/openFile/clone`, `lsp.hasServer`.
-Multi-language support ✅ (decision: native registry, NOT a VS Code marketplace —
-  extensions need the VS Code API + are a security surface):
-  - Highlighting expanded in editor `languageForPath` (rust/go/java/kotlin/swift/
-    csharp/ruby/php/lua/r/sql/scala/dart/xml/toml→ini/etc. — Monaco bundles the grammars).
-  - LSP: `main/lsp.ts` adds rust (rust-analyzer) + go (gopls); `languageForLsp` maps .rs/.go.
-  - `main/commandExists.ts` (PATH/PATHEXT scan, tested) → `lsp.hasServer(cmd)` bridge.
-  - `renderer/src/languages.ts` registry + `LanguagesDialog` (the "extension list"):
-    lists languages, ✓installed/✗not-found per server, copyable install command.
-    Open via command palette (Languages: Installed Servers…) or welcome button.
-  - File badges/colours added for rs/go/java/rb/php.
-- `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
-- `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
-- **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)
-  runs the security scan on every commit. CI (`.github/workflows/ci.yml`) runs
-  security:ci + lint + typecheck + test.
-- **Always run lint+typecheck+test before committing.** Commit messages end with
-  the Co-Authored-By trailer.
+- **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
+  **`npm test`** (vitest) — **all green: 143 tests / 36 files.**
+  ALWAYS run all three before committing. After a renderer change also run
+  `npm -w @strix/desktop run build:renderer` so the built app reflects it.
+- `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
+- `npm run security` — secret scanner. `npm run security:ci` — adds critical dep audit.
+- **Pre-commit hook** (`.githooks/pre-commit`, wired via `prepare` →
+  `core.hooksPath`) runs the security scan on every commit. CI
+  (`.github/workflows/ci.yml`) runs security:ci + lint + typecheck + test.
+- Commit messages end with the `Co-Authored-By` trailer. Work on a branch only if
+  asked; current work has been committing straight to `main` (local).
 
 ---
 
-## 4. Architecture (current, as built)
+## 4. Feature inventory (what's built & where)
+
+**Workbench shell** (`App.tsx`): title bar · activity bar (view switcher) ·
+sidebar · editor pane · AI panel · terminal panel · status bar. Panels are
+resizable (`useResizable`) and individually toggleable.
+
+**Activity bar = view switcher** (left rail): Explorer / Search / Source Control
+(re-clicking the active one hides the sidebar), plus AI-panel & terminal toggles,
+and a Settings gear pinned at the bottom.
+
+**Explorer** (`FileTree`): collapsible tree, colour-coded file-type SVG glyphs,
+active-file highlight, right-click **context menu** (New File/Folder, Rename,
+Delete via `ContextMenu` + `PromptDialog`; delete confirms).
+
+**Editor** (`FileViewer` → `@strix/editor` Monaco): multi-file **tabs**
+(`EditorTabs`/`useEditorTabs`, per-tab dirty buffers), **breadcrumbs** bar,
+syntax highlighting for ~25 languages, inline AI autocomplete, Ctrl+G
+generate-from-comment, LSP diagnostics → Monaco markers, **Markdown preview**
+toggle for `.md`, **Format Document**.
+
+**Search** (`SearchView` → `search.find`): workspace-wide substring search,
+grouped by file, click to open. **Ctrl+Shift+F**.
+
+**Source Control** (`SourceControlView`): lists git changes (M/A/D); click →
+read-only **diff vs HEAD** (`DiffView` + `git.fileHead`).
+
+**AI panel** (`AiPanel` → `@strix/ai-gateway`): chat / explain / vuln-check /
+Fix / Refactor, model picker (default Auto), persistent history, streaming,
+diff-proposal apply (`CodeProposal`).
+
+**Terminal** (`TerminalTabs`/`Terminal`): xterm.js + node-pty, multiple sessions.
+
+**Command palette** (`Palette`, **Ctrl+Shift+P**) & **Quick Open** (Ctrl+P).
+
+**Settings** (`SettingsDialog`/`useSettings`, gear or palette): theme
+(dark/light), font size, tab size, word wrap, minimap — persisted to localStorage.
+
+**Languages panel** (`LanguagesDialog`/`languages.ts`): the "extension list"
+analog — lists supported languages, shows ✓installed / ✗not-found per language
+server (`lsp.hasServer`), with a copyable install command. **NOT a marketplace**
+(deliberate — see §8).
+
+**Keyboard shortcuts** (global, in `App.tsx`): Ctrl+S save · Ctrl+K S save-all ·
+Ctrl+B sidebar · Ctrl+` terminal · Ctrl+W close tab · Ctrl+P quick open ·
+Ctrl+Shift+P command palette · Ctrl+Shift+F search · Ctrl+O open file ·
+Shift+Alt+F format · Ctrl+G generate-from-comment (in editor).
+
+**Workspace**: Open Folder, Open File, Clone-from-GitHub (welcome screen +
+palette), recent folders.
+
+---
+
+## 5. Architecture — full file structure (as built)
 
 ```
 strix/ (folder: tabea)
 ├── apps/desktop/
-│   ├── main/            Electron main (Node, ESM). Compiles to dist/main.
-│   │   ├── index.ts       BrowserWindow; loads built renderer (or STRIX_DEV_URL);
-│   │   │                  preload.mjs; sandbox:false; auto-starts FreeLLMAPI.
-│   │   ├── preload.mts  → preload.mjs (ESM). contextBridge → window.strix.
-│   │   ├── bridge.ts      StrixApi TYPES (shared with renderer; no runtime).
-│   │   ├── ipc.ts         registerIpcHandlers — all channels.
-│   │   ├── fs.ts          read/write/buildFileTree (file:*)
-│   │   ├── git.ts         getGitStatus via isomorphic-git (findRoot → repo root)
-│   │   ├── terminal.ts    TerminalManager (node-pty, DI spawn)
-│   │   ├── lsp.ts         LspManager (child_process, JSON-RPC framing, DI spawn)
-│   │   └── aiServer.ts    spawn/stop vendored FreeLLMAPI
-│   └── renderer/        React 19 + Vite. base:'./' (file:// loads).
-│       ├── main.tsx       imports xterm css, styles.css, monaco-setup, App
-│       ├── App.tsx        IDE shell: titlebar · sidebar · editor · ai · terminal · statusbar
-│       ├── styles.css     dark theme
-│       ├── global.d.ts    window.strix: StrixApi  (from ../main/bridge)
-│       ├── test-utils.ts  makeStrixApi() — single source of truth for bridge mocks
+│   ├── main/              Electron main (Node, ESM) → compiles to dist/main
+│   │   ├── index.ts         BrowserWindow; preload.mjs; sandbox:false;
+│   │   │                    loads built renderer (or STRIX_DEV_URL); starts FreeLLMAPI;
+│   │   │                    opens DevTools on the right.
+│   │   ├── preload.mts    → preload.mjs (ESM). contextBridge → window.strix.
+│   │   ├── bridge.ts        StrixApi TYPES (shared with renderer; no runtime).
+│   │   ├── ipc.ts           registerIpcHandlers — ALL channels live here.
+│   │   ├── fs.ts            read/write/buildFileTree + create/rename/remove (file:*)
+│   │   ├── git.ts           getGitStatus + getFileHeadContent (isomorphic-git)
+│   │   ├── workspace.ts     mutable currentRoot; Open Folder/File dialogs; clone
+│   │   ├── search.ts        searchInFiles (workspace-wide, ignores/binary/caps)
+│   │   ├── commandExists.ts PATH/PATHEXT scan → is a language server installed?
+│   │   ├── repoName.ts      repoNameFromUrl (git URL → folder name; electron-free)
+│   │   ├── terminal.ts      TerminalManager (node-pty, DI spawn)
+│   │   ├── lsp.ts           LspManager (child_process, JSON-RPC framing, DI spawn)
+│   │   ├── aiServer.ts      spawn/stop vendored FreeLLMAPI
+│   │   └── *.test.ts        node-env vitest for fs/git/terminal/lsp/search/
+│   │                        commandExists/repoName/aiServer
+│   └── renderer/          React 19 + Vite (base:'./' for file:// loads)
+│       ├── main.tsx         imports xterm css, tokens.css, styles.css, monaco-setup, App
+│       ├── App.tsx          the workbench shell + all wiring (shortcuts, commands, dialogs)
+│       ├── tokens.css       DESIGN TOKENS (primitives + semantic + light theme). Edit here to re-skin.
+│       ├── styles.css       all component styles; consumes ONLY semantic tokens (no raw hex)
+│       ├── index.html       has the CSP meta tag (§8)
+│       ├── global.d.ts      window.strix: StrixApi (from ../main/bridge)
+│       ├── test-utils.ts    makeStrixApi() — SINGLE SOURCE OF TRUTH for bridge mocks
 │       └── src/
-│           ├── FileTree.tsx + useFileTree.ts        (file:tree)
-│           ├── FileViewer.tsx (presentational)      (Monaco via @strix/editor)
-│           ├── EditorTabs.tsx + useEditorTabs.ts    multi-file tabs, per-tab buffers
+│           ├── FileTree.tsx + useFileTree.ts       tree; exports fileBadge/fileKind/FileIcon
+│           ├── FileViewer.tsx                       editor host (presentational); markers→problems;
+│           │                                        markdown preview toggle; registerFormat
+│           ├── EditorTabs.tsx + useEditorTabs.ts    tabs + per-tab buffers + saveAll
 │           ├── useFileBuffer.ts / useFileContents.ts
-│           ├── AiPanel.tsx        chat/explain/vuln_check + model picker + history
-│           ├── GitStatusBar.tsx + useGitStatus.ts   (title bar: "main · N changed")
-│           ├── StatusBar.tsx      Ln/Col, language, dirty
+│           ├── Breadcrumbs.tsx                      path bar above editor (relativeSegments)
+│           ├── AiPanel.tsx                          chat/explain/vuln/Fix/Refactor + model picker
+│           ├── CodeProposal.tsx                     AI diff proposal apply/dismiss
+│           ├── SearchView.tsx                       Find in Files UI
+│           ├── SourceControlView.tsx + DiffView.tsx git changes list + diff-vs-HEAD
+│           ├── GitStatusBar.tsx + useGitStatus.ts   branch + change count (status bar, left)
+│           ├── StatusBar.tsx                        git · problems | Ln/Col · indent · enc · EOL · lang
 │           ├── Terminal.tsx + TerminalTabs.tsx      xterm (terminal:*)
-│           ├── monaco-setup.ts    self-hosted Monaco workers (loader.config)
-│           └── useResizable.ts    draggable panel dividers
+│           ├── Palette.tsx                          reusable overlay (Quick Open + Command Palette)
+│           ├── ContextMenu.tsx + PromptDialog.tsx   right-click menu + naming dialog
+│           ├── SettingsDialog.tsx + useSettings.ts  settings UI + persisted store
+│           ├── LanguagesDialog.tsx + languages.ts   "extension list" panel + language registry
+│           ├── MarkdownPreview.tsx + markdown.tsx   safe MD→React renderer (no innerHTML)
+│           ├── icons.tsx                            all inline SVG icons (Codicon-style)
+│           ├── lspClient.ts                         LSP client (handshake → Monaco markers); languageForLsp
+│           ├── autocomplete.ts                      Monaco inline-completions (AI ghost text)
+│           ├── collab.ts                            Yjs collaboration (opt-in, dynamic-imported)
+│           ├── monaco-setup.ts                      self-hosted Monaco workers (loader.config)
+│           └── useResizable.ts                      draggable panel dividers
 ├── packages/
-│   ├── ai-gateway/   @strix/ai-gateway — client(configureAi), tasks, context
-│   │                 (buildPrompt), stream(streamToPanel), status(StatusTracker),
+│   ├── ai-gateway/   @strix/ai-gateway — client(configureAi), tasks, context(buildPrompt),
+│   │                 stream(streamToPanel), status(StatusTracker),
 │   │                 request(runTask + model override + complete()), types(TaskType, ChatMessage)
-│   ├── editor/       @strix/editor — CodeEditor (wraps @monaco-editor/react),
-│   │                 languageForPath, exposes onCursorChange
-│   ├── terminal/ lsp/ collab/ ui/   (placeholders — logic lives in apps/desktop/main)
-├── freellmapi/      VENDORED FreeLLMAPI (own copy, not a submodule). Its
-│                    node_modules/dist/.env/*.db are gitignored.
+│   ├── editor/       @strix/editor — CodeEditor (wraps @monaco-editor/react), DiffViewer,
+│   │                 languageForPath (~25 langs), parseGenerateComment, EditorOptions
+│   └── terminal/ lsp/ collab/ ui/   placeholders — real logic lives in apps/desktop/main
+├── freellmapi/      VENDORED FreeLLMAPI (own copy, not a submodule);
+│                    node_modules/dist/.env/*.db are gitignored
 ├── scripts/         security-scan.mjs, ai-setup.mjs
 ├── .github/         workflows/ci.yml, agents/strix-*.agent.md
 └── ARCHITECTURE.md  AGENTS.md  PROGRESS.md(this)  package.json  tsconfig*.json
 ```
 
 ### The IPC bridge — `window.strix` (typed in `apps/desktop/main/bridge.ts`)
-- `fs.read(path)` · `fs.write(path, content)` · `fs.tree(root)` · `fs.create(path, 'file'|'directory')` · `fs.rename(from, to)` · `fs.remove(path)`
-- `workspace.root()` (mutable, in `main/workspace.ts`) · `workspace.open()` (folder picker) · `workspace.openFile()` (file picker) · `workspace.clone(url)` (isomorphic-git shallow clone)
-- `git.status(root)`  → `{ isRepo, branch, files[] }` · `git.fileHead(path)` → committed content (for diffs)
-- `search.find(query)` → `{ path, line, text }[]` (workspace-wide substring search)
-- `terminal.create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` · `onData(cb)` · `onExit(cb)`
-- `lsp.start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)`
-- `ai.config()` → `{ baseURL, apiKey }` (live from FreeLLMAPI) · `ai.models()` → string[]
+- **fs:** `read(path)` · `write(path, content)` · `tree(root)` ·
+  `create(path, 'file'|'directory')` · `rename(from, to)` · `remove(path)`
+- **workspace:** `root()` · `open()` (folder picker) · `openFile()` ·
+  `clone(url)` — root is mutable, lives in `main/workspace.ts`
+- **git:** `status(root)` → `{isRepo, branch, files[]}` · `fileHead(path)` →
+  committed content (for diffs)
+- **search:** `find(query)` → `{path, line, text}[]`
+- **terminal:** `create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` ·
+  `onData(cb)` · `onExit(cb)`
+- **lsp:** `start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)` ·
+  `hasServer(command)` → bool
+- **ai:** `config()` → `{baseURL, apiKey}` (live from FreeLLMAPI) · `models()` → string[]
+- **collab:** `url()` → string|null (COLLAB_SERVER_URL)
 
-**When you add a bridge method:** update `bridge.ts` (type), `preload.mts`
-(impl), `ipc.ts` (handler), and `renderer/test-utils.ts` `makeStrixApi`
-(default), or every renderer test fails typecheck.
+> **When you add a bridge method:** update `bridge.ts` (type), `preload.mts`
+> (impl), `ipc.ts` (handler), AND `renderer/test-utils.ts` `makeStrixApi`
+> (default) — or every renderer test fails typecheck. Put pure logic in its own
+> electron-free module (like `search.ts`/`commandExists.ts`/`repoName.ts`) so it's
+> unit-testable without spawning Electron.
 
 ---
 
-## 5. FreeLLMAPI (the AI backbone)
+## 6. Design system (tokens) — how to restyle
 
-- **It is a router/proxy, NOT a model.** It exposes one OpenAI-compatible
-  endpoint (`:3001/v1`) and forwards to ~14 free-tier providers (Gemini, Groq,
-  Cerebras, Mistral, OpenRouter, …) with automatic failover. The "AI" = whatever
-  provider it routes to. `model: 'auto'` uses its fallback chain (this IS the
-  "auto-switch when tokens run out" behavior — built in, not ours).
-- **Vendored** at `freellmapi/` (we own it; was briefly a submodule). Run
-  `npm run ai:setup` after a fresh clone to install+build+generate its `.env` key.
-- **Auto-started** by `apps/desktop/main/aiServer.ts` (spawns `node
+- `renderer/tokens.css` is imported **before** `styles.css` in `main.tsx`. Two layers:
+  1. **Primitives** — raw palette (`--gray-900`, `--blue-600`, file-type `--c-ts`…)
+     + scales (`--space-*`, `--radius-*`, `--text-*`, `--weight-*`, `--ease`).
+  2. **Semantic** — intent tokens (`--bg`, `--bg-elevated`, `--text`, `--accent`,
+     `--border`, `--dirty`, `--danger`, `--scrim`, `--shadow-modal`, …).
+- `styles.css` references **only semantic tokens** (no raw hex). Re-theming or
+  adding a theme = edit `tokens.css` only.
+- **Light theme** is a `:root[data-theme='light']` block remapping the semantic
+  surface/text/line tokens; `useSettings` sets `document.documentElement.dataset.theme`.
+
+---
+
+## 7. FreeLLMAPI (the AI backbone)
+
+- **It is a router/proxy, NOT a model.** One OpenAI-compatible endpoint
+  (`:3001/v1`) forwarding to ~14 free-tier providers (Gemini, Groq, Cerebras,
+  Mistral, OpenRouter, …) with automatic failover. `model: 'auto'` uses its
+  fallback chain — this IS the "auto-switch when tokens run out" behaviour.
+- **Vendored** at `freellmapi/`. Run `npm run ai:setup` after a fresh clone to
+  install+build+generate its `.env` key.
+- **Auto-started** by `apps/desktop/main/aiServer.ts` (`node
   freellmapi/server/dist/index.js`). Disable with `STRIX_NO_AI_SERVER=1`.
-- **Unified key:** stored in its SQLite DB; fetch live via
-  `GET :3001/api/settings/api-key`. The renderer gets it through `ai.config()`
-  (no `.env` copying). Auth check is in `freellmapi/server/src/routes/proxy.ts`.
-
----
-
-## 6. Build phases (ARCHITECTURE §10) status
-
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | Monorepo, tooling, CI | ✅ |
-| 2 | Editor, file tree, tabs, open/save, syntax | ✅ |
-| 3 | FreeLLMAPI deployed (locally, no Pi) | ✅ (provider keys = user) |
-| 4 | AI gateway + all §8 editor features | ✅ chat (§8.2), explain (§8.3), vuln (§8.7), autocomplete (§8.1), Fix/Refactor diff (§8.4/§8.6), generate-from-comment (§8.5), model picker, persistent context |
-| 5 | Terminal + LSP | ✅ terminal; LSP backend + **renderer diagnostics** (lightweight LspClient → Monaco markers, §6.5). Hover/go-to-def not done; needs a language server installed to see live |
-| 6 | Yjs collaboration | ✅ opt-in (`collab.ts`; COLLAB_SERVER_URL + `npm run collab:start`) |
-| 7 | Hex viewer / CTF / vuln linter | ⛔ not started |
-| 8 | Packaging / installers | ⛔ not started |
-
----
-
-## 7. Security gate
-
-- `scripts/security-scan.mjs` (dependency-free): blocks commits with leaked
-  secrets (private keys, AWS/GitHub/OpenAI/FreeLLMAPI keys, hardcoded creds) or a
-  committed `.env`. Suppresses obvious doc placeholders. Runs via pre-commit + CI.
-- `npm audit`: gate on **critical** (CI hard-fails). Known: **1 high (Electron
-  32)** + DOMPurify moderates — transitive, not yet upgraded.
-- Deep on-demand review: `.github/agents/strix-security-auditor.agent.md` (focus:
-  IPC surface, path traversal, command injection, CSP). Use `/security-review`.
+- **Unified key** lives in its SQLite DB; renderer fetches it live via
+  `ai.config()` → `GET :3001/api/settings/api-key` (no `.env` copying). Auth
+  check is in `freellmapi/server/src/routes/proxy.ts`.
 
 ---
 
@@ -239,75 +246,90 @@ strix/ (folder: tabea)
 
 1. **Sandbox vs real machine:** the assistant's shell runs in a sandbox where the
    **project dir is shared** with the user's machine, but **global installs
-   (npm -g) and `AppData` are NOT.** The user runs the GUI; assistant verifies
-   builds/tests. Can't launch Electron/GUI from assistant tools.
+   (npm -g) and `AppData` are NOT.** The user runs the GUI; the assistant verifies
+   via builds/tests. Cannot launch Electron/GUI from assistant tools — user sends
+   screenshots.
 2. **Electron preload must be ESM `.mjs`** (`preload.mts` → `preload.mjs`) with
    `sandbox:false`; a `.js` ESM preload throws "Cannot use import statement".
-3. **Vite build must run via npm script** (`cd renderer && vite build`), NOT
-   `npx vite` from the subdir — npm-exec relocates cwd to the package root and
-   Vite can't find `index.html`. Also `vite.config.ts` uses `import.meta.url`
-   (ESM), not `__dirname`, and `base:'./'` so built assets load over `file://`.
-4. **Monaco** is self-hosted (`monaco-setup.ts` wires workers via Vite `?worker`
-   + `loader.config({monaco})`); the CDN default fails under `file://`. The
-   editor also needs real width (FileViewer is in a `flex:1` column).
-5. **git status** uses `git.findRoot` so it works when launched from a subdir.
-6. **LF→CRLF git warnings on Windows are benign.**
-7. **Bundle is ~4 MB** (full Monaco) — functional; code-split later.
-8. **27 commits ahead of origin/main** as of last update — user pushes manually
-   (assistant's `gh` isn't authed; user authed on their machine).
+3. **Vite build must run via npm script** (`build:renderer`), not `npx vite` from
+   the subdir. `vite.config.ts` uses `import.meta.url` (ESM) + `base:'./'` so
+   assets load over `file://`.
+4. **Monaco is self-hosted** (`monaco-setup.ts` wires workers via Vite `?worker` +
+   `loader.config({monaco})`); the CDN default fails under `file://`. Editor needs
+   real width (FileViewer is in a `flex:1` column). Monaco **bundles grammars** for
+   ~50 languages — adding highlighting = just map the extension in `languageForPath`.
+5. **CSP** is set via a meta tag in `index.html` — deliberately **no
+   'unsafe-eval'** (cleared the Electron insecure-CSP warning, verified live). If
+   the editor ever renders blank, widen `script-src` or remove the tag to diagnose.
+6. **No VS Code-style extension marketplace** (decided): VS Code extensions need
+   the VS Code API to run and downloading/executing third-party code is a security
+   surface that conflicts with the "vulnerability-proof" mandate. Strix uses a
+   native language **registry** + the Languages panel instead.
+7. **Markdown preview** renders to **React elements, never `dangerouslySetInnerHTML`**;
+   dangerous link targets (`javascript:`) are downgraded to text. No XSS surface.
+8. **git status/diff** use `git.findRoot` so they work from a subdirectory.
+9. **LF→CRLF git warnings on Windows are benign.**
+10. **Windows LSP spawn** needs `shell: true` to resolve `.cmd/.exe` shims
+    (typescript-language-server, pylsp).
+11. **Bundle is ~4 MB** (full Monaco) — functional; code-split later.
+12. **64 commits ahead of origin/main** (local) — user pushes manually.
 
 ---
 
-## 9. Open items / next candidates
+## 9. Build phases (ARCHITECTURE §10) status
 
-- **AI:** user adds provider key(s) at :3001 for real answers (auth is fixed).
-- **LSP diagnostics DONE** (`renderer/src/lspClient.ts` → Monaco markers via
-  FileViewer `onEditorMount`). To see squiggles live: install a server (e.g.
-  `pip install python-lsp-server`) and open a matching file. Hover / go-to-def
-  / code actions are still TODO (would extend LspClient).
-- **Phase 4 is DONE** (all §8 AI editor features). They need a provider key +
-  live window to see real output. Files: `AiPanel.tsx` (chat/explain/vuln,
-  model picker, context), `autocomplete.ts` (§8.1), `CodeProposal.tsx` +
-  editor `DiffViewer` (§8.4/§8.6), editor `parseGenerateComment` + Ctrl+G
-  action wired in `FileViewer` (§8.5).
-- **Next phases:** 7 (cybersec panels: hex viewer / CTF / vuln linter),
-  8 (packaging/installers). LSP hover/go-to-def still TODO. Collab is opt-in
-  & needs `npm run collab:start` + COLLAB_SERVER_URL + 2 clients to verify.
-- **Hardening:** add Content-Security-Policy; upgrade Electron (1 high CVE) &
-  DOMPurify; consider proxying AI through main to keep the key out of the bundle.
-- **Phase 8 (packaging):** electron-builder → installable .exe (would need `node`
-  bundled or `ELECTRON_RUN_AS_NODE` for the FreeLLMAPI auto-start).
-- **Phase 6 collab / Phase 7 cybersec** if desired.
-- **Push to GitHub** to sync.
+| Phase | Scope | Status |
+|---|---|---|
+| 1 | Monorepo, tooling, CI | ✅ |
+| 2 | Editor, file tree, tabs, open/save, syntax | ✅ |
+| 3 | FreeLLMAPI deployed locally | ✅ (user adds provider key) |
+| 4 | AI gateway + all §8 editor features | ✅ chat/explain/vuln/autocomplete/Fix/Refactor/generate/model-picker/context |
+| 5 | Terminal + LSP | ✅ terminal; LSP diagnostics (Py/TS/JS/C/C++/Bash/Rust/Go). Hover/go-to-def TODO |
+| 6 | Yjs collaboration | ✅ opt-in (`collab.ts`; COLLAB_SERVER_URL + `npm run collab:start`) |
+| 7 | Hex viewer / CTF / vuln linter | ⛔ not started |
+| 8 | Packaging / installers | ⛔ not started |
 
 ---
 
-## 10. Recent commit trail (newest first)
+## 10. Open items / next candidates
 
-- **Design tokens layer** (2026-05-26): new `apps/desktop/renderer/tokens.css`
-  defines a two-tier system — raw palette primitives (`--gray-900`, `--blue-600`,
-  `--c-ts`, …, spacing/radius/type scales) feeding semantic tokens (`--bg`,
-  `--accent`, `--dirty`, `--text-muted`, …). `main.tsx` imports it before
-  `styles.css`; `styles.css` no longer defines its own `:root` and consumes
-  ONLY semantic tokens (zero raw hex). Re-theming = edit `tokens.css` only.
-- Phase 6 Yjs collaboration (§6.6, opt-in): `collab.ts` (connectCollab via
-  dynamic-imported yjs/y-websocket/y-monaco + awareness), `window.strix.collab.url`
-  (COLLAB_SERVER_URL), FileViewer wiring, `collab:start` script
-- `ccd7198` Fix LSP spawn on Windows (shell:true → resolves .cmd/.exe shims
-  like typescript-language-server / pylsp). Servers are installed on the host
-  (pip python-lsp-server + npm -g typescript-language-server).
-- Phase 5 LSP diagnostics (§6.5): `lspClient.ts` (handshake + diagnostics→
-  Monaco markers) wired via FileViewer `onEditorMount`
-- Phase 4 generate-from-comment (§8.5): editor `parseGenerateComment` + Ctrl+G
-- Phase 4 Fix/Refactor diff proposals (§8.4/§8.6): editor `DiffViewer`,
-  `CodeProposal`, AiPanel Fix/Refactor → apply to active buffer
-- Phase 4 inline autocomplete (§8.1): ai-gateway `complete()` + Monaco
-  inline-completions provider (`renderer/src/autocomplete.ts`)
-- `459aa1b` Add PROGRESS.md handoff doc
-- `2a6896b` AI panel: live auth, manual model picker, persistent context
-- `cac5ee5` Auto-start vendored FreeLLMAPI from Strix
-- `...` Vendor FreeLLMAPI; security gate; LSP; resizable panels; status bar;
-  multi-file tabs; GUI shell; Monaco self-host; preload ESM fix; build fixes;
-  git status; xterm UI; terminal bridge; ai-gateway; rename tabea→strix; initial.
+- **AI:** user adds provider key(s) at :3001 for real answers (auth is wired).
+- **LSP:** diagnostics done for 8 languages; **hover / go-to-definition / code
+  actions** still TODO (would extend `lspClient.ts`). Live IntelliSense needs the
+  matching server installed (Languages panel shows which).
+- **Source Control:** view is read-only; an integrated **commit box** (stage +
+  commit message) would be the next SCM step.
+- **Editor:** split editors / side-by-side; breadcrumb dropdown navigation.
+- **Hardening:** upgrade Electron (1 high CVE) & DOMPurify; consider proxying AI
+  through main to keep the key out of the renderer bundle.
+- **Phase 7** (cybersec panels: hex viewer / CTF / vuln linter), **Phase 8**
+  (electron-builder installer — needs `node` bundled or `ELECTRON_RUN_AS_NODE`
+  for the FreeLLMAPI auto-start).
+- **Push to GitHub** to sync (64 commits ahead).
+
+---
+
+## 11. Recent commit trail (newest first)
+
+- `4718fda` Multi-language support — native registry + Languages panel
+  (rust-analyzer/gopls LSP, ~25-lang highlighting, `lsp.hasServer`, `commandExists`)
+- `cfcb0b5` Format Document (Shift+Alt+F) + finalize settings batch
+- `b8d677f` Settings (theme dark/light, font/tab/wrap/minimap; light theme tokens)
+- `66d7e86` Markdown preview (safe MD→React renderer)
+- `acf216d` Source Control view with diff vs HEAD (`git.fileHead`)
+- `b71a77f` Find in Files + activity-bar view switcher (`search.find`, SearchView)
+- `1373216` Fix: indentation detection no longer reports silly values
+- `3fe9e1c` Security: add Content-Security-Policy (no unsafe-eval)
+- `eb534a4` Save All (Ctrl+K S) · `c56d943` Recent folders · `0f2f7de` Open File
+- `374cd5c` Clone from GitHub · Open Folder (mutable workspace root)
+- GUI batches: VS Code makeover, design-token system, colour badges + AI panel
+  redesign, file-type SVG glyphs, active-file highlight, keyboard shortcuts,
+  Quick Open, Command Palette, Problems indicator, Explorer context menu + file ops
+- Earlier: Phase 6 Yjs collab; Phase 5 LSP diagnostics; Phase 4 AI editor features
+  (autocomplete, Fix/Refactor diff, generate-from-comment); PROGRESS.md;
+  AI live-auth + model picker + context; auto-start FreeLLMAPI; vendor FreeLLMAPI;
+  security gate; resizable panels; status bar; multi-file tabs; GUI shell;
+  Monaco self-host; preload ESM fix; git status; xterm UI; terminal bridge;
+  ai-gateway; rename tabea→strix; initial scaffold.
 
 *(Run `git log --oneline` for the full list.)*
