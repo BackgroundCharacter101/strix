@@ -42,6 +42,11 @@
   --c-py: #7fc2e8;
   --c-sh: #8fd45a;
   --c-yml: #c98a8a;
+  --c-rs: #e08a4b;
+  --c-go: #4dc4e6;
+  --c-java: #e0734b;
+  --c-rb: #e0556b;
+  --c-php: #8a8ad0;
 
   /* ---- Spacing scale (4px base) ----------------------------------------- */
   --space-0: 0;

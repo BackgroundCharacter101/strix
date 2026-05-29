@@ -18,6 +18,7 @@ import { BrowserWindow } from 'electron';
 import { searchInFiles } from './search.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
+import { commandExists } from './commandExists.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
@@ -73,6 +74,7 @@ export function registerIpcHandlers(): void {
     (_event, { id, message }: { id: string; message: JsonRpcMessage }) => lsp.send(id, message),
   );
   ipcMain.on('lsp:stop', (_event, { id }: { id: string }) => lsp.stop(id));
+  ipcMain.handle('lsp:hasServer', (_event, command: string) => commandExists(command));
 
   // --- AI: bridge the renderer to the local FreeLLMAPI server ---
   const aiPort = process.env.FREELLMAPI_PORT ?? '3001';

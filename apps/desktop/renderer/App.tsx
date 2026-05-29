@@ -10,6 +10,7 @@ import { SearchView } from './src/SearchView';
 import { SourceControlView } from './src/SourceControlView';
 import { DiffView } from './src/DiffView';
 import { SettingsDialog } from './src/SettingsDialog';
+import { LanguagesDialog } from './src/LanguagesDialog';
 import { useSettings } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
@@ -40,6 +41,7 @@ export default function App() {
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [cloneOpen, setCloneOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [languagesOpen, setLanguagesOpen] = useState(false);
   const [settings, updateSettings] = useSettings();
   const [recents, setRecents] = useState<string[]>(() => {
     try {
@@ -215,6 +217,7 @@ export default function App() {
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
+    { id: 'lang.manage', label: 'Languages: Installed Servers…', detail: '', run: () => setLanguagesOpen(true) },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
     { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
     { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
@@ -342,6 +345,7 @@ export default function App() {
                     onOpenFolder={openFolder}
                     onOpenFile={openFile}
                     onCloneRepo={() => setCloneOpen(true)}
+                    onLanguages={() => setLanguagesOpen(true)}
                     editorOptions={{
                       fontSize: settings.fontSize,
                       tabSize: settings.tabSize,
@@ -421,6 +425,7 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
+      {languagesOpen && <LanguagesDialog onClose={() => setLanguagesOpen(false)} />}
     </div>
   );
 }

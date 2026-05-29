@@ -15,6 +15,7 @@ export function FileViewer({
   onOpenFolder,
   onOpenFile,
   onCloneRepo,
+  onLanguages,
   editorOptions,
   registerFormat,
 }: {
@@ -25,6 +26,7 @@ export function FileViewer({
   onOpenFolder?: () => void;
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
+  onLanguages?: () => void;
   editorOptions?: EditorOptions;
   // Hands a "format the document" callback up to App (null on unmount).
   registerFormat?: (run: (() => void) | null) => void;
@@ -52,6 +54,11 @@ export function FileViewer({
             {onOpenFile && (
               <button type="button" className="ai-ghost-btn" onClick={onOpenFile}>
                 Open File…
+              </button>
+            )}
+            {onLanguages && (
+              <button type="button" className="ai-ghost-btn" onClick={onLanguages}>
+                Languages…
               </button>
             )}
           </div>

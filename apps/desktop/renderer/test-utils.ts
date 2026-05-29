@@ -54,6 +54,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       send: vi.fn(),
       stop: vi.fn(),
       onMessage: vi.fn(() => () => {}),
+      hasServer: vi.fn(async (): Promise<boolean> => false),
     },
     ai: {
       config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'test-key' })),

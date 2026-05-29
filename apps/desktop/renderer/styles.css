@@ -151,6 +151,82 @@ body {
   width: 120px;
 }
 
+/* ---- Languages dialog --------------------------------------------------- */
+.languages-dialog {
+  width: 560px;
+}
+
+.languages-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.languages-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.languages-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.languages-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.languages-label {
+  font-weight: var(--weight-medium);
+}
+
+.languages-ext {
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.languages-status {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.languages-status.is-ok {
+  color: var(--c-sh);
+}
+
+.languages-status.is-missing {
+  color: var(--dirty);
+}
+
+.languages-install {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.languages-install code {
+  flex: 1 1 auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--overlay-subtle);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 /* VS Code-style left accent bar on the active item. */
 .activity-bar button[aria-pressed='true']::before {
   content: '';
@@ -720,6 +796,21 @@ body {
 }
 [data-ext='yml'] {
   color: var(--c-yml);
+}
+[data-ext='rs'] {
+  color: var(--c-rs);
+}
+[data-ext='go'] {
+  color: var(--c-go);
+}
+[data-ext='java'] {
+  color: var(--c-java);
+}
+[data-ext='rb'] {
+  color: var(--c-rb);
+}
+[data-ext='php'] {
+  color: var(--c-php);
 }
 
 /* ---- Source control view ------------------------------------------------ */

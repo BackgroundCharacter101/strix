@@ -45,6 +45,8 @@ export interface StrixLspApi {
   send(id: string, message: JsonRpcMessage): void;
   stop(id: string): void;
   onMessage(cb: (e: { id: string; message: JsonRpcMessage }) => void): () => void;
+  // Whether a language-server command is installed on PATH.
+  hasServer(command: string): Promise<boolean>;
 }
 
 export interface StrixAiApi {

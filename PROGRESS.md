@@ -46,7 +46,7 @@ Other entry points: `npm run dev` (Vite renderer hot-reload; set
 ## 3. Quality gates & scripts (root `package.json`)
 
 - `npm run lint` · `npm run typecheck` (`tsc --build`) · `npm test` (vitest) —
-  **all green: 139 tests / 34 files.**
+  **all green: 143 tests / 36 files.**
 
 GUI polish (user wanted all, ALL DONE): [1] collapsible file tree + badges ✅;
 [2] editor-tab polish ✅; [3] IDE chrome (activity bar/panel toggles) ✅;
@@ -108,7 +108,17 @@ Top-tier batch ✅:
     Monaco `editor.action.formatDocument`.
 NEW SHORTCUTS: Ctrl+O open file, Ctrl+Shift+F search, Ctrl+K S save-all,
   Shift+Alt+F format. NEW BRIDGE: `search.find`, `git.fileHead`,
-  `workspace.open/openFile/clone`.
+  `workspace.open/openFile/clone`, `lsp.hasServer`.
+Multi-language support ✅ (decision: native registry, NOT a VS Code marketplace —
+  extensions need the VS Code API + are a security surface):
+  - Highlighting expanded in editor `languageForPath` (rust/go/java/kotlin/swift/
+    csharp/ruby/php/lua/r/sql/scala/dart/xml/toml→ini/etc. — Monaco bundles the grammars).
+  - LSP: `main/lsp.ts` adds rust (rust-analyzer) + go (gopls); `languageForLsp` maps .rs/.go.
+  - `main/commandExists.ts` (PATH/PATHEXT scan, tested) → `lsp.hasServer(cmd)` bridge.
+  - `renderer/src/languages.ts` registry + `LanguagesDialog` (the "extension list"):
+    lists languages, ✓installed/✗not-found per server, copyable install command.
+    Open via command palette (Languages: Installed Servers…) or welcome button.
+  - File badges/colours added for rs/go/java/rb/php.
 - `npm run watch` — `tsc --build --watch` (live type errors). `npm run test:watch`.
 - `npm run security` — secret scanner (see §7). `security:ci` adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, via `prepare` → `core.hooksPath`)

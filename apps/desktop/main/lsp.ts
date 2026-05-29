@@ -1,6 +1,14 @@
 import { spawn as nodeSpawn } from 'node:child_process';
 
-export type Language = 'python' | 'typescript' | 'javascript' | 'c' | 'cpp' | 'bash';
+export type Language =
+  | 'python'
+  | 'typescript'
+  | 'javascript'
+  | 'c'
+  | 'cpp'
+  | 'bash'
+  | 'rust'
+  | 'go';
 
 export type JsonRpcMessage = Record<string, unknown>;
 
@@ -17,6 +25,8 @@ const SERVERS: Record<Language, ServerSpec> = {
   c: { command: 'clangd', args: [] },
   cpp: { command: 'clangd', args: [] },
   bash: { command: 'bash-language-server', args: ['start'] },
+  rust: { command: 'rust-analyzer', args: [] },
+  go: { command: 'gopls', args: [] },
 };
 
 // Minimal surface the manager needs from a child process — lets tests inject

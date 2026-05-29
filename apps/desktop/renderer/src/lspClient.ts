@@ -55,6 +55,8 @@ export function languageForLsp(path: string): Language | null {
     hpp: 'cpp',
     sh: 'bash',
     bash: 'bash',
+    rs: 'rust',
+    go: 'go',
   };
   return map[ext] ?? null;
 }

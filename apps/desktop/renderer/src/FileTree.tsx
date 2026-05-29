@@ -41,6 +41,11 @@ export function fileBadge(name: string): string {
     py: 'PY',
     sh: 'SH',
     yml: 'YML',
+    rs: 'RS',
+    go: 'GO',
+    java: 'JV',
+    rb: 'RB',
+    php: 'PHP',
   };
   return map[fileKind(name)] ?? '·';
 }
