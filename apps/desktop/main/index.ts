@@ -19,6 +19,9 @@ function createWindow() {
     const mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
+        // Frameless: Strix draws its own title bar (see renderer TitleBar).
+        frame: false,
+        backgroundColor: '#1e1e1e',
         webPreferences: {
             preload: path.join(__dirname, 'preload.mjs'),
             contextIsolation: true,
@@ -48,6 +51,11 @@ function createWindow() {
     }
     mainWindow.webContents.openDevTools({ mode: 'right' });
     buildAppMenu(mainWindow);
+
+    // Tell the renderer's custom title bar when the maximize state changes.
+    const sendMax = () => mainWindow.webContents.send('win:maximized', mainWindow.isMaximized());
+    mainWindow.on('maximize', sendMax);
+    mainWindow.on('unmaximize', sendMax);
 }
 
 app.whenReady().then(() => {

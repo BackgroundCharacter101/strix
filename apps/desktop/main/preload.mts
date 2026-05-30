@@ -67,6 +67,18 @@ const api: StrixApi = {
       return () => ipcRenderer.removeListener('menu:command', handler);
     },
   },
+  win: {
+    minimize: () => ipcRenderer.send('win:minimize'),
+    toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),
+    close: () => ipcRenderer.send('win:close'),
+    isMaximized: () => ipcRenderer.invoke('win:isMaximized'),
+    onMaximizeChange: (cb) => {
+      const handler = (_event: unknown, maximized: boolean) => cb(maximized);
+      ipcRenderer.on('win:maximized', handler);
+      return () => ipcRenderer.removeListener('win:maximized', handler);
+    },
+    popupMenu: (label, x, y) => ipcRenderer.send('win:popupMenu', { label, x, y }),
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);

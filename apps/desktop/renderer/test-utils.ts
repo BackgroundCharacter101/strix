@@ -13,6 +13,7 @@ interface StrixApiOverrides {
   collab?: Partial<StrixApi['collab']>;
   search?: Partial<StrixApi['search']>;
   menu?: Partial<StrixApi['menu']>;
+  win?: Partial<StrixApi['win']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -72,6 +73,14 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     menu: {
       onCommand: vi.fn(() => () => {}),
     },
+    win: {
+      minimize: vi.fn(),
+      toggleMaximize: vi.fn(),
+      close: vi.fn(),
+      isMaximized: vi.fn(async (): Promise<boolean> => false),
+      onMaximizeChange: vi.fn(() => () => {}),
+      popupMenu: vi.fn(),
+    },
   };
 
   return {
@@ -84,5 +93,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     collab: { ...base.collab, ...overrides.collab },
     search: { ...base.search, ...overrides.search },
     menu: { ...base.menu, ...overrides.menu },
+    win: { ...base.win, ...overrides.win },
   };
 }

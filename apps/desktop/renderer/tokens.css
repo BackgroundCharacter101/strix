@@ -123,6 +123,7 @@
   --dirty: var(--amber-300);
   --danger: #e85c5c;
   --danger-bg: #6e2222;
+  --close-hover: #c4322b;
 
   /* Scrollbars */
   --scrollbar: var(--gray-500);

@@ -67,23 +67,77 @@ body {
 
 .titlebar {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 14px;
-  height: 38px;
+  align-items: stretch;
+  height: 34px;
   background: var(--bg-titlebar);
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
+  /* The whole bar is draggable; interactive children opt out below. */
+  -webkit-app-region: drag;
 }
 
 .app-brand {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+  padding: 0 12px;
 }
 
 .app-brand svg {
   color: var(--accent);
+}
+
+/* Menu bar inside the title bar (frameless window). */
+.titlebar-menus {
+  display: flex;
+  align-items: stretch;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-menu {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.titlebar-menu:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.titlebar-drag {
+  flex: 1 1 auto;
+}
+
+.titlebar-controls {
+  display: flex;
+  align-items: stretch;
+  -webkit-app-region: no-drag;
+}
+
+.win-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.win-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.win-close:hover {
+  background: var(--close-hover);
+  color: var(--white);
 }
 
 .app-title {

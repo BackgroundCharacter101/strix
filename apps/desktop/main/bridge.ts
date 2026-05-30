@@ -71,6 +71,17 @@ export interface StrixMenuApi {
   onCommand(cb: (id: string) => void): () => void;
 }
 
+// Window controls for the custom (frameless) title bar.
+export interface StrixWindowApi {
+  minimize(): void;
+  toggleMaximize(): void;
+  close(): void;
+  isMaximized(): Promise<boolean>;
+  onMaximizeChange(cb: (maximized: boolean) => void): () => void;
+  // Pop a top-level application menu (by label) at the given screen-relative point.
+  popupMenu(label: string, x: number, y: number): void;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
@@ -81,4 +92,5 @@ export interface StrixApi {
   collab: StrixCollabApi;
   search: StrixSearchApi;
   menu: StrixMenuApi;
+  win: StrixWindowApi;
 }

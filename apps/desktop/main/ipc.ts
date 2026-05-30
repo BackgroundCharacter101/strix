@@ -16,6 +16,7 @@ import {
 } from './workspace.js';
 import { BrowserWindow } from 'electron';
 import { searchInFiles } from './search.js';
+import { popupMenu } from './menu.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
@@ -45,6 +46,22 @@ export function registerIpcHandlers(): void {
     cloneRepo(BrowserWindow.fromWebContents(event.sender), url),
   );
   ipcMain.handle('search:find', (_event, query: string) => searchInFiles(getRoot(), query));
+
+  // --- Custom title bar: window controls + menu popups ---
+  const winOf = (event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent) =>
+    BrowserWindow.fromWebContents(event.sender);
+  ipcMain.on('win:minimize', (event) => winOf(event)?.minimize());
+  ipcMain.on('win:toggleMaximize', (event) => {
+    const w = winOf(event);
+    if (w?.isMaximized()) w.unmaximize();
+    else w?.maximize();
+  });
+  ipcMain.on('win:close', (event) => winOf(event)?.close());
+  ipcMain.handle('win:isMaximized', (event) => winOf(event)?.isMaximized() ?? false);
+  ipcMain.on('win:popupMenu', (event, { label, x, y }: { label: string; x: number; y: number }) => {
+    const w = winOf(event);
+    if (w) popupMenu(w, label, x, y);
+  });
   ipcMain.handle('git:status', (_event, rootPath: string) => getGitStatus(rootPath));
   ipcMain.handle('git:fileHead', (_event, filePath: string) => getFileHeadContent(filePath));
 

@@ -5,6 +5,18 @@ import {
   type MenuItemConstructorOptions,
 } from 'electron';
 
+// The built application menu, kept so the custom (frameless) title bar can pop
+// individual top-level submenus by label.
+let appMenu: Menu | null = null;
+
+// The top-level menu labels, in order — the renderer title bar renders these.
+export const MENU_LABELS = ['File', 'Edit', 'View', 'Go', 'Help'] as const;
+
+export function popupMenu(win: BrowserWindow, label: string, x: number, y: number): void {
+  const item = appMenu?.items.find((i) => i.label === label);
+  item?.submenu?.popup({ window: win, x: Math.round(x), y: Math.round(y) });
+}
+
 // Build the native application menu (the File / Edit / View / … bar). Items that
 // trigger app behaviour send a `menu:command` IPC with a command id the renderer
 // already knows (same ids as the command palette). Edit uses native roles so
@@ -91,7 +103,7 @@ export function buildAppMenu(win: BrowserWindow): void {
       submenu: [cmd('Format Document', 'editor.format', 'Shift+Alt+F')],
     },
     {
-      role: 'help',
+      label: 'Help',
       submenu: [
         { label: 'About Strix', click: send('help.about') },
         {
@@ -102,5 +114,8 @@ export function buildAppMenu(win: BrowserWindow): void {
     },
   ];
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  appMenu = Menu.buildFromTemplate(template);
+  // Keep it as the application menu so accelerators stay registered app-wide,
+  // even though the frameless window renders its own title bar.
+  Menu.setApplicationMenu(appMenu);
 }

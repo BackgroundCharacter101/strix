@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 147 tests / 37 files.**
+  **`npm test`** (vitest) — **all green: 149 tests / 38 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -69,9 +69,15 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 
 ## 4. Feature inventory (what's built & where)
 
-**Workbench shell** (`App.tsx`): title bar · activity bar (view switcher) ·
+**Workbench shell** (`App.tsx`): custom title bar · activity bar (view switcher) ·
 sidebar · editor pane · AI panel · terminal panel · status bar. Panels are
 resizable (`useResizable`) and individually toggleable.
+
+**Custom frameless title bar** (`TitleBar.tsx`): the window is `frame:false`;
+Strix draws its own bar — owl brand, File/Edit/View/Go/Help menu buttons that
+pop the native submenus (`win.popupMenu` → main `popupMenu`), a draggable region
+(`-webkit-app-region`), and min/maximize/close window controls (`win.*` bridge).
+Toasts: `toast.ts` store + `Toaster` (mounted in App) for non-blocking messages.
 
 **Activity bar = view switcher** (left rail): Explorer / Search / Source Control /
 **Extensions** (re-clicking the active one hides the sidebar), plus AI-panel &

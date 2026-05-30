@@ -13,6 +13,7 @@ import { DiffView } from './src/DiffView';
 import { SettingsDialog } from './src/SettingsDialog';
 import { AboutDialog } from './src/AboutDialog';
 import { Toaster } from './src/Toaster';
+import { TitleBar } from './src/TitleBar';
 import { showToast } from './src/toast';
 import { useSettings } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
@@ -24,7 +25,6 @@ import {
   ExtensionsIcon,
   FilesIcon,
   GearIcon,
-  OwlIcon,
   SearchIcon,
   SourceControlIcon,
   SparkleIcon,
@@ -278,12 +278,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="titlebar">
-        <span className="app-brand">
-          <OwlIcon size={18} />
-          <span className="app-title">Strix</span>
-        </span>
-      </header>
+      <TitleBar />
       <div className="app-body">
         <nav className="activity-bar" aria-label="panels">
           <button

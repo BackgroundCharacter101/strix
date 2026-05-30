@@ -108,6 +108,41 @@ export function GearIcon({ size = 20 }: IconProps) {
   );
 }
 
+// --- Window controls (title bar) ---
+export function WinMinIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+      <line x1="1" y1="5" x2="9" y2="5" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+export function WinMaxIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+      <rect x="1.5" y="1.5" width="7" height="7" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+export function WinRestoreIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+      <rect x="1.5" y="3" width="5.5" height="5.5" stroke="currentColor" strokeWidth="1" />
+      <path d="M3.5 3V1.5H8.5V6.5H7" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+export function WinCloseIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+      <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" stroke="currentColor" strokeWidth="1" />
+      <line x1="8.5" y1="1.5" x2="1.5" y2="8.5" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
 export function GitBranchIcon({ size = 14 }: IconProps) {
   return (
     <svg {...base(size)}>
