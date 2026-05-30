@@ -149,6 +149,10 @@ export function FileViewer({
           <MarkdownPreview content={buffer.draft} />
         ) : (
         <CodeEditor
+          // Key by path so switching files mounts a fresh editor (fixes the
+          // editor sticking on the previous file) and re-runs onEditorMount so
+          // LSP / the selection toolbar attach to the current file's model.
+          key={path}
           value={buffer.draft}
           language={languageForPath(path)}
           editorOptions={editorOptions}
