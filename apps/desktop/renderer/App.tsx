@@ -12,6 +12,8 @@ import { ExtensionsView } from './src/ExtensionsView';
 import { DiffView } from './src/DiffView';
 import { SettingsDialog } from './src/SettingsDialog';
 import { AboutDialog } from './src/AboutDialog';
+import { Toaster } from './src/Toaster';
+import { showToast } from './src/toast';
 import { useSettings } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
@@ -78,11 +80,15 @@ export default function App() {
 
   const cloneRepo = useCallback(async (url: string) => {
     setCloneOpen(false);
+    showToast('Cloning repository…', 'info');
     try {
       const dir = await window.strix.workspace.clone(url);
-      if (dir) setRoot(dir);
+      if (dir) {
+        setRoot(dir);
+        showToast('Repository cloned', 'success');
+      }
     } catch (e) {
-      window.alert(`Clone failed: ${e instanceof Error ? e.message : String(e)}`);
+      showToast(`Clone failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 8000);
     }
   }, []);
 
@@ -481,6 +487,7 @@ export default function App() {
         />
       )}
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      <Toaster />
     </div>
   );
 }

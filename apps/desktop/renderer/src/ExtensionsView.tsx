@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { LANGUAGES } from './languages';
+import { showToast } from './toast';
 
 type State = 'checking' | 'installed' | 'missing' | 'installing' | 'failed';
 
@@ -32,6 +33,12 @@ export function ExtensionsView() {
     // A successful install command means the server is available (it may need a
     // fresh shell to appear on PATH, so trust the exit code).
     setState((s) => ({ ...s, [id]: res.ok ? 'installed' : 'failed' }));
+    const label = LANGUAGES.find((l) => l.id === id)?.label ?? id;
+    showToast(
+      res.ok ? `${label} language server installed` : `${label} install failed`,
+      res.ok ? 'success' : 'error',
+      res.ok ? 4000 : 8000,
+    );
   };
 
   return (
