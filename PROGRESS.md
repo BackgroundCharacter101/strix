@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 151 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 156 tests / 38 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -121,7 +121,13 @@ opens in the workspace root. **Claude Code launcher** — a "✦ Claude Code" bu
 missing). It edits files on disk → changes appear live in the editor. This runs
 the REAL Anthropic CLI; Strix does not bundle or re-implement it.
 
-**Command palette** (`Palette`, **Ctrl+Shift+P**) & **Quick Open** (Ctrl+P).
+**Command palette** (`Palette`, **Ctrl+Shift+P**) & **Quick Open** (Ctrl+P) —
+fuzzy match + highlight + recently-used first (`strix.recentCommands`).
+
+**Zen mode** (Ctrl+K Z / Esc / command / menu): hides all chrome for
+distraction-free editing. **Toasts** (`toast.ts` + `Toaster`) for non-blocking
+notifications. Overlays/dialogs/menus have fade+pop animations
+(respects prefers-reduced-motion).
 
 **Settings** (`SettingsPage`/`useSettings`, gear / Ctrl+, / palette): a full
 editor-area page (sectioned, searchable, Reset) — theme, font size, font family,
