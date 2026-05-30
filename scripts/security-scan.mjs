@@ -20,14 +20,8 @@ const SECRET_RULES = [
   },
 ];
 
-// Files/dirs excluded from secret scanning (own ruleset, lockfiles with hashes,
-// and the security-scanner's own tests which contain fake-secret fixtures).
-const SCAN_SKIP = [
-  /^package-lock\.json$/,
-  /^scripts\/security-scan\.mjs$/,
-  /securityScan\.test\.ts$/,
-  /\.(png|jpg|jpeg|gif|ico|woff2?|webp)$/i,
-];
+// Files/dirs excluded from secret scanning (own ruleset, lockfiles with hashes).
+const SCAN_SKIP = [/^package-lock\.json$/, /^scripts\/security-scan\.mjs$/, /\.(png|jpg|jpeg|gif|ico|woff2?|webp)$/i];
 
 // Obvious placeholders/examples — not real secrets (used to suppress false
 // positives from the generic "Hardcoded credential" rule in docs/samples).

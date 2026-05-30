@@ -90,15 +90,6 @@ export function ExtensionsIcon({ size = 20 }: IconProps) {
   );
 }
 
-export function ShieldIcon({ size = 20 }: IconProps) {
-  return (
-    <svg {...base(size)}>
-      <path d="M12 3l7 3v5c0 4.4-3 8-7 10-4-2-7-5.6-7-10V6l7-3z" />
-      <path d="M9 12l2 2 4-4" />
-    </svg>
-  );
-}
-
 export function TerminalIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

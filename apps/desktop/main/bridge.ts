@@ -1,7 +1,6 @@
 import type { FileNode } from './fs';
 import type { GitStatus } from './git';
 import type { SearchMatch } from './search';
-import type { SecurityFinding } from './securityScan';
 import type { TerminalCreateOptions } from './terminal';
 import type { Language, JsonRpcMessage } from './lsp';
 
@@ -75,10 +74,6 @@ export interface StrixSearchApi {
   find(query: string): Promise<SearchMatch[]>;
 }
 
-export interface StrixSecurityApi {
-  scan(): Promise<SecurityFinding[]>;
-}
-
 export interface StrixMenuApi {
   // Subscribe to native-menu commands (id matches the command palette). Returns an unsubscribe.
   onCommand(cb: (id: string) => void): () => void;
@@ -104,7 +99,6 @@ export interface StrixApi {
   ai: StrixAiApi;
   collab: StrixCollabApi;
   search: StrixSearchApi;
-  security: StrixSecurityApi;
   menu: StrixMenuApi;
   win: StrixWindowApi;
 }

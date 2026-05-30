@@ -66,9 +66,6 @@ const api: StrixApi = {
   search: {
     find: (query) => ipcRenderer.invoke('search:find', query),
   },
-  security: {
-    scan: () => ipcRenderer.invoke('security:scan'),
-  },
   menu: {
     onCommand: (cb) => {
       const handler = (_event: unknown, id: string) => cb(id);

@@ -24,7 +24,6 @@ import {
 } from './workspace.js';
 import { BrowserWindow } from 'electron';
 import { searchInFiles } from './search.js';
-import { scanWorkspace } from './securityScan.js';
 import { popupMenu } from './menu.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
@@ -56,7 +55,6 @@ export function registerIpcHandlers(): void {
     cloneRepo(BrowserWindow.fromWebContents(event.sender), url),
   );
   ipcMain.handle('search:find', (_event, query: string) => searchInFiles(getRoot(), query));
-  ipcMain.handle('security:scan', () => scanWorkspace(getRoot()));
 
   // --- Custom title bar: window controls + menu popups ---
   const winOf = (event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent) =>

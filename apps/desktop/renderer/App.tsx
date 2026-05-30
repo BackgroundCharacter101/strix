@@ -9,7 +9,6 @@ import { PromptDialog } from './src/PromptDialog';
 import { SearchView } from './src/SearchView';
 import { SourceControlView } from './src/SourceControlView';
 import { ExtensionsView } from './src/ExtensionsView';
-import { SecurityView } from './src/SecurityView';
 import { DiffView } from './src/DiffView';
 import { SettingsPage } from './src/SettingsPage';
 import { AboutDialog } from './src/AboutDialog';
@@ -30,7 +29,6 @@ import {
   FilesIcon,
   GearIcon,
   SearchIcon,
-  ShieldIcon,
   SourceControlIcon,
   SparkleIcon,
   TerminalIcon,
@@ -42,9 +40,9 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [sidebarView, setSidebarView] = useState<
-    'explorer' | 'search' | 'scm' | 'extensions' | 'security'
-  >('explorer');
+  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm' | 'extensions'>(
+    'explorer',
+  );
   const [diff, setDiff] = useState<{ path: string; original: string; modified: string } | null>(
     null,
   );
@@ -240,7 +238,7 @@ export default function App() {
   useEffect(() => window.strix.menu.onCommand((id) => runCommandRef.current(id)), []);
 
   // Activity-bar view switch: re-clicking the active view hides the sidebar.
-  const selectView = (view: 'explorer' | 'search' | 'scm' | 'extensions' | 'security') => {
+  const selectView = (view: 'explorer' | 'search' | 'scm' | 'extensions') => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
     } else {
@@ -293,7 +291,6 @@ export default function App() {
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
-    { id: 'view.security', label: 'View: Security Scan', detail: '', run: () => selectView('security') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     {
@@ -405,15 +402,6 @@ export default function App() {
           </button>
           <button
             type="button"
-            aria-label="Security"
-            aria-pressed={showSidebar && sidebarView === 'security'}
-            title="Security scan"
-            onClick={() => selectView('security')}
-          >
-            <ShieldIcon />
-          </button>
-          <button
-            type="button"
             aria-label="Toggle AI"
             aria-pressed={showAi}
             title="AI assistant"
@@ -453,9 +441,7 @@ export default function App() {
                         ? 'Source Control'
                         : sidebarView === 'extensions'
                           ? 'Languages & Extensions'
-                          : sidebarView === 'security'
-                            ? 'Security'
-                            : 'Explorer'}
+                          : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={(p) => tabs.open(p)} />
@@ -463,8 +449,6 @@ export default function App() {
                     <SourceControlView rootPath={root} onOpenDiff={(abs) => void openDiff(abs)} />
                   ) : sidebarView === 'extensions' ? (
                     <ExtensionsView />
-                  ) : sidebarView === 'security' ? (
-                    <SecurityView rootPath={root} onOpen={(abs) => tabs.open(abs)} />
                   ) : root ? (
                     <FileTree
                       key={root}
