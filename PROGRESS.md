@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 164 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 165 tests / 38 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -93,6 +93,12 @@ Currently installable: Python, TS/JS, Rust, Go, Ruby, PHP, Bash; C/C++ manual.
 **Explorer** (`FileTree`): collapsible tree, colour-coded file-type SVG glyphs,
 active-file highlight, right-click **context menu** (New File/Folder, Rename,
 Delete via `ContextMenu` + `PromptDialog`; delete confirms).
+
+**Split editors** (`Ctrl+\` / View menu / command): two independent editor
+groups side by side (App keeps `tabs` + `tabsB`, `split`, `activeGroup`;
+`activeTabs` = focused group). Clicking a group focuses it; new opens / save /
+status bar / AI panel follow the focused group. `renderGroup()` in App. The
+CodeEditor is keyed by `path` (fixes stale content + LSP per file).
 
 **Editor** (`FileViewer` → `@strix/editor` Monaco): multi-file **tabs**
 (`EditorTabs`/`useEditorTabs`, per-tab dirty buffers), **breadcrumbs** bar,

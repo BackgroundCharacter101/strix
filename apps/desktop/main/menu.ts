@@ -85,6 +85,7 @@ export function buildAppMenu(win: BrowserWindow): void {
         { type: 'separator' },
         cmd('Toggle Terminal', 'view.terminal', 'CmdOrCtrl+`'),
         cmd('Toggle AI Assistant', 'view.ai'),
+        cmd('Split Editor', 'view.split', 'CmdOrCtrl+\\'),
         cmd('Toggle Zen Mode', 'view.zen', 'CmdOrCtrl+K Z'),
         cmd('Start Claude Code', 'terminal.claude'),
         { type: 'separator' },

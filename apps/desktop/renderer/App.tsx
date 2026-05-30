@@ -79,6 +79,12 @@ export default function App() {
     }
   });
   const tabs = useEditorTabs();
+  const tabsB = useEditorTabs();
+  const [split, setSplit] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<'a' | 'b'>('a');
+  // The group that receives new file-opens / save / close, and feeds the AI
+  // panel + status bar.
+  const activeTabs = split && activeGroup === 'b' ? tabsB : tabs;
   const chordRef = useRef(false);
   const formatRef = useRef<(() => void) | null>(null);
   const zenRef = useRef(false);
@@ -94,8 +100,19 @@ export default function App() {
 
   const openFile = useCallback(async () => {
     const filePath = await window.strix.workspace.openFile();
-    if (filePath) tabs.open(filePath);
-  }, [tabs]);
+    if (filePath) activeTabs.open(filePath);
+  }, [activeTabs]);
+
+  const toggleSplit = () => {
+    if (split) {
+      setSplit(false);
+      setActiveGroup('a');
+    } else {
+      setSplit(true);
+      if (tabs.activePath) tabsB.open(tabs.activePath);
+      setActiveGroup('b');
+    }
+  };
 
   const cloneRepo = useCallback(async (url: string) => {
     setCloneOpen(false);
@@ -172,6 +189,7 @@ export default function App() {
         if (e.key.toLowerCase() === 's') {
           e.preventDefault();
           void tabs.saveAll();
+          void tabsB.saveAll();
           return;
         }
         if (e.key.toLowerCase() === 'z') {
@@ -192,7 +210,7 @@ export default function App() {
       switch (e.key.toLowerCase()) {
         case 's':
           e.preventDefault();
-          void tabs.active?.save();
+          void activeTabs.active?.save();
           break;
         case 'b':
           e.preventDefault();
@@ -203,10 +221,14 @@ export default function App() {
           setShowTerminal((v) => !v);
           break;
         case 'w':
-          if (tabs.activePath) {
+          if (activeTabs.activePath) {
             e.preventDefault();
-            tabs.close(tabs.activePath);
+            activeTabs.close(activeTabs.activePath);
           }
+          break;
+        case '\\':
+          e.preventDefault();
+          toggleSplit();
           break;
         case 'p':
           e.preventDefault();
@@ -267,7 +289,7 @@ export default function App() {
 
   // Hand a question (+ the active file's path) off to a Claude Code session.
   const askClaude = (text: string) => {
-    const rel = tabs.activePath ? relativeSegments(root, tabs.activePath).join('/') : '';
+    const rel = activeTabs.activePath ? relativeSegments(root, activeTabs.activePath).join('/') : '';
     const q = text.trim();
     let prompt: string;
     if (rel && q) prompt = `In ${rel}: ${q}`;
@@ -302,14 +324,23 @@ export default function App() {
     { id: 'view.zen', label: 'View: Toggle Zen Mode', detail: 'Ctrl+K Z', run: toggleZen },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
     { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
-    { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
-    { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
+    { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void activeTabs.active?.save() },
+    {
+      id: 'file.saveAll',
+      label: 'File: Save All',
+      detail: 'Ctrl+K S',
+      run: () => {
+        void tabs.saveAll();
+        void tabsB.saveAll();
+      },
+    },
+    { id: 'view.split', label: 'View: Split Editor', detail: 'Ctrl+\\', run: toggleSplit },
     { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
     {
       id: 'view.closeEditor',
       label: 'View: Close Editor',
       detail: 'Ctrl+W',
-      run: () => tabs.activePath && tabs.close(tabs.activePath),
+      run: () => activeTabs.activePath && activeTabs.close(activeTabs.activePath),
     },
     { id: 'file.quickOpen', label: 'Go to File…', detail: 'Ctrl+P', run: () => void openQuickFiles() },
     ...recents
@@ -355,6 +386,44 @@ export default function App() {
     commands.find((c) => c.id === id)?.run();
   };
   runCommandRef.current = runCommand;
+
+  const editorOptions = {
+    fontSize: settings.fontSize,
+    tabSize: settings.tabSize,
+    wordWrap: settings.wordWrap,
+    minimap: settings.minimap,
+    fontFamily: settings.fontFamily || undefined,
+    lineNumbers: settings.lineNumbers,
+    cursorStyle: settings.cursorStyle,
+    renderWhitespace: settings.renderWhitespace,
+  };
+
+  // One editor group (tabs + breadcrumbs + editor). With split active there are
+  // two; clicking a group focuses it (new opens / save / status bar follow it).
+  const renderGroup = (group: typeof tabs, which: 'a' | 'b') => (
+    <div
+      className="editor-group"
+      data-active={split && which === activeGroup}
+      onMouseDown={() => setActiveGroup(which)}
+    >
+      <EditorTabs tabs={group} />
+      {group.activePath && <Breadcrumbs rootPath={root} path={group.activePath} />}
+      <FileViewer
+        path={group.activePath}
+        buffer={group.active}
+        onCursorChange={setCursor}
+        onMarkersChange={setProblems}
+        onOpenFolder={openFolder}
+        onOpenFile={openFile}
+        onCloneRepo={() => setCloneOpen(true)}
+        onLanguages={() => selectView('extensions')}
+        editorOptions={editorOptions}
+        theme={editorTheme}
+        registerFormat={registerFormat}
+        onSelectionAction={onSelectionAction}
+      />
+    </div>
+  );
 
   return (
     <div className="app" data-zen={zen}>
@@ -444,7 +513,7 @@ export default function App() {
                           : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
-                    <SearchView onOpen={(p) => tabs.open(p)} />
+                    <SearchView onOpen={(p) => activeTabs.open(p)} />
                   ) : sidebarView === 'scm' ? (
                     <SourceControlView rootPath={root} onOpenDiff={(abs) => void openDiff(abs)} />
                   ) : sidebarView === 'extensions' ? (
@@ -453,8 +522,8 @@ export default function App() {
                     <FileTree
                       key={root}
                       rootPath={root}
-                      activePath={tabs.activePath}
-                      onSelectFile={(node) => tabs.open(node.path)}
+                      activePath={activeTabs.activePath}
+                      onSelectFile={(node) => activeTabs.open(node.path)}
                     />
                   ) : (
                     <p className="muted">Opening workspace…</p>
@@ -480,33 +549,15 @@ export default function App() {
                   onClose={() => setDiff(null)}
                 />
               ) : (
-                <>
-                  <EditorTabs tabs={tabs} />
-                  {tabs.activePath && <Breadcrumbs rootPath={root} path={tabs.activePath} />}
-                  <FileViewer
-                    path={tabs.activePath}
-                    buffer={tabs.active}
-                    onCursorChange={setCursor}
-                    onMarkersChange={setProblems}
-                    onOpenFolder={openFolder}
-                    onOpenFile={openFile}
-                    onCloneRepo={() => setCloneOpen(true)}
-                    onLanguages={() => selectView('extensions')}
-                    editorOptions={{
-                      fontSize: settings.fontSize,
-                      tabSize: settings.tabSize,
-                      wordWrap: settings.wordWrap,
-                      minimap: settings.minimap,
-                      fontFamily: settings.fontFamily || undefined,
-                      lineNumbers: settings.lineNumbers,
-                      cursorStyle: settings.cursorStyle,
-                      renderWhitespace: settings.renderWhitespace,
-                    }}
-                    theme={editorTheme}
-                    registerFormat={registerFormat}
-                    onSelectionAction={onSelectionAction}
-                  />
-                </>
+                <div className="editor-groups">
+                  {renderGroup(tabs, 'a')}
+                  {split && (
+                    <>
+                      <div className="group-divider" />
+                      {renderGroup(tabsB, 'b')}
+                    </>
+                  )}
+                </div>
               )}
             </main>
             {showAi && !zen && (
@@ -514,9 +565,9 @@ export default function App() {
                 <div className="resizer resizer-x" onPointerDown={aiPanel.onPointerDown} />
                 <aside className="ai-pane" style={{ width: aiPanel.size }}>
                   <AiPanel
-                    filePath={tabs.activePath}
-                    fileContent={tabs.active?.draft ?? ''}
-                    onApplyEdit={(content) => tabs.active?.setDraft(content)}
+                    filePath={activeTabs.activePath}
+                    fileContent={activeTabs.active?.draft ?? ''}
+                    onApplyEdit={(content) => activeTabs.active?.setDraft(content)}
                     onAskClaude={askClaude}
                     selectionRequest={selectionReq}
                   />
@@ -537,11 +588,11 @@ export default function App() {
       {!zen && (
         <StatusBar
           gitStatus={gitStatus}
-          path={tabs.activePath}
-          dirty={tabs.active?.dirty ?? false}
+          path={activeTabs.activePath}
+          dirty={activeTabs.active?.dirty ?? false}
           cursor={cursor}
-          content={tabs.active?.draft ?? ''}
-          problems={tabs.activePath ? problems : { errors: 0, warnings: 0 }}
+          content={activeTabs.active?.draft ?? ''}
+          problems={activeTabs.activePath ? problems : { errors: 0, warnings: 0 }}
           onOpenScm={() => selectView('scm')}
         />
       )}
@@ -550,7 +601,7 @@ export default function App() {
           items={fileItems}
           placeholder="Search files by name…"
           onSelect={(item) => {
-            tabs.open(item.id);
+            activeTabs.open(item.id);
             setPalette(null);
           }}
           onClose={() => setPalette(null)}
