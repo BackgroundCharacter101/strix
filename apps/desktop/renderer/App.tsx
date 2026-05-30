@@ -52,7 +52,9 @@ export default function App() {
   const [cloneOpen, setCloneOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [claudeSignal, setClaudeSignal] = useState(0);
+  const [claudeLaunch, setClaudeLaunch] = useState<{ nonce: number; prompt?: string }>({
+    nonce: 0,
+  });
   const [zen, setZen] = useState(false);
   const [recentCommands, setRecentCommands] = useState<string[]>(() => {
     try {
@@ -247,6 +249,22 @@ export default function App() {
     });
   };
 
+  const launchClaude = (prompt?: string) => {
+    setShowTerminal(true);
+    setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt }));
+  };
+
+  // Hand a question (+ the active file's path) off to a Claude Code session.
+  const askClaude = (text: string) => {
+    const rel = tabs.activePath ? relativeSegments(root, tabs.activePath).join('/') : '';
+    const q = text.trim();
+    let prompt: string;
+    if (rel && q) prompt = `In ${rel}: ${q}`;
+    else if (rel) prompt = `Review ${rel}`;
+    else prompt = q;
+    launchClaude(prompt);
+  };
+
   const openDiff = async (absPath: string) => {
     const [original, modified] = await Promise.all([
       window.strix.git.fileHead(absPath),
@@ -268,10 +286,7 @@ export default function App() {
       id: 'terminal.claude',
       label: 'Start Claude Code',
       detail: '',
-      run: () => {
-        setShowTerminal(true);
-        setClaudeSignal((n) => n + 1);
-      },
+      run: () => launchClaude(),
     },
     { id: 'view.zen', label: 'View: Toggle Zen Mode', detail: 'Ctrl+K Z', run: toggleZen },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
@@ -490,6 +505,7 @@ export default function App() {
                     filePath={tabs.activePath}
                     fileContent={tabs.active?.draft ?? ''}
                     onApplyEdit={(content) => tabs.active?.setDraft(content)}
+                    onAskClaude={askClaude}
                   />
                 </aside>
               </>
@@ -499,7 +515,7 @@ export default function App() {
             <>
               <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
               <section className="panel" style={{ height: terminal.size }}>
-                <TerminalTabs cwd={root ?? undefined} launchSignal={claudeSignal} />
+                <TerminalTabs cwd={root ?? undefined} launch={claudeLaunch} />
               </section>
             </>
           )}

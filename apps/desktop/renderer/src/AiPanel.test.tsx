@@ -124,6 +124,14 @@ describe('AiPanel', () => {
     expect(onApplyEdit).toHaveBeenCalledWith('const refactored = true;');
   });
 
+  it('hands the question off to Claude Code', async () => {
+    const onAskClaude = vi.fn();
+    render(<AiPanel filePath="/ws/a.ts" fileContent="x" onAskClaude={onAskClaude} />);
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'why is this slow?' } });
+    fireEvent.click(screen.getByRole('button', { name: /Ask Claude Code/ }));
+    expect(onAskClaude).toHaveBeenCalledWith('why is this slow?');
+  });
+
   it('restores a persisted conversation from localStorage', () => {
     localStorage.setItem(
       'strix.ai.history',

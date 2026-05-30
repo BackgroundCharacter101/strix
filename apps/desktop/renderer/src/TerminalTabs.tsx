@@ -14,13 +14,23 @@ const CLAUDE_INSTALL =
   'Install it with:  npm install -g @anthropic-ai/claude-code\r\n' +
   'Then type:  claude';
 
+// Wrap a prompt as a single safe CLI argument (double-quoted; inner double
+// quotes downgraded to single quotes, newlines flattened) so it works across
+// cmd / PowerShell / bash.
+function claudeCommand(prompt?: string): string {
+  if (!prompt) return 'claude';
+  const safe = prompt.replace(/"/g, "'").replace(/[\r\n]+/g, ' ').trim();
+  return `claude "${safe}"`;
+}
+
 export function TerminalTabs({
   cwd,
-  launchSignal = 0,
+  launch = { nonce: 0 },
 }: {
   cwd?: string;
-  // Bumping this (from a command / menu) opens a Claude Code session.
-  launchSignal?: number;
+  // Bumping nonce (from a command / menu / AI hand-off) opens a Claude Code
+  // session, optionally seeded with a prompt.
+  launch?: { nonce: number; prompt?: string };
 }) {
   const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0, title: 'Terminal 1' }]);
   const [active, setActive] = useState(0);
@@ -32,22 +42,27 @@ export function TerminalTabs({
     setActive(id);
   };
 
-  const launchClaude = async () => {
+  const launchClaude = async (prompt?: string) => {
     const id = nextId.current++;
     const installed = await window.strix.terminal.hasCommand('claude');
     const tab: TabDesc = installed
-      ? { id, title: 'Claude Code', bootCommand: 'claude', notice: 'Starting Claude Code…' }
+      ? {
+          id,
+          title: 'Claude Code',
+          bootCommand: claudeCommand(prompt),
+          notice: prompt ? 'Asking Claude Code…' : 'Starting Claude Code…',
+        }
       : { id, title: 'Claude Code', notice: CLAUDE_INSTALL };
     setTabs((prev) => [...prev, tab]);
     setActive(id);
   };
 
-  // Open a Claude Code session when App signals it (command palette / menu).
+  // Open a Claude Code session when App signals it (command / menu / AI hand-off).
   const launchRef = useRef(launchClaude);
   launchRef.current = launchClaude;
   useEffect(() => {
-    if (launchSignal > 0) void launchRef.current();
-  }, [launchSignal]);
+    if (launch.nonce > 0) void launchRef.current(launch.prompt);
+  }, [launch.nonce, launch.prompt]);
 
   const closeTab = (id: number) => {
     const remaining = tabs.filter((x) => x.id !== id);

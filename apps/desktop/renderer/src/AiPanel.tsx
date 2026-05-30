@@ -18,10 +18,13 @@ export function AiPanel({
   filePath,
   fileContent,
   onApplyEdit,
+  onAskClaude,
 }: {
   filePath: string | null;
   fileContent: string;
   onApplyEdit?: (content: string) => void;
+  // Hand the typed question (+ active file) off to a Claude Code terminal session.
+  onAskClaude?: (text: string) => void;
 }) {
   const [input, setInput] = useState('');
   const [model, setModel] = useState('auto');
@@ -214,6 +217,17 @@ export function AiPanel({
             Refactor
           </button>
         </div>
+        {onAskClaude && (
+          <button
+            type="button"
+            className="ai-claude-btn"
+            title="Open Claude Code in the terminal with this question and file"
+            disabled={input.trim().length === 0 && !fileReady}
+            onClick={() => onAskClaude(input)}
+          >
+            <SparkleIcon size={13} /> Ask Claude Code
+          </button>
+        )}
       </div>
     </section>
   );

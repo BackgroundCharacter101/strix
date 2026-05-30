@@ -1758,6 +1758,26 @@ body {
   border-color: var(--accent);
 }
 
+.ai-claude-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-weight: var(--weight-medium);
+}
+
+.ai-claude-btn:hover:not(:disabled) {
+  background: var(--selection);
+}
+
+.ai-claude-btn svg {
+  color: var(--accent);
+}
+
 .ai-response {
   flex: 1 1 auto;
   min-height: 80px;

@@ -64,6 +64,19 @@ describe('TerminalTabs', () => {
     expect(hasCommand).toHaveBeenCalledWith('claude');
   });
 
+  it('seeds the Claude session with a prompt when launched via the launch prop', async () => {
+    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => true) } });
+    const { rerender } = render(<TerminalTabs launch={{ nonce: 0 }} />);
+    rerender(<TerminalTabs launch={{ nonce: 1, prompt: 'In a.ts: why slow?' }} />);
+
+    await waitFor(() => {
+      const slot = screen
+        .getAllByTestId('terminal')
+        .find((t) => t.dataset.boot === 'claude "In a.ts: why slow?"');
+      expect(slot).toBeTruthy();
+    });
+  });
+
   it('shows an install hint when Claude Code is not on PATH', async () => {
     window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => false) } });
     render(<TerminalTabs />);
