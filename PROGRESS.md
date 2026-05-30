@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 156 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 159 tests / 38 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -112,7 +112,11 @@ a file → read-only **diff vs HEAD** (`DiffView` + `git.fileHead`).
 
 **AI panel** (`AiPanel` → `@strix/ai-gateway`): chat / explain / vuln-check /
 Fix / Refactor, model picker (default Auto), persistent history, streaming,
-diff-proposal apply (`CodeProposal`).
+diff-proposal apply (`CodeProposal`). **Ask Claude Code** button hands the
+question + file off to a Claude Code terminal session. **Selection toolbar**: a
+Monaco content-widget floats over a code selection with Explain/Fix, which run
+the AI on just that snippet (FileViewer `onSelectionAction` → AiPanel
+`selectionRequest`).
 
 **Terminal** (`TerminalTabs`/`Terminal`): xterm.js + node-pty, multiple sessions,
 opens in the workspace root. **Claude Code launcher** — a "✦ Claude Code" button

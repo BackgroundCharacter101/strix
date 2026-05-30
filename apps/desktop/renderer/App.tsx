@@ -55,6 +55,11 @@ export default function App() {
   const [claudeLaunch, setClaudeLaunch] = useState<{ nonce: number; prompt?: string }>({
     nonce: 0,
   });
+  const [selectionReq, setSelectionReq] = useState<{
+    nonce: number;
+    kind: 'explain' | 'fix';
+    selection: string;
+  }>();
   const [zen, setZen] = useState(false);
   const [recentCommands, setRecentCommands] = useState<string[]>(() => {
     try {
@@ -252,6 +257,12 @@ export default function App() {
   const launchClaude = (prompt?: string) => {
     setShowTerminal(true);
     setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt }));
+  };
+
+  // Run Explain/Fix on an editor selection — reveal the AI panel and ask it.
+  const onSelectionAction = (kind: 'explain' | 'fix', selection: string) => {
+    setShowAi(true);
+    setSelectionReq((p) => ({ nonce: (p?.nonce ?? 0) + 1, kind, selection }));
   };
 
   // Hand a question (+ the active file's path) off to a Claude Code session.
@@ -493,6 +504,7 @@ export default function App() {
                     }}
                     theme={editorTheme}
                     registerFormat={registerFormat}
+                    onSelectionAction={onSelectionAction}
                   />
                 </>
               )}
@@ -506,6 +518,7 @@ export default function App() {
                     fileContent={tabs.active?.draft ?? ''}
                     onApplyEdit={(content) => tabs.active?.setDraft(content)}
                     onAskClaude={askClaude}
+                    selectionRequest={selectionReq}
                   />
                 </aside>
               </>

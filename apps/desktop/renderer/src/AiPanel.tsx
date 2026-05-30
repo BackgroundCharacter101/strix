@@ -19,12 +19,15 @@ export function AiPanel({
   fileContent,
   onApplyEdit,
   onAskClaude,
+  selectionRequest,
 }: {
   filePath: string | null;
   fileContent: string;
   onApplyEdit?: (content: string) => void;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
+  // Run an Explain/Fix on an editor selection (from the floating toolbar).
+  selectionRequest?: { nonce: number; kind: 'explain' | 'fix'; selection: string };
 }) {
   const [input, setInput] = useState('');
   const [model, setModel] = useState('auto');
@@ -94,6 +97,46 @@ export function AiPanel({
       setStreaming('');
     }
   };
+
+  // Run Explain/Fix on a selected snippet (from the editor's floating toolbar).
+  // The request + response are appended to the conversation thread.
+  const runSelection = async (kind: 'explain' | 'fix', selection: string) => {
+    setBusy(true);
+    setStreaming('');
+    setRoutedVia(null);
+    setHistory((h) => [
+      ...h,
+      { role: 'user', content: `${kind === 'explain' ? 'Explain' : 'Fix'} this selection:\n${selection}` },
+    ]);
+    let acc = '';
+    try {
+      await runTask(
+        kind,
+        { filePath: filePath ?? '', fileContent: selection, userMessage: '' },
+        {
+          onToken: (token) => {
+            acc += token;
+            setStreaming(acc);
+          },
+          onDone: (via) => setRoutedVia(via),
+        },
+        { model },
+      );
+    } finally {
+      setBusy(false);
+    }
+    setHistory((h) => [...h, { role: 'assistant', content: acc }]);
+    setStreaming('');
+  };
+
+  // Trigger a selection action when App raises a new request.
+  const lastReq = useRef(0);
+  useEffect(() => {
+    if (selectionRequest && selectionRequest.nonce > lastReq.current) {
+      lastReq.current = selectionRequest.nonce;
+      void runSelection(selectionRequest.kind, selectionRequest.selection);
+    }
+  }, [selectionRequest]);
 
   // Fix (§8.4) / Refactor (§8.6): ask for the full updated file, show a diff.
   const propose = async (task: TaskType) => {

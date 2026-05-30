@@ -20,6 +20,7 @@ export function FileViewer({
   editorOptions,
   theme,
   registerFormat,
+  onSelectionAction,
 }: {
   path: string | null;
   buffer: FileBuffer | null;
@@ -33,6 +34,8 @@ export function FileViewer({
   theme?: string;
   // Hands a "format the document" callback up to App (null on unmount).
   registerFormat?: (run: (() => void) | null) => void;
+  // Explain/Fix on the current editor selection (floating toolbar).
+  onSelectionAction?: (kind: 'explain' | 'fix', selection: string) => void;
 }) {
   const [showPreview, setShowPreview] = useState(true);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
@@ -142,6 +145,61 @@ export function FileViewer({
             const model = editor.getModel();
             if (!model) return;
             const disposers: (() => void)[] = [];
+
+            // Floating Explain/Fix toolbar that appears over a non-empty selection.
+            if (onSelectionAction) {
+              let anchor: { lineNumber: number; column: number } | null = null;
+              let node: HTMLDivElement | null = null;
+              const makeBtn = (label: string, kind: 'explain' | 'fix') => {
+                const b = document.createElement('button');
+                b.textContent = label;
+                b.className = 'sel-toolbar-btn';
+                // mousedown (not click) keeps the editor selection intact.
+                b.addEventListener('mousedown', (ev) => {
+                  ev.preventDefault();
+                  ev.stopPropagation();
+                  const sel = editor.getSelection();
+                  const text = sel ? model.getValueInRange(sel) : '';
+                  if (text.trim()) onSelectionAction(kind, text);
+                });
+                return b;
+              };
+              const widget = {
+                getId: () => 'strix.selectionToolbar',
+                getDomNode: () => {
+                  if (!node) {
+                    node = document.createElement('div');
+                    node.className = 'sel-toolbar';
+                    node.appendChild(makeBtn('✦ Explain', 'explain'));
+                    node.appendChild(makeBtn('✦ Fix', 'fix'));
+                  }
+                  return node;
+                },
+                getPosition: () =>
+                  anchor
+                    ? {
+                        position: anchor,
+                        preference: [
+                          monaco.editor.ContentWidgetPositionPreference.ABOVE,
+                          monaco.editor.ContentWidgetPositionPreference.BELOW,
+                        ],
+                      }
+                    : null,
+              };
+              editor.addContentWidget(widget);
+              const selSub = editor.onDidChangeCursorSelection((e) => {
+                const text = model.getValueInRange(e.selection);
+                anchor =
+                  text.trim().length > 0 && !e.selection.isEmpty()
+                    ? { lineNumber: e.selection.startLineNumber, column: e.selection.startColumn }
+                    : null;
+                editor.layoutContentWidget(widget);
+              });
+              disposers.push(() => {
+                selSub.dispose();
+                editor.removeContentWidget(widget);
+              });
+            }
 
             // Expose a Format Document action to App-level commands/shortcuts.
             if (registerFormat) {

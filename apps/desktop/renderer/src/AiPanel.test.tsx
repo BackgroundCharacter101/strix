@@ -124,6 +124,34 @@ describe('AiPanel', () => {
     expect(onApplyEdit).toHaveBeenCalledWith('const refactored = true;');
   });
 
+  it('runs Explain on a selection request and shows it in the thread', async () => {
+    runTask.mockImplementation(async (_t, _o, cb) => {
+      cb.onToken('This code ');
+      cb.onToken('does X.');
+      cb.onDone('groq');
+    });
+    const { rerender } = render(
+      <AiPanel filePath="/ws/a.ts" fileContent="full" selectionRequest={{ nonce: 0, kind: 'explain', selection: '' }} />,
+    );
+    rerender(
+      <AiPanel
+        filePath="/ws/a.ts"
+        fileContent="full"
+        selectionRequest={{ nonce: 1, kind: 'explain', selection: 'const x = 1;' }}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByLabelText('AI conversation')).toHaveTextContent('This code does X.'),
+    );
+    expect(runTask).toHaveBeenCalledWith(
+      'explain',
+      expect.objectContaining({ fileContent: 'const x = 1;' }),
+      expect.any(Object),
+      expect.any(Object),
+    );
+  });
+
   it('hands the question off to Claude Code', async () => {
     const onAskClaude = vi.fn();
     render(<AiPanel filePath="/ws/a.ts" fileContent="x" onAskClaude={onAskClaude} />);
