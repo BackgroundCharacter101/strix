@@ -29,6 +29,10 @@ export interface StrixWorkspaceApi {
 export interface StrixGitApi {
   status(rootPath: string): Promise<GitStatus>;
   fileHead(filePath: string): Promise<string>;
+  stage(rootPath: string, filepath: string): Promise<void>;
+  unstage(rootPath: string, filepath: string): Promise<void>;
+  stageAll(rootPath: string): Promise<void>;
+  commit(rootPath: string, message: string): Promise<string>;
 }
 
 export interface StrixTerminalApi {

@@ -7,7 +7,14 @@ import {
   renameEntry,
   removeEntry,
 } from './fs.js';
-import { getGitStatus, getFileHeadContent } from './git.js';
+import {
+  getGitStatus,
+  getFileHeadContent,
+  stageFile,
+  unstageFile,
+  stageAll,
+  commit,
+} from './git.js';
 import {
   getRoot,
   openFolderDialog,
@@ -64,6 +71,12 @@ export function registerIpcHandlers(): void {
   });
   ipcMain.handle('git:status', (_event, rootPath: string) => getGitStatus(rootPath));
   ipcMain.handle('git:fileHead', (_event, filePath: string) => getFileHeadContent(filePath));
+  ipcMain.handle('git:stage', (_event, root: string, filepath: string) => stageFile(root, filepath));
+  ipcMain.handle('git:unstage', (_event, root: string, filepath: string) =>
+    unstageFile(root, filepath),
+  );
+  ipcMain.handle('git:stageAll', (_event, root: string) => stageAll(root));
+  ipcMain.handle('git:commit', (_event, root: string, message: string) => commit(root, message));
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>

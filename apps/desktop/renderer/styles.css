@@ -1241,6 +1241,86 @@ body {
 }
 
 /* ---- Source control view ------------------------------------------------ */
+.scm-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.scm-commit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.scm-message {
+  width: 100%;
+  resize: vertical;
+  min-height: 46px;
+  font-size: var(--text-sm);
+}
+
+.scm-commit-btn {
+  align-self: stretch;
+  font-weight: var(--weight-medium);
+}
+
+.scm-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-4) var(--space-1);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.scm-count {
+  font-weight: var(--weight-medium);
+}
+
+.scm-link {
+  all: unset;
+  cursor: pointer;
+  color: var(--link);
+  font-size: var(--text-xs);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.scm-link:hover {
+  text-decoration: underline;
+}
+
+.scm-line {
+  display: flex;
+  align-items: center;
+}
+
+.scm-line .scm-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.scm-stage-btn {
+  all: unset;
+  flex: 0 0 auto;
+  width: 24px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--text-base);
+}
+
+.scm-stage-btn:hover:not(:disabled) {
+  color: var(--accent);
+}
+
 .scm-summary {
   padding: var(--space-1) var(--space-5) var(--space-2);
   font-size: var(--text-xs);

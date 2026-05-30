@@ -1,22 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { GitStatus } from '../../main/git';
 
-export function useGitStatus(rootPath: string | null): GitStatus | null {
+export interface GitStatusState {
+  status: GitStatus | null;
+  reload: () => void;
+}
+
+export function useGitStatusState(rootPath: string | null): GitStatusState {
   const [status, setStatus] = useState<GitStatus | null>(null);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     if (!rootPath) {
       setStatus(null);
       return;
     }
-    let cancelled = false;
-    window.strix.git.status(rootPath).then((s) => {
-      if (!cancelled) setStatus(s);
-    });
-    return () => {
-      cancelled = true;
-    };
+    window.strix.git.status(rootPath).then(setStatus);
   }, [rootPath]);
 
-  return status;
+  useEffect(reload, [reload]);
+
+  return { status, reload };
+}
+
+// Convenience wrapper for callers that only need the status value.
+export function useGitStatus(rootPath: string | null): GitStatus | null {
+  return useGitStatusState(rootPath).status;
 }

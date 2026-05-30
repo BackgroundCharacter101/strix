@@ -103,8 +103,12 @@ toggle for `.md`, **Format Document**.
 **Search** (`SearchView` → `search.find`): workspace-wide substring search,
 grouped by file, click to open. **Ctrl+Shift+F**.
 
-**Source Control** (`SourceControlView`): lists git changes (M/A/D); click →
-read-only **diff vs HEAD** (`DiffView` + `git.fileHead`).
+**Source Control** (`SourceControlView`): lists git changes (M/A/D) split into
+Staged / Changes; per-file **stage (+) / unstage (−)**, **Stage all**, a commit
+message box and **Commit** — via `git.stage/unstage/stageAll/commit`
+(isomorphic-git in main; author from git config, fallback Strix identity). Click
+a file → read-only **diff vs HEAD** (`DiffView` + `git.fileHead`).
+`useGitStatusState` exposes `reload` so the view refreshes after each op.
 
 **AI panel** (`AiPanel` → `@strix/ai-gateway`): chat / explain / vuln-check /
 Fix / Refactor, model picker (default Auto), persistent history, streaming,

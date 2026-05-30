@@ -40,6 +40,39 @@ export async function getGitStatus(dir: string): Promise<GitStatus> {
   }
 }
 
+// Stage a single path (add, or remove if it was deleted on disk).
+export async function stageFile(rootPath: string, filepath: string): Promise<void> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const abs = path.join(dir, filepath);
+  if (fs.existsSync(abs)) await git.add({ fs, dir, filepath });
+  else await git.remove({ fs, dir, filepath });
+}
+
+export async function unstageFile(rootPath: string, filepath: string): Promise<void> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  await git.resetIndex({ fs, dir, filepath });
+}
+
+// Stage every change in the working tree.
+export async function stageAll(rootPath: string): Promise<void> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const matrix = await git.statusMatrix({ fs, dir });
+  for (const [filepath, head, workdir] of matrix) {
+    if (head === 1 && workdir === 1) continue; // unchanged
+    if (workdir === 0) await git.remove({ fs, dir, filepath });
+    else await git.add({ fs, dir, filepath });
+  }
+}
+
+// Commit the staged changes. Uses the repo's configured author, falling back to
+// a generic Strix identity if git user.name/email aren't set.
+export async function commit(rootPath: string, message: string): Promise<string> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const name = (await git.getConfig({ fs, dir, path: 'user.name' })) || 'Strix User';
+  const email = (await git.getConfig({ fs, dir, path: 'user.email' })) || 'strix@local';
+  return git.commit({ fs, dir, message, author: { name, email } });
+}
+
 // The committed (HEAD) content of a file, for diffing against the working copy.
 // Returns '' for untracked/new files or any error.
 export async function getFileHeadContent(filePath: string): Promise<string> {
