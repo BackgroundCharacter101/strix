@@ -307,7 +307,23 @@ body {
 .ext-actions {
   display: flex;
   align-items: center;
+  gap: var(--space-3);
   margin-top: var(--space-2);
+}
+
+.ext-uninstall {
+  margin-left: auto;
+  padding: 1px 9px;
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+
+.ext-uninstall:hover:not(:disabled) {
+  background: var(--danger-bg);
+  color: var(--white);
+  border-color: var(--danger-bg);
 }
 
 .ext-status {

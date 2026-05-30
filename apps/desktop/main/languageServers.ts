@@ -1,8 +1,8 @@
 import { exec } from 'node:child_process';
 
-// Install commands keyed by the SAME language id the renderer registry uses.
-// The renderer can only pass an id (never a command), so it can never ask us to
-// run an arbitrary string — only one of these vetted, hardcoded installs.
+// Install / uninstall commands keyed by the SAME language id the renderer
+// registry uses. The renderer can only pass an id (never a command), so it can
+// never ask us to run an arbitrary string — only one of these vetted commands.
 const INSTALL: Record<string, string> = {
   python: 'pip install python-lsp-server',
   typescript: 'npm i -g typescript-language-server typescript',
@@ -13,18 +13,23 @@ const INSTALL: Record<string, string> = {
   bash: 'npm i -g bash-language-server',
 };
 
-export interface InstallResult {
+const UNINSTALL: Record<string, string> = {
+  python: 'pip uninstall -y python-lsp-server',
+  typescript: 'npm uninstall -g typescript-language-server',
+  rust: 'rustup component remove rust-analyzer',
+  ruby: 'gem uninstall -x -a solargraph',
+  php: 'npm uninstall -g intelephense',
+  bash: 'npm uninstall -g bash-language-server',
+};
+
+export interface CommandResult {
   ok: boolean;
   output: string;
 }
 
-// Run the install command for a known language id and return its combined output.
-export function installServer(id: string): Promise<InstallResult> {
-  const command = INSTALL[id];
-  if (!command) {
-    return Promise.resolve({ ok: false, output: 'No automatic installer for this language.' });
-  }
-  return new Promise<InstallResult>((resolve) => {
+function run(command: string | undefined, fallback: string): Promise<CommandResult> {
+  if (!command) return Promise.resolve({ ok: false, output: fallback });
+  return new Promise<CommandResult>((resolve) => {
     exec(
       command,
       { timeout: 180_000, maxBuffer: 8 * 1024 * 1024, windowsHide: true },
@@ -34,4 +39,12 @@ export function installServer(id: string): Promise<InstallResult> {
       },
     );
   });
+}
+
+export function installServer(id: string): Promise<CommandResult> {
+  return run(INSTALL[id], 'No automatic installer for this language.');
+}
+
+export function uninstallServer(id: string): Promise<CommandResult> {
+  return run(UNINSTALL[id], 'No automatic uninstaller for this language.');
 }

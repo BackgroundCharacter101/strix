@@ -15,6 +15,8 @@ export interface LanguageInfo {
   install: string;
   /** Whether Strix can run the install automatically (one clean command). */
   installable: boolean;
+  /** Whether Strix can run an uninstall automatically. */
+  uninstallable: boolean;
 }
 
 export const LANGUAGES: LanguageInfo[] = [
@@ -25,6 +27,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'pylsp',
     install: 'pip install python-lsp-server',
     installable: true,
+    uninstallable: true,
   },
   {
     id: 'typescript',
@@ -33,6 +36,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'typescript-language-server',
     install: 'npm i -g typescript-language-server typescript',
     installable: true,
+    uninstallable: true,
   },
   {
     id: 'rust',
@@ -41,6 +45,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'rust-analyzer',
     install: 'rustup component add rust-analyzer',
     installable: true,
+    uninstallable: true,
   },
   {
     id: 'go',
@@ -49,6 +54,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'gopls',
     install: 'go install golang.org/x/tools/gopls@latest',
     installable: true,
+    uninstallable: false,
   },
   {
     id: 'ruby',
@@ -57,6 +63,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'solargraph',
     install: 'gem install solargraph',
     installable: true,
+    uninstallable: true,
   },
   {
     id: 'php',
@@ -65,6 +72,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'intelephense',
     install: 'npm i -g intelephense',
     installable: true,
+    uninstallable: true,
   },
   {
     id: 'bash',
@@ -73,6 +81,7 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'bash-language-server',
     install: 'npm i -g bash-language-server',
     installable: true,
+    uninstallable: true,
   },
   {
     id: 'cpp',
@@ -81,5 +90,6 @@ export const LANGUAGES: LanguageInfo[] = [
     server: 'clangd',
     install: 'Install clangd (bundled with LLVM)',
     installable: false,
+    uninstallable: false,
   },
 ];

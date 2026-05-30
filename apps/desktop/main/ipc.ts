@@ -20,7 +20,7 @@ import { popupMenu } from './menu.js';
 import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
-import { installServer } from './languageServers.js';
+import { installServer, uninstallServer } from './languageServers.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
@@ -95,6 +95,7 @@ export function registerIpcHandlers(): void {
   ipcMain.on('lsp:stop', (_event, { id }: { id: string }) => lsp.stop(id));
   ipcMain.handle('lsp:hasServer', (_event, command: string) => commandExists(command));
   ipcMain.handle('lsp:installServer', (_event, id: string) => installServer(id));
+  ipcMain.handle('lsp:uninstallServer', (_event, id: string) => uninstallServer(id));
 
   // --- AI: bridge the renderer to the local FreeLLMAPI server ---
   const aiPort = process.env.FREELLMAPI_PORT ?? '3001';

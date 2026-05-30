@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { LANGUAGES } from './languages';
 import { showToast } from './toast';
 
-type State = 'checking' | 'installed' | 'missing' | 'installing' | 'failed';
+type State = 'checking' | 'installed' | 'missing' | 'installing' | 'uninstalling' | 'failed';
 
 export function ExtensionsView() {
   const [state, setState] = useState<Record<string, State>>({});
@@ -16,7 +16,9 @@ export function ExtensionsView() {
     );
     setState((prev) => {
       const next = { ...prev };
-      for (const [id, s] of pairs) if (next[id] !== 'installing') next[id] = s;
+      for (const [id, s] of pairs) {
+        if (next[id] !== 'installing' && next[id] !== 'uninstalling') next[id] = s;
+      }
       return next;
     });
   }, []);
@@ -41,6 +43,21 @@ export function ExtensionsView() {
     );
   };
 
+  const uninstall = async (id: string) => {
+    const lang = LANGUAGES.find((l) => l.id === id);
+    if (!window.confirm(`Uninstall the ${lang?.label ?? id} language server?`)) return;
+    setState((s) => ({ ...s, [id]: 'uninstalling' }));
+    setOutput((o) => ({ ...o, [id]: '' }));
+    const res = await window.strix.lsp.uninstallServer(id);
+    setOutput((o) => ({ ...o, [id]: res.output }));
+    setState((s) => ({ ...s, [id]: res.ok ? 'missing' : 'installed' }));
+    showToast(
+      res.ok ? `${lang?.label ?? id} language server uninstalled` : `${lang?.label ?? id} uninstall failed`,
+      res.ok ? 'success' : 'error',
+      res.ok ? 4000 : 8000,
+    );
+  };
+
   return (
     <div className="ext-view" aria-label="extensions">
       <p className="ext-note">
@@ -57,9 +74,23 @@ export function ExtensionsView() {
                 <span className="ext-exts">{lang.extensions.join(' ')}</span>
               </div>
               <div className="ext-actions">
-                {s === 'installed' && <span className="ext-status is-ok">✓ Installed</span>}
+                {s === 'installed' && (
+                  <>
+                    <span className="ext-status is-ok">✓ Installed</span>
+                    {lang.uninstallable && (
+                      <button
+                        type="button"
+                        className="ext-uninstall"
+                        onClick={() => void uninstall(lang.id)}
+                      >
+                        Uninstall
+                      </button>
+                    )}
+                  </>
+                )}
                 {s === 'checking' && <span className="ext-status">…</span>}
                 {s === 'installing' && <span className="ext-status is-busy">Installing…</span>}
+                {s === 'uninstalling' && <span className="ext-status is-busy">Uninstalling…</span>}
                 {(s === 'missing' || s === 'failed') &&
                   (lang.installable ? (
                     <button type="button" className="ext-install" onClick={() => void install(lang.id)}>

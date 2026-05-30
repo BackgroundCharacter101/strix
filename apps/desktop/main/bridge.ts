@@ -51,6 +51,8 @@ export interface StrixLspApi {
   hasServer(command: string): Promise<boolean>;
   // Install a language server by registry id (main runs a vetted command).
   installServer(id: string): Promise<{ ok: boolean; output: string }>;
+  // Uninstall a language server by registry id (main runs a vetted command).
+  uninstallServer(id: string): Promise<{ ok: boolean; output: string }>;
 }
 
 export interface StrixAiApi {

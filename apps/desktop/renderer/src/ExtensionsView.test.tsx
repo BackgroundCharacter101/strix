@@ -7,11 +7,13 @@ import { makeStrixApi } from '../test-utils';
 
 const hasServer = vi.fn<[string], Promise<boolean>>();
 const installServer = vi.fn<[string], Promise<{ ok: boolean; output: string }>>();
+const uninstallServer = vi.fn<[string], Promise<{ ok: boolean; output: string }>>();
 
 beforeEach(() => {
   hasServer.mockReset();
   installServer.mockReset();
-  window.strix = makeStrixApi({ lsp: { hasServer, installServer } as never });
+  uninstallServer.mockReset();
+  window.strix = makeStrixApi({ lsp: { hasServer, installServer, uninstallServer } as never });
 });
 
 describe('ExtensionsView', () => {
@@ -22,6 +24,20 @@ describe('ExtensionsView', () => {
     await waitFor(() => expect(screen.getAllByText('✓ Installed').length).toBeGreaterThan(0));
     // Python is missing → an Install button exists.
     expect(screen.getAllByRole('button', { name: 'Install' }).length).toBeGreaterThan(0);
+  });
+
+  it('uninstalls an installed server after confirmation', async () => {
+    hasServer.mockResolvedValue(true);
+    uninstallServer.mockResolvedValue({ ok: true, output: 'removed' });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    render(<ExtensionsView />);
+
+    const buttons = await screen.findAllByRole('button', { name: 'Uninstall' });
+    fireEvent.click(buttons[0]);
+
+    await waitFor(() => expect(uninstallServer).toHaveBeenCalled());
+    expect(await screen.findByText('removed')).toBeInTheDocument();
+    confirmSpy.mockRestore();
   });
 
   it('installs a server and flips it to Installed', async () => {
