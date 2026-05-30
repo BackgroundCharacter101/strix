@@ -53,6 +53,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [claudeSignal, setClaudeSignal] = useState(0);
+  const [zen, setZen] = useState(false);
   const [settings, updateSettings] = useSettings();
   // Latest runCommand, so the menu subscription (mounted once) never goes stale.
   const runCommandRef = useRef<(id: string) => void>(() => {});
@@ -66,6 +67,7 @@ export default function App() {
   const tabs = useEditorTabs();
   const chordRef = useRef(false);
   const formatRef = useRef<(() => void) | null>(null);
+  const zenRef = useRef(false);
   const registerFormat = useCallback((fn: (() => void) | null) => {
     formatRef.current = fn;
   }, []);
@@ -138,18 +140,29 @@ export default function App() {
   // Global keyboard shortcuts (VS Code-style).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Esc exits Zen mode.
+      if (e.key === 'Escape' && zenRef.current) {
+        e.preventDefault();
+        setZen(false);
+        return;
+      }
       // Shift+Alt+F — Format Document (no Ctrl, so handle before the guard).
       if (e.altKey && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         formatRef.current?.();
         return;
       }
-      // Ctrl+K then S — Save All chord.
+      // Ctrl+K then S / Z chords.
       if (chordRef.current) {
         chordRef.current = false;
         if (e.key.toLowerCase() === 's') {
           e.preventDefault();
           void tabs.saveAll();
+          return;
+        }
+        if (e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          setZen((v) => !v);
           return;
         }
       }
@@ -220,6 +233,13 @@ export default function App() {
     }
   };
 
+  const toggleZen = () => {
+    setZen((v) => {
+      if (!v) showToast('Zen mode — press Esc to exit', 'info', 2500);
+      return !v;
+    });
+  };
+
   const openDiff = async (absPath: string) => {
     const [original, modified] = await Promise.all([
       window.strix.git.fileHead(absPath),
@@ -246,6 +266,7 @@ export default function App() {
         setClaudeSignal((n) => n + 1);
       },
     },
+    { id: 'view.zen', label: 'View: Toggle Zen Mode', detail: 'Ctrl+K Z', run: toggleZen },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
     { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
@@ -265,6 +286,8 @@ export default function App() {
 
   const gitStatus = useGitStatus(root);
   const changedCount = gitStatus?.isRepo ? gitStatus.files.length : 0;
+
+  zenRef.current = zen;
 
   const editorTheme = monacoThemeFor(settings.theme);
 
@@ -288,9 +311,10 @@ export default function App() {
   runCommandRef.current = runCommand;
 
   return (
-    <div className="app">
-      <TitleBar />
+    <div className="app" data-zen={zen}>
+      {!zen && <TitleBar />}
       <div className="app-body">
+        {!zen && (
         <nav className="activity-bar" aria-label="panels">
           <button
             type="button"
@@ -358,9 +382,10 @@ export default function App() {
             <GearIcon />
           </button>
         </nav>
+        )}
         <div className="app-main">
           <div className="workbench">
-            {showSidebar && (
+            {showSidebar && !zen && (
               <>
                 <aside className="sidebar" style={{ width: sidebar.size }}>
                   <div className="sidebar-header">
@@ -437,7 +462,7 @@ export default function App() {
                 </>
               )}
             </main>
-            {showAi && (
+            {showAi && !zen && (
               <>
                 <div className="resizer resizer-x" onPointerDown={aiPanel.onPointerDown} />
                 <aside className="ai-pane" style={{ width: aiPanel.size }}>
@@ -450,7 +475,7 @@ export default function App() {
               </>
             )}
           </div>
-          {showTerminal && (
+          {showTerminal && !zen && (
             <>
               <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
               <section className="panel" style={{ height: terminal.size }}>
@@ -460,15 +485,17 @@ export default function App() {
           )}
         </div>
       </div>
-      <StatusBar
-        gitStatus={gitStatus}
-        path={tabs.activePath}
-        dirty={tabs.active?.dirty ?? false}
-        cursor={cursor}
-        content={tabs.active?.draft ?? ''}
-        problems={tabs.activePath ? problems : { errors: 0, warnings: 0 }}
-        onOpenScm={() => selectView('scm')}
-      />
+      {!zen && (
+        <StatusBar
+          gitStatus={gitStatus}
+          path={tabs.activePath}
+          dirty={tabs.active?.dirty ?? false}
+          cursor={cursor}
+          content={tabs.active?.draft ?? ''}
+          problems={tabs.activePath ? problems : { errors: 0, warnings: 0 }}
+          onOpenScm={() => selectView('scm')}
+        />
+      )}
       {palette === 'files' && (
         <Palette
           items={fileItems}
