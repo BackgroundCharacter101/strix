@@ -10,6 +10,46 @@
   background: var(--selection);
 }
 
+/* ---- Motion ------------------------------------------------------------- */
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Honour users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 /* ---- Scrollbars --------------------------------------------------------- */
 * {
   scrollbar-width: thin;
@@ -361,6 +401,15 @@ body {
   padding: 2px 0 8px;
 }
 
+/* Subtle fade when switching sidebar views / opening the editor welcome. */
+.sidebar .tree,
+.search-view,
+.scm-view,
+.ext-view,
+.welcome {
+  animation: fade-in 0.15s ease;
+}
+
 /* ---- Search view -------------------------------------------------------- */
 .search-view {
   display: flex;
@@ -585,6 +634,7 @@ body {
   align-items: flex-start;
   padding-top: 10vh;
   background: var(--scrim);
+  animation: overlay-fade 0.12s ease;
 }
 
 .palette {
@@ -598,6 +648,7 @@ body {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-modal);
   overflow: hidden;
+  animation: pop-in 0.16s ease;
 }
 
 .palette-input {
@@ -663,6 +714,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-modal);
+  animation: pop-in 0.16s ease;
 }
 
 .dialog-title {
@@ -825,6 +877,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-modal);
+  animation: pop-in 0.1s ease;
 }
 
 .context-item {
