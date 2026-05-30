@@ -77,6 +77,19 @@ export function SourceControlIcon({ size = 20 }: IconProps) {
   );
 }
 
+// Extensions glyph (four squares, top-right offset) — the classic "extensions" mark.
+export function ExtensionsIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1" />
+      <path d="M14 4.5h5.5V10" />
+      <path d="M16.7 7.2 20 4" />
+    </svg>
+  );
+}
+
 export function TerminalIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

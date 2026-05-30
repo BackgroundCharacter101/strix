@@ -47,6 +47,7 @@ const api: StrixApi = {
       return () => ipcRenderer.removeListener('lsp:message', handler);
     },
     hasServer: (command) => ipcRenderer.invoke('lsp:hasServer', command),
+    installServer: (id) => ipcRenderer.invoke('lsp:installServer', id),
   },
   ai: {
     config: () => ipcRenderer.invoke('ai:config'),

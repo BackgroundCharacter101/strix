@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 144 tests / 36 files.**
+  **`npm test`** (vitest) — **all green: 145 tests / 37 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -73,9 +73,16 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 sidebar · editor pane · AI panel · terminal panel · status bar. Panels are
 resizable (`useResizable`) and individually toggleable.
 
-**Activity bar = view switcher** (left rail): Explorer / Search / Source Control
-(re-clicking the active one hides the sidebar), plus AI-panel & terminal toggles,
-and a Settings gear pinned at the bottom.
+**Activity bar = view switcher** (left rail): Explorer / Search / Source Control /
+**Extensions** (re-clicking the active one hides the sidebar), plus AI-panel &
+terminal toggles, and a Settings gear pinned at the bottom.
+
+**Extensions view** (`ExtensionsView`, sidebar): the "extensions" home — lists
+supported languages (`languages.ts` registry) with ✓Installed / Install buttons.
+**One-click install** runs a vetted command via `lsp.installServer(id)` (main
+`languageServers.ts` execs an id→command from a HARDCODED map — renderer passes
+only an id, never a command, so no injection). Shows live output + re-checks.
+Currently installable: Python, TS/JS, Rust, Go, Ruby, PHP, Bash; C/C++ manual.
 
 **Explorer** (`FileTree`): collapsible tree, colour-coded file-type SVG glyphs,
 active-file highlight, right-click **context menu** (New File/Folder, Rename,
@@ -126,8 +133,8 @@ Items whose shortcut the renderer keydown already owns use
 renderer — no double-fire). Settings owns Ctrl+, natively. **About Strix**
 dialog (`AboutDialog`) reachable from Help.
 
-**No marketplace — "Languages & Extensions"** is the extensions home
-(`LanguagesDialog`): native language servers, not downloadable plugins.
+**No marketplace** — "Languages & Extensions" = native language servers, not
+downloadable plugins (the install commands are vetted/hardcoded in main).
 
 ---
 
@@ -149,6 +156,7 @@ strix/ (folder: tabea)
 │   │   ├── workspace.ts     mutable currentRoot; Open Folder/File dialogs; clone
 │   │   ├── search.ts        searchInFiles (workspace-wide, ignores/binary/caps)
 │   │   ├── commandExists.ts PATH/PATHEXT scan → is a language server installed?
+│   │   ├── languageServers.ts installServer(id) — exec a vetted install command
 │   │   ├── repoName.ts      repoNameFromUrl (git URL → folder name; electron-free)
 │   │   ├── terminal.ts      TerminalManager (node-pty, DI spawn)
 │   │   ├── lsp.ts           LspManager (child_process, JSON-RPC framing, DI spawn)
@@ -213,7 +221,8 @@ strix/ (folder: tabea)
 - **terminal:** `create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` ·
   `onData(cb)` · `onExit(cb)`
 - **lsp:** `start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)` ·
-  `hasServer(command)` → bool
+  `hasServer(command)` → bool · `installServer(id)` → `{ok, output}` (vetted install)
+  — supported: python/typescript/javascript/c/cpp/bash/rust/go/ruby/php
 - **ai:** `config()` → `{baseURL, apiKey}` (live from FreeLLMAPI) · `models()` → string[]
 - **collab:** `url()` → string|null (COLLAB_SERVER_URL)
 - **menu:** `onCommand(cb)` → unsubscribe (native menu → renderer command ids)

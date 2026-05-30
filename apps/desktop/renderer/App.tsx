@@ -8,9 +8,9 @@ import { Palette, type PaletteItem } from './src/Palette';
 import { PromptDialog } from './src/PromptDialog';
 import { SearchView } from './src/SearchView';
 import { SourceControlView } from './src/SourceControlView';
+import { ExtensionsView } from './src/ExtensionsView';
 import { DiffView } from './src/DiffView';
 import { SettingsDialog } from './src/SettingsDialog';
-import { LanguagesDialog } from './src/LanguagesDialog';
 import { AboutDialog } from './src/AboutDialog';
 import { useSettings } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
@@ -19,6 +19,7 @@ import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
 import {
+  ExtensionsIcon,
   FilesIcon,
   GearIcon,
   OwlIcon,
@@ -34,7 +35,9 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm'>('explorer');
+  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm' | 'extensions'>(
+    'explorer',
+  );
   const [diff, setDiff] = useState<{ path: string; original: string; modified: string } | null>(
     null,
   );
@@ -43,7 +46,6 @@ export default function App() {
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [cloneOpen, setCloneOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [languagesOpen, setLanguagesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [settings, updateSettings] = useSettings();
   // Latest runCommand, so the menu subscription (mounted once) never goes stale.
@@ -199,7 +201,7 @@ export default function App() {
   useEffect(() => window.strix.menu.onCommand((id) => runCommandRef.current(id)), []);
 
   // Activity-bar view switch: re-clicking the active view hides the sidebar.
-  const selectView = (view: 'explorer' | 'search' | 'scm') => {
+  const selectView = (view: 'explorer' | 'search' | 'scm' | 'extensions') => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
     } else {
@@ -226,7 +228,7 @@ export default function App() {
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
-    { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => setLanguagesOpen(true) },
+    { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
     { id: 'file.saveAll', label: 'File: Save All', detail: 'Ctrl+K S', run: () => void tabs.saveAll() },
     { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
@@ -295,6 +297,15 @@ export default function App() {
           </button>
           <button
             type="button"
+            aria-label="Extensions"
+            aria-pressed={showSidebar && sidebarView === 'extensions'}
+            title="Languages & Extensions"
+            onClick={() => selectView('extensions')}
+          >
+            <ExtensionsIcon />
+          </button>
+          <button
+            type="button"
             aria-label="Toggle AI"
             aria-pressed={showAi}
             title="AI assistant"
@@ -331,12 +342,16 @@ export default function App() {
                       ? 'Search'
                       : sidebarView === 'scm'
                         ? 'Source Control'
-                        : 'Explorer'}
+                        : sidebarView === 'extensions'
+                          ? 'Languages & Extensions'
+                          : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={(p) => tabs.open(p)} />
                   ) : sidebarView === 'scm' ? (
                     <SourceControlView rootPath={root} onOpenDiff={(abs) => void openDiff(abs)} />
+                  ) : sidebarView === 'extensions' ? (
+                    <ExtensionsView />
                   ) : root ? (
                     <FileTree
                       key={root}
@@ -371,7 +386,7 @@ export default function App() {
                     onOpenFolder={openFolder}
                     onOpenFile={openFile}
                     onCloneRepo={() => setCloneOpen(true)}
-                    onLanguages={() => setLanguagesOpen(true)}
+                    onLanguages={() => selectView('extensions')}
                     editorOptions={{
                       fontSize: settings.fontSize,
                       tabSize: settings.tabSize,
@@ -451,7 +466,6 @@ export default function App() {
           onClose={() => setSettingsOpen(false)}
         />
       )}
-      {languagesOpen && <LanguagesDialog onClose={() => setLanguagesOpen(false)} />}
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
     </div>
   );

@@ -47,6 +47,8 @@ export interface StrixLspApi {
   onMessage(cb: (e: { id: string; message: JsonRpcMessage }) => void): () => void;
   // Whether a language-server command is installed on PATH.
   hasServer(command: string): Promise<boolean>;
+  // Install a language server by registry id (main runs a vetted command).
+  installServer(id: string): Promise<{ ok: boolean; output: string }>;
 }
 
 export interface StrixAiApi {

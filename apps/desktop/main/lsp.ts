@@ -8,7 +8,9 @@ export type Language =
   | 'cpp'
   | 'bash'
   | 'rust'
-  | 'go';
+  | 'go'
+  | 'ruby'
+  | 'php';
 
 export type JsonRpcMessage = Record<string, unknown>;
 
@@ -27,6 +29,8 @@ const SERVERS: Record<Language, ServerSpec> = {
   bash: { command: 'bash-language-server', args: ['start'] },
   rust: { command: 'rust-analyzer', args: [] },
   go: { command: 'gopls', args: [] },
+  ruby: { command: 'solargraph', args: ['stdio'] },
+  php: { command: 'intelephense', args: ['--stdio'] },
 };
 
 // Minimal surface the manager needs from a child process — lets tests inject
