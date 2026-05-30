@@ -246,6 +246,13 @@ strix/ (folder: tabea)
   adding a theme = edit `tokens.css` only.
 - **Light theme** is a `:root[data-theme='light']` block remapping the semantic
   surface/text/line tokens; `useSettings` sets `document.documentElement.dataset.theme`.
+- **Editor (Monaco) theme:** custom `strix-dark` / `strix-light` defined in
+  `monaco-setup.ts` (amber cursor + active line-number, amber-tinted selection /
+  bracket-match / indent guides, subtle current-line highlight, matched bg).
+  Modern options live in `MODERN_OPTIONS` in `packages/editor/src/index.tsx`
+  (padding, Cascadia ligatures, smooth caret, bracket-pair colourization, indent
+  guides). `CodeEditor`/`DiffViewer` take a `theme` prop; App derives it from
+  `settings.theme` and threads it through FileViewer/DiffView.
 - **Brand identity = Strix amber** (`--accent: #e8a33d`, "owl eyes in the dark").
   Amber fills use **`--accent-ink`** (near-black) for legible text, NOT white.
   The status bar is the signature amber stripe (`--statusbar` + `--statusbar-ink`).

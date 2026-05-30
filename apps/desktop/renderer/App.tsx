@@ -244,6 +244,8 @@ export default function App() {
       .map((p) => ({ id: `recent:${p}`, label: `Open Recent: ${p}`, detail: '', run: () => setRoot(p) })),
   ];
 
+  const editorTheme = settings.theme === 'light' ? 'strix-light' : 'strix-dark';
+
   // Run a command by id — shared by the command palette and the native menu.
   const runCommand = (id: string) => {
     if (id === 'view.commandPalette') {
@@ -372,6 +374,7 @@ export default function App() {
                   path={diff.path}
                   original={diff.original}
                   modified={diff.modified}
+                  theme={editorTheme}
                   onClose={() => setDiff(null)}
                 />
               ) : (
@@ -393,6 +396,7 @@ export default function App() {
                       wordWrap: settings.wordWrap,
                       minimap: settings.minimap,
                     }}
+                    theme={editorTheme}
                     registerFormat={registerFormat}
                   />
                 </>

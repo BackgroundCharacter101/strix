@@ -18,6 +18,7 @@ export function FileViewer({
   onCloneRepo,
   onLanguages,
   editorOptions,
+  theme,
   registerFormat,
 }: {
   path: string | null;
@@ -29,6 +30,7 @@ export function FileViewer({
   onCloneRepo?: () => void;
   onLanguages?: () => void;
   editorOptions?: EditorOptions;
+  theme?: string;
   // Hands a "format the document" callback up to App (null on unmount).
   registerFormat?: (run: (() => void) | null) => void;
 }) {
@@ -130,6 +132,7 @@ export function FileViewer({
           value={buffer.draft}
           language={languageForPath(path)}
           editorOptions={editorOptions}
+          theme={theme}
           onChange={buffer.setDraft}
           onCursorChange={onCursorChange}
           onGenerate={(description, fileContent) =>

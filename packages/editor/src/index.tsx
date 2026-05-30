@@ -25,7 +25,28 @@ export interface CodeEditorProps {
   onEditorMount?: (...args: Parameters<OnMount>) => void | (() => void);
   /** User-configurable editor options (font size, tab size, word wrap, minimap). */
   editorOptions?: EditorOptions;
+  /** Monaco theme name (e.g. 'strix-dark' / 'strix-light'). */
+  theme?: string;
 }
+
+// Modern editor chrome shared by CodeEditor + DiffViewer.
+const MODERN_OPTIONS = {
+  automaticLayout: true,
+  padding: { top: 12, bottom: 12 },
+  fontFamily: "'Cascadia Code', 'Consolas', monospace",
+  fontLigatures: true,
+  lineHeight: 1.55,
+  cursorBlinking: 'smooth' as const,
+  cursorSmoothCaretAnimation: 'on' as const,
+  smoothScrolling: true,
+  roundedSelection: true,
+  scrollBeyondLastLine: false,
+  renderLineHighlight: 'all' as const,
+  bracketPairColorization: { enabled: true },
+  guides: { bracketPairs: true, indentation: true },
+  overviewRulerBorder: false,
+  scrollbar: { verticalScrollbarSize: 11, horizontalScrollbarSize: 11 },
+};
 
 // Extract the description from a `# generate: ...` or `// generate: ...` line.
 export function parseGenerateComment(line: string): string | null {
@@ -44,6 +65,7 @@ export function CodeEditor({
   onGenerate,
   onEditorMount,
   editorOptions,
+  theme = 'strix-dark',
 }: CodeEditorProps) {
   const handleMount: OnMount = (editor, monaco) => {
     editor.onDidChangeCursorPosition((e) =>
@@ -84,10 +106,11 @@ export function CodeEditor({
     <Editor
       value={value}
       language={language}
+      theme={theme}
       options={{
+        ...MODERN_OPTIONS,
         readOnly,
         minimap: { enabled: editorOptions?.minimap ?? false },
-        automaticLayout: true,
         inlineSuggest: { enabled: true },
         fontSize: editorOptions?.fontSize ?? 13,
         tabSize: editorOptions?.tabSize ?? 2,
@@ -103,20 +126,28 @@ export interface DiffViewerProps {
   original: string;
   modified: string;
   language?: string;
+  theme?: string;
 }
 
 // Read-only inline diff (original vs an AI-proposed change).
-export function DiffViewer({ original, modified, language }: DiffViewerProps) {
+export function DiffViewer({ original, modified, language, theme = 'strix-dark' }: DiffViewerProps) {
   return (
     <DiffEditor
       original={original}
       modified={modified}
       language={language}
+      theme={theme}
       options={{
         readOnly: true,
         renderSideBySide: false,
         minimap: { enabled: false },
         automaticLayout: true,
+        padding: { top: 12, bottom: 12 },
+        fontFamily: "'Cascadia Code', 'Consolas', monospace",
+        fontLigatures: true,
+        lineHeight: 1.55,
+        scrollBeyondLastLine: false,
+        overviewRulerBorder: false,
       }}
     />
   );

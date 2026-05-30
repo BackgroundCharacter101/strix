@@ -11,11 +11,13 @@ export function DiffView({
   path,
   original,
   modified,
+  theme,
   onClose,
 }: {
   path: string;
   original: string;
   modified: string;
+  theme?: string;
   onClose: () => void;
 }) {
   return (
@@ -27,7 +29,12 @@ export function DiffView({
         </button>
       </div>
       <div className="diff-host">
-        <DiffViewer original={original} modified={modified} language={languageForPath(path)} />
+        <DiffViewer
+          original={original}
+          modified={modified}
+          language={languageForPath(path)}
+          theme={theme}
+        />
       </div>
     </div>
   );
