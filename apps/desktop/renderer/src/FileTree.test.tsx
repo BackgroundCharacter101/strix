@@ -92,6 +92,17 @@ describe('FileTree', () => {
     expect(onSelectFile.mock.calls[0][0].path).toBe('/root/src/index.ts');
   });
 
+  it('offers Open to the Side for files and calls onOpenToSide', async () => {
+    tree.mockResolvedValue(sample);
+    const onOpenToSide = vi.fn();
+    render(<FileTree rootPath="/root" onOpenToSide={onOpenToSide} />);
+
+    fireEvent.contextMenu(await screen.findByText('readme.md'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open to the Side' }));
+    expect(onOpenToSide).toHaveBeenCalledTimes(1);
+    expect(onOpenToSide.mock.calls[0][0].path).toBe('/root/readme.md');
+  });
+
   it('deletes a file via the context menu after confirmation', async () => {
     tree.mockResolvedValue(sample);
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);

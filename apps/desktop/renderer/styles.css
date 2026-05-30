@@ -656,6 +656,22 @@ body {
   background: var(--border);
 }
 
+/* Split button at the right end of the tab strip. */
+.editor-tabs-split {
+  all: unset;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.editor-tabs-split:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
 /* ---- Editor tabs -------------------------------------------------------- */
 .editor-tabs {
   display: flex;

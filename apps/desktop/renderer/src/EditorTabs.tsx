@@ -1,13 +1,14 @@
 import React from 'react';
 import type { EditorTabsApi } from './useEditorTabs';
 import { FileIcon } from './FileTree';
+import { SplitIcon } from './icons';
 
 function basename(path: string): string {
   const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
   return i === -1 ? path : path.slice(i + 1);
 }
 
-export function EditorTabs({ tabs }: { tabs: EditorTabsApi }) {
+export function EditorTabs({ tabs, onSplit }: { tabs: EditorTabsApi; onSplit?: () => void }) {
   if (tabs.tabs.length === 0) {
     return null;
   }
@@ -21,6 +22,12 @@ export function EditorTabs({ tabs }: { tabs: EditorTabsApi }) {
             key={path}
             className="editor-tab"
             data-active={path === tabs.activePath}
+            // Drag a tab onto an editor group to open it there / split.
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/strix-path', path);
+              e.dataTransfer.effectAllowed = 'copy';
+            }}
             // Middle-click closes the tab (common IDE shortcut).
             onAuxClick={(e) => {
               if (e.button === 1) tabs.close(path);
@@ -47,6 +54,17 @@ export function EditorTabs({ tabs }: { tabs: EditorTabsApi }) {
           </span>
         );
       })}
+      {onSplit && (
+        <button
+          type="button"
+          className="editor-tabs-split"
+          aria-label="Split editor"
+          title="Split editor (Ctrl+\)"
+          onClick={onSplit}
+        >
+          <SplitIcon />
+        </button>
+      )}
     </div>
   );
 }

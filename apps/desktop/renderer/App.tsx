@@ -114,6 +114,33 @@ export default function App() {
     }
   };
 
+  // Open a file in the second group (splitting if needed) — right-click
+  // "Open to the Side" or dropping on the right of a single group.
+  const openToSide = (path: string) => {
+    setSplit(true);
+    tabsB.open(path);
+    setActiveGroup('b');
+  };
+
+  // Handle a file dropped onto an editor group (from the tree or a tab).
+  const onGroupDrop = (which: 'a' | 'b', e: React.DragEvent) => {
+    const path = e.dataTransfer.getData('text/strix-path');
+    if (!path) return;
+    e.preventDefault();
+    if (which === 'a' && !split) {
+      const r = e.currentTarget.getBoundingClientRect();
+      if (e.clientX > r.left + r.width * 0.6) {
+        openToSide(path); // dropped on the right edge → split
+        return;
+      }
+      tabs.open(path);
+      setActiveGroup('a');
+    } else {
+      (which === 'b' ? tabsB : tabs).open(path);
+      setActiveGroup(which);
+    }
+  };
+
   const cloneRepo = useCallback(async (url: string) => {
     setCloneOpen(false);
     showToast('Cloning repository…', 'info');
@@ -405,8 +432,12 @@ export default function App() {
       className="editor-group"
       data-active={split && which === activeGroup}
       onMouseDown={() => setActiveGroup(which)}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('text/strix-path')) e.preventDefault();
+      }}
+      onDrop={(e) => onGroupDrop(which, e)}
     >
-      <EditorTabs tabs={group} />
+      <EditorTabs tabs={group} onSplit={toggleSplit} />
       {group.activePath && <Breadcrumbs rootPath={root} path={group.activePath} />}
       <FileViewer
         path={group.activePath}
@@ -524,6 +555,7 @@ export default function App() {
                       rootPath={root}
                       activePath={activeTabs.activePath}
                       onSelectFile={(node) => activeTabs.open(node.path)}
+                      onOpenToSide={(node) => openToSide(node.path)}
                     />
                   ) : (
                     <p className="muted">Opening workspace…</p>

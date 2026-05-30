@@ -90,6 +90,15 @@ export function ExtensionsIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function SplitIcon({ size = 15 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="3" y="4" width="18" height="16" rx="1.5" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+    </svg>
+  );
+}
+
 export function TerminalIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

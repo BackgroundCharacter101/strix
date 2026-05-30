@@ -78,6 +78,12 @@ function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContex
           className="tree-row tree-file"
           data-active={active}
           aria-current={active ? 'true' : undefined}
+          // Drag a file onto an editor group to open it / split there.
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/strix-path', node.path);
+            e.dataTransfer.effectAllowed = 'copy';
+          }}
           onClick={() => onSelectFile?.(node)}
           onContextMenu={(e) => onContext(node, e)}
         >
@@ -127,9 +133,11 @@ export interface FileTreeProps {
   rootPath: string;
   activePath?: string | null;
   onSelectFile?: (node: FileNode) => void;
+  // Open a file in a second editor group (right-click → Open to the Side).
+  onOpenToSide?: (node: FileNode) => void;
 }
 
-export function FileTree({ rootPath, activePath, onSelectFile }: FileTreeProps) {
+export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: FileTreeProps) {
   const { tree, loading, error, reload } = useFileTree(rootPath);
   // Root starts expanded; other folders start collapsed.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set([rootPath]));
@@ -183,6 +191,9 @@ export function FileTree({ rootPath, activePath, onSelectFile }: FileTreeProps) 
   };
 
   const menuItems = (node: FileNode) => [
+    ...(node.type === 'file' && onOpenToSide
+      ? [{ label: 'Open to the Side', onClick: () => onOpenToSide(node) }]
+      : []),
     { label: 'New File…', onClick: () => setDialog({ kind: 'newFile', node }) },
     { label: 'New Folder…', onClick: () => setDialog({ kind: 'newFolder', node }) },
     { label: 'Rename…', onClick: () => setDialog({ kind: 'rename', node }) },
