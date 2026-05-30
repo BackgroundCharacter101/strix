@@ -51,9 +51,13 @@ export function SourceControlView({
       showToast('Changes committed', 'success');
     });
 
+  // File paths from git are relative to the REPO root, which may differ from the
+  // opened workspace folder — resolve diffs against the repo root.
+  const repoRoot = status.root ?? rootPath;
+
   const fileRow = (f: (typeof status.files)[number], action: 'stage' | 'unstage') => {
-    const abs = rootPath
-      ? `${rootPath}${sep(rootPath)}${f.path.replace(/\//g, sep(rootPath))}`
+    const abs = repoRoot
+      ? `${repoRoot}${sep(repoRoot)}${f.path.replace(/\//g, sep(repoRoot))}`
       : f.path;
     return (
       <li key={f.path} className="scm-line">

@@ -12,6 +12,9 @@ export interface GitStatus {
   isRepo: boolean;
   branch: string | null;
   files: GitFileChange[];
+  // Absolute path of the repo root. File paths in `files` are relative to it
+  // (which may differ from the opened workspace folder).
+  root?: string;
 }
 
 // statusMatrix rows are [filepath, HEAD, WORKDIR, STAGE].
@@ -33,7 +36,7 @@ export async function getGitStatus(dir: string): Promise<GitStatus> {
       files.push({ path, status, staged: stage !== head });
     }
 
-    return { isRepo: true, branch, files };
+    return { isRepo: true, branch, files, root };
   } catch {
     // Not a git repository (or .git unreadable).
     return { isRepo: false, branch: null, files: [] };
