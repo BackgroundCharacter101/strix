@@ -10,12 +10,12 @@ import { SearchView } from './src/SearchView';
 import { SourceControlView } from './src/SourceControlView';
 import { ExtensionsView } from './src/ExtensionsView';
 import { DiffView } from './src/DiffView';
-import { SettingsDialog } from './src/SettingsDialog';
+import { SettingsPage } from './src/SettingsPage';
 import { AboutDialog } from './src/AboutDialog';
 import { Toaster } from './src/Toaster';
 import { TitleBar } from './src/TitleBar';
 import { showToast } from './src/toast';
-import { useSettings } from './src/useSettings';
+import { useSettings, DEFAULT_SETTINGS } from './src/useSettings';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
@@ -380,7 +380,14 @@ export default function App() {
               </>
             )}
             <main className="editor-pane">
-              {diff ? (
+              {settingsOpen ? (
+                <SettingsPage
+                  settings={settings}
+                  onChange={updateSettings}
+                  onReset={() => updateSettings(DEFAULT_SETTINGS)}
+                  onClose={() => setSettingsOpen(false)}
+                />
+              ) : diff ? (
                 <DiffView
                   path={diff.path}
                   original={diff.original}
@@ -406,6 +413,10 @@ export default function App() {
                       tabSize: settings.tabSize,
                       wordWrap: settings.wordWrap,
                       minimap: settings.minimap,
+                      fontFamily: settings.fontFamily || undefined,
+                      lineNumbers: settings.lineNumbers,
+                      cursorStyle: settings.cursorStyle,
+                      renderWhitespace: settings.renderWhitespace,
                     }}
                     theme={editorTheme}
                     registerFormat={registerFormat}
@@ -472,13 +483,6 @@ export default function App() {
           confirmLabel="Clone"
           onSubmit={(url) => void cloneRepo(url)}
           onCancel={() => setCloneOpen(false)}
-        />
-      )}
-      {settingsOpen && (
-        <SettingsDialog
-          settings={settings}
-          onChange={updateSettings}
-          onClose={() => setSettingsOpen(false)}
         />
       )}
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}

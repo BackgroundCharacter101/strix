@@ -11,6 +11,10 @@ export interface EditorOptions {
   tabSize?: number;
   wordWrap?: boolean;
   minimap?: boolean;
+  fontFamily?: string;
+  lineNumbers?: 'on' | 'off' | 'relative';
+  cursorStyle?: 'line' | 'block' | 'underline';
+  renderWhitespace?: 'none' | 'boundary' | 'selection' | 'all';
 }
 
 export interface CodeEditorProps {
@@ -115,6 +119,10 @@ export function CodeEditor({
         fontSize: editorOptions?.fontSize ?? 13,
         tabSize: editorOptions?.tabSize ?? 2,
         wordWrap: editorOptions?.wordWrap ? 'on' : 'off',
+        fontFamily: editorOptions?.fontFamily || MODERN_OPTIONS.fontFamily,
+        lineNumbers: editorOptions?.lineNumbers ?? 'on',
+        cursorStyle: editorOptions?.cursorStyle ?? 'line',
+        renderWhitespace: editorOptions?.renderWhitespace ?? 'selection',
       }}
       onChange={(next) => onChange?.(next ?? '')}
       onMount={handleMount}

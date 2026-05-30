@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 149 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 151 tests / 38 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -119,8 +119,10 @@ the REAL Anthropic CLI; Strix does not bundle or re-implement it.
 
 **Command palette** (`Palette`, **Ctrl+Shift+P**) & **Quick Open** (Ctrl+P).
 
-**Settings** (`SettingsDialog`/`useSettings`, gear or palette): theme
-(dark/light), font size, tab size, word wrap, minimap — persisted to localStorage.
+**Settings** (`SettingsPage`/`useSettings`, gear / Ctrl+, / palette): a full
+editor-area page (sectioned, searchable, Reset) — theme, font size, font family,
+tab size, word wrap, line numbers, cursor style, render whitespace, minimap.
+Persisted to localStorage; editor options flow to Monaco via `editorOptions`.
 
 **Languages panel** (`LanguagesDialog`/`languages.ts`): the "extension list"
 analog — lists supported languages, shows ✓installed / ✗not-found per language
@@ -232,8 +234,8 @@ strix/ (folder: tabea)
 - **terminal:** `create(opts{cwd})` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` ·
   `onData(cb)` · `onExit(cb)` · `hasCommand(cmd)` → bool (Claude Code detection)
 - **lsp:** `start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)` ·
-  `hasServer(command)` → bool · `installServer(id)` → `{ok, output}` (vetted install)
-  — supported: python/typescript/javascript/c/cpp/bash/rust/go/ruby/php
+  `hasServer(command)` → bool · `installServer(id)` / `uninstallServer(id)` →
+  `{ok, output}` (vetted commands) — supported: python/typescript/javascript/c/cpp/bash/rust/go/ruby/php
 - **ai:** `config()` → `{baseURL, apiKey}` (live from FreeLLMAPI) · `models()` → string[]
 - **collab:** `url()` → string|null (COLLAB_SERVER_URL)
 - **menu:** `onCommand(cb)` → unsubscribe (native menu → renderer command ids)

@@ -6,6 +6,10 @@ export interface Settings {
   wordWrap: boolean;
   minimap: boolean;
   theme: 'dark' | 'light';
+  fontFamily: string;
+  lineNumbers: 'on' | 'off' | 'relative';
+  cursorStyle: 'line' | 'block' | 'underline';
+  renderWhitespace: 'none' | 'boundary' | 'selection' | 'all';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -14,6 +18,10 @@ export const DEFAULT_SETTINGS: Settings = {
   wordWrap: false,
   minimap: false,
   theme: 'dark',
+  fontFamily: '',
+  lineNumbers: 'on',
+  cursorStyle: 'line',
+  renderWhitespace: 'selection',
 };
 
 const KEY = 'strix.settings';
