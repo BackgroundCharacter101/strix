@@ -26,7 +26,9 @@ export type SpawnFn = (
 
 export function defaultShell(): string {
   if (process.platform === 'win32') {
-    return process.env.COMSPEC ?? 'powershell.exe';
+    // Prefer PowerShell over the legacy cmd.exe for a modern terminal.
+    // STRIX_SHELL lets the user override (e.g. their COMSPEC, pwsh, or bash).
+    return process.env.STRIX_SHELL ?? 'powershell.exe';
   }
   return process.env.SHELL ?? 'bash';
 }
@@ -41,6 +43,9 @@ const defaultSpawn: SpawnFn = (shell, opts) => {
     cols: opts.cols,
     rows: opts.rows,
     env: process.env as Record<string, string>,
+    // Use the modern ConPTY backend on Windows (better ANSI/Unicode + speed
+    // than the legacy winpty). Ignored on other platforms.
+    ...(process.platform === 'win32' ? { useConpty: true } : {}),
   });
   return {
     onData: (cb) => proc.onData(cb),

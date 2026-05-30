@@ -63,11 +63,27 @@ function createWindow() {
     mainWindow.on('unmaximize', sendMax);
 }
 
-app.whenReady().then(() => {
-    registerIpcHandlers();
-    startAiServer(__dirname);
-    createWindow();
-});
+// Single-instance lock: relaunching Strix focuses the existing window instead
+// of spawning a second (heavy) process. Big resource win on Windows where users
+// often double-click the icon again.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on('second-instance', () => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+            if (win.isMinimized()) win.restore();
+            win.focus();
+        }
+    });
+
+    app.whenReady().then(() => {
+        registerIpcHandlers();
+        startAiServer(__dirname);
+        createWindow();
+    });
+}
 
 app.on('will-quit', () => {
     stopAiServer();
