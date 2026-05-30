@@ -65,6 +65,7 @@ export function registerIpcHandlers(): void {
       terminals.resize(id, cols, rows),
   );
   ipcMain.on('terminal:kill', (_event, { id }: { id: string }) => terminals.kill(id));
+  ipcMain.handle('terminal:hasCommand', (_event, command: string) => commandExists(command));
 
   const lsp = new LspManager();
   ipcMain.handle('lsp:start', (event, language: Language) =>

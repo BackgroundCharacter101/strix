@@ -49,6 +49,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       kill: vi.fn(),
       onData: vi.fn(() => () => {}),
       onExit: vi.fn(() => () => {}),
+      hasCommand: vi.fn(async (): Promise<boolean> => false),
     },
     lsp: {
       start: vi.fn(async (): Promise<string> => 'lsp-1'),

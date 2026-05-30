@@ -1394,6 +1394,28 @@ body {
   color: var(--text);
 }
 
+.term-claude-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 9px;
+  font-weight: var(--weight-medium);
+}
+
+.term-claude-btn:hover:not(:disabled) {
+  background: var(--selection);
+  border-color: var(--accent);
+}
+
+.term-claude-btn svg {
+  color: var(--accent);
+}
+
 /* ---- Controls ----------------------------------------------------------- */
 button {
   background: var(--accent);

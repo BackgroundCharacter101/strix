@@ -73,6 +73,7 @@ export function buildAppMenu(win: BrowserWindow): void {
         { type: 'separator' },
         cmd('Toggle Terminal', 'view.terminal', 'CmdOrCtrl+`'),
         cmd('Toggle AI Assistant', 'view.ai'),
+        cmd('Start Claude Code', 'terminal.claude'),
         { type: 'separator' },
         cmd('Languages & Extensions…', 'lang.manage'),
         { type: 'separator' },

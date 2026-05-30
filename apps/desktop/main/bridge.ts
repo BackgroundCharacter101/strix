@@ -38,6 +38,8 @@ export interface StrixTerminalApi {
   kill(id: string): void;
   onData(cb: (e: { id: string; data: string }) => void): () => void;
   onExit(cb: (e: { id: string; exitCode: number }) => void): () => void;
+  // Whether an executable (e.g. `claude`) is available on PATH.
+  hasCommand(command: string): Promise<boolean>;
 }
 
 export interface StrixLspApi {

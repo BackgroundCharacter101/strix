@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 145 tests / 37 files.**
+  **`npm test`** (vitest) — **all green: 147 tests / 37 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -104,7 +104,12 @@ read-only **diff vs HEAD** (`DiffView` + `git.fileHead`).
 Fix / Refactor, model picker (default Auto), persistent history, streaming,
 diff-proposal apply (`CodeProposal`).
 
-**Terminal** (`TerminalTabs`/`Terminal`): xterm.js + node-pty, multiple sessions.
+**Terminal** (`TerminalTabs`/`Terminal`): xterm.js + node-pty, multiple sessions,
+opens in the workspace root. **Claude Code launcher** — a "✦ Claude Code" button
+(+ "Start Claude Code" command/menu) detects the `claude` CLI via
+`terminal.hasCommand` and boots it in an integrated terminal (install hint if
+missing). It edits files on disk → changes appear live in the editor. This runs
+the REAL Anthropic CLI; Strix does not bundle or re-implement it.
 
 **Command palette** (`Palette`, **Ctrl+Shift+P**) & **Quick Open** (Ctrl+P).
 
@@ -218,8 +223,8 @@ strix/ (folder: tabea)
 - **git:** `status(root)` → `{isRepo, branch, files[]}` · `fileHead(path)` →
   committed content (for diffs)
 - **search:** `find(query)` → `{path, line, text}[]`
-- **terminal:** `create(opts)` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` ·
-  `onData(cb)` · `onExit(cb)`
+- **terminal:** `create(opts{cwd})` · `input(id,data)` · `resize(id,c,r)` · `kill(id)` ·
+  `onData(cb)` · `onExit(cb)` · `hasCommand(cmd)` → bool (Claude Code detection)
 - **lsp:** `start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)` ·
   `hasServer(command)` → bool · `installServer(id)` → `{ok, output}` (vetted install)
   — supported: python/typescript/javascript/c/cpp/bash/rust/go/ruby/php

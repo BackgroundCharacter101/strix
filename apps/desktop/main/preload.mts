@@ -35,6 +35,7 @@ const api: StrixApi = {
       ipcRenderer.on('terminal:exit', handler);
       return () => ipcRenderer.removeListener('terminal:exit', handler);
     },
+    hasCommand: (command) => ipcRenderer.invoke('terminal:hasCommand', command),
   },
   lsp: {
     start: (language) => ipcRenderer.invoke('lsp:start', language),

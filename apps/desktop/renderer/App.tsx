@@ -47,6 +47,7 @@ export default function App() {
   const [cloneOpen, setCloneOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [claudeSignal, setClaudeSignal] = useState(0);
   const [settings, updateSettings] = useSettings();
   // Latest runCommand, so the menu subscription (mounted once) never goes stale.
   const runCommandRef = useRef<(id: string) => void>(() => {});
@@ -227,6 +228,15 @@ export default function App() {
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
+    {
+      id: 'terminal.claude',
+      label: 'Start Claude Code',
+      detail: '',
+      run: () => {
+        setShowTerminal(true);
+        setClaudeSignal((n) => n + 1);
+      },
+    },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
     { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void tabs.active?.save() },
@@ -419,7 +429,7 @@ export default function App() {
             <>
               <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
               <section className="panel" style={{ height: terminal.size }}>
-                <TerminalTabs />
+                <TerminalTabs cwd={root ?? undefined} launchSignal={claudeSignal} />
               </section>
             </>
           )}
