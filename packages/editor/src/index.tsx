@@ -33,16 +33,19 @@ export interface CodeEditorProps {
   theme?: string;
 }
 
-// Modern editor chrome shared by CodeEditor + DiffViewer.
+// Modern editor chrome shared by CodeEditor + DiffViewer. Animation options are
+// deliberately lightweight: a plain blinking caret + no smooth-caret/scroll, so
+// the editor doesn't repaint every frame while idle (saves GPU/CPU). The static
+// touches (ligatures, padding, bracket colourisation) cost nothing at runtime.
 const MODERN_OPTIONS = {
   automaticLayout: true,
   padding: { top: 12, bottom: 12 },
   fontFamily: "'Cascadia Code', 'Consolas', monospace",
   fontLigatures: true,
   lineHeight: 1.55,
-  cursorBlinking: 'smooth' as const,
-  cursorSmoothCaretAnimation: 'on' as const,
-  smoothScrolling: true,
+  cursorBlinking: 'blink' as const,
+  cursorSmoothCaretAnimation: 'off' as const,
+  smoothScrolling: false,
   roundedSelection: true,
   scrollBeyondLastLine: false,
   renderLineHighlight: 'all' as const,

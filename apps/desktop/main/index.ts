@@ -49,7 +49,12 @@ function createWindow() {
         });
         console.log('Electron window created, loading built renderer', BUILT_INDEX);
     }
-    mainWindow.webContents.openDevTools({ mode: 'right' });
+    // DevTools is a full second renderer process — heavy on CPU/RAM. Only
+    // auto-open it when explicitly debugging (STRIX_DEVTOOLS=1 or a dev server).
+    // It's always available from the View menu (Toggle Developer Tools).
+    if (process.env.STRIX_DEVTOOLS === '1' || DEV_URL) {
+        mainWindow.webContents.openDevTools({ mode: 'right' });
+    }
     buildAppMenu(mainWindow);
 
     // Tell the renderer's custom title bar when the maximize state changes.
