@@ -6,6 +6,7 @@ import type { FileBuffer } from './useFileBuffer';
 import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
 import { MarkdownPreview } from './MarkdownPreview';
+import { HexViewer } from './HexViewer';
 import { OwlIcon } from './icons';
 
 export function FileViewer({
@@ -38,7 +39,11 @@ export function FileViewer({
   onSelectionAction?: (kind: 'explain' | 'fix', selection: string) => void;
 }) {
   const [showPreview, setShowPreview] = useState(true);
+  const [hexOverride, setHexOverride] = useState<boolean | null>(null);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
+  // A NUL byte in the decoded text strongly implies a binary file.
+  const isBinary = (buffer?.draft ?? '').includes(String.fromCharCode(0));
+  const showHex = hexOverride ?? isBinary;
 
   if (!path || !buffer) {
     return (
@@ -116,10 +121,20 @@ export function FileViewer({
           </span>
         )}
         {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
-        {isMarkdown && (
+        <span className="toolbar-right" />
+        <button
+          type="button"
+          className="ai-ghost-btn"
+          aria-pressed={showHex}
+          title="Toggle hex view"
+          onClick={() => setHexOverride(!showHex)}
+        >
+          {showHex ? 'Text' : 'Hex'}
+        </button>
+        {isMarkdown && !showHex && (
           <button
             type="button"
-            className="ai-ghost-btn toolbar-right"
+            className="ai-ghost-btn"
             aria-pressed={showPreview}
             onClick={() => setShowPreview((v) => !v)}
           >
@@ -128,7 +143,9 @@ export function FileViewer({
         )}
       </div>
       <div className="editor-host">
-        {isMarkdown && showPreview ? (
+        {showHex ? (
+          <HexViewer path={path} />
+        ) : isMarkdown && showPreview ? (
           <MarkdownPreview content={buffer.draft} />
         ) : (
         <CodeEditor

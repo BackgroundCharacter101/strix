@@ -6,6 +6,7 @@ import {
   createEntry,
   renameEntry,
   removeEntry,
+  readFileBytes,
 } from './fs.js';
 import {
   getGitStatus,
@@ -42,6 +43,7 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle('file:rename', (_event, from: string, to: string) => renameEntry(from, to));
   ipcMain.handle('file:remove', (_event, targetPath: string) => removeEntry(targetPath));
+  ipcMain.handle('file:readBytes', (_event, filePath: string) => readFileBytes(filePath));
   ipcMain.handle('workspace:root', () => getRoot());
   ipcMain.handle('workspace:open', (event) =>
     openFolderDialog(BrowserWindow.fromWebContents(event.sender)),

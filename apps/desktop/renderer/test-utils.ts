@@ -30,6 +30,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       create: vi.fn(async (): Promise<void> => {}),
       rename: vi.fn(async (): Promise<void> => {}),
       remove: vi.fn(async (): Promise<void> => {}),
+      readBytes: vi.fn(async () => ({ base64: '', size: 0, truncated: false })),
     },
     workspace: {
       root: vi.fn(async (): Promise<string> => '/'),

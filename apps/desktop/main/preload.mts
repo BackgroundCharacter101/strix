@@ -9,6 +9,7 @@ const api: StrixApi = {
     create: (targetPath, type) => ipcRenderer.invoke('file:create', targetPath, type),
     rename: (from, to) => ipcRenderer.invoke('file:rename', from, to),
     remove: (targetPath) => ipcRenderer.invoke('file:remove', targetPath),
+    readBytes: (filePath) => ipcRenderer.invoke('file:readBytes', filePath),
   },
   workspace: {
     root: () => ipcRenderer.invoke('workspace:root'),
