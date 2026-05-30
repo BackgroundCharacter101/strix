@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Settings } from './useSettings';
+import { THEMES, ACCENTS } from './themes';
 
 function Row({
   query,
@@ -59,15 +60,36 @@ export function SettingsPage({
       <div className="settings-body">
         <section className="set-section">
           <h3>Appearance</h3>
-          <Row query={query} label="Color theme" desc="Overall light or dark UI theme.">
+          <Row query={query} label="Color theme" desc="Overall UI theme.">
             <select
               aria-label="Color theme"
               value={settings.theme}
               onChange={(e) => onChange({ theme: e.target.value as Settings['theme'] })}
             >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
+              {THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
             </select>
+          </Row>
+          <Row query={query} label="Accent color" desc="Highlight colour for the UI and editor.">
+            <div className="accent-swatches" role="radiogroup" aria-label="Accent color">
+              {ACCENTS.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={settings.accent === a.id}
+                  aria-label={a.label}
+                  title={a.label}
+                  className="accent-swatch"
+                  data-active={settings.accent === a.id}
+                  style={{ background: a.hex }}
+                  onClick={() => onChange({ accent: a.id })}
+                />
+              ))}
+            </div>
           </Row>
         </section>
 

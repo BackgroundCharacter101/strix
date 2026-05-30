@@ -328,6 +328,31 @@ body {
   width: 90px;
 }
 
+.accent-swatches {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.accent-swatch {
+  all: unset;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px var(--border);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.accent-swatch:hover {
+  transform: scale(1.1);
+}
+
+.accent-swatch[data-active='true'] {
+  box-shadow:
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--text);
+}
+
 /* ---- Extensions view (sidebar) ------------------------------------------ */
 .ext-view {
   flex: 1 1 auto;

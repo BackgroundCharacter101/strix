@@ -257,8 +257,12 @@ strix/ (folder: tabea)
      `--border`, `--dirty`, `--danger`, `--scrim`, `--shadow-modal`, …).
 - `styles.css` references **only semantic tokens** (no raw hex). Re-theming or
   adding a theme = edit `tokens.css` only.
-- **Light theme** is a `:root[data-theme='light']` block remapping the semantic
-  surface/text/line tokens; `useSettings` sets `document.documentElement.dataset.theme`.
+- **Themes:** `[data-theme]` blocks for dark (base) / light / midnight /
+  high-contrast (surfaces/text only). **Accents:** `[data-accent]` blocks
+  (amber/violet/teal/emerald/blue) own the accent-family tokens. `useSettings`
+  sets both `dataset.theme` + `dataset.accent`. The Monaco editor accent follows
+  via `monaco-setup.applyAccent(hex, themeName)` (re-defines strix-dark/light).
+  Catalogue + helpers in `themes.ts`. Pick both in the Settings page.
 - **Editor (Monaco) theme:** custom `strix-dark` / `strix-light` defined in
   `monaco-setup.ts` (amber cursor + active line-number, amber-tinted selection /
   bracket-match / indent guides, subtle current-line highlight, matched bg).

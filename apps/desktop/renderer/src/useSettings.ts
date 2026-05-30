@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { ThemeId, AccentId } from './themes';
 
 export interface Settings {
   fontSize: number;
   tabSize: number;
   wordWrap: boolean;
   minimap: boolean;
-  theme: 'dark' | 'light';
+  theme: ThemeId;
+  accent: AccentId;
   fontFamily: string;
   lineNumbers: 'on' | 'off' | 'relative';
   cursorStyle: 'line' | 'block' | 'underline';
@@ -18,6 +20,7 @@ export const DEFAULT_SETTINGS: Settings = {
   wordWrap: false,
   minimap: false,
   theme: 'dark',
+  accent: 'amber',
   fontFamily: '',
   lineNumbers: 'on',
   cursorStyle: 'line',
@@ -44,6 +47,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
       /* ignore */
     }
     document.documentElement.dataset.theme = settings.theme;
+    document.documentElement.dataset.accent = settings.accent;
   }, [settings]);
 
   const update = useCallback(

@@ -16,6 +16,8 @@ import { Toaster } from './src/Toaster';
 import { TitleBar } from './src/TitleBar';
 import { showToast } from './src/toast';
 import { useSettings, DEFAULT_SETTINGS } from './src/useSettings';
+import { applyAccent } from './src/monaco-setup';
+import { accentHex, monacoThemeFor } from './src/themes';
 import { AiPanel } from './src/AiPanel';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
@@ -260,7 +262,12 @@ export default function App() {
       .map((p) => ({ id: `recent:${p}`, label: `Open Recent: ${p}`, detail: '', run: () => setRoot(p) })),
   ];
 
-  const editorTheme = settings.theme === 'light' ? 'strix-light' : 'strix-dark';
+  const editorTheme = monacoThemeFor(settings.theme);
+
+  // Keep the Monaco editor accent in sync with the chosen accent.
+  useEffect(() => {
+    applyAccent(accentHex(settings.accent), editorTheme);
+  }, [settings.accent, editorTheme]);
 
   // Run a command by id — shared by the command palette and the native menu.
   const runCommand = (id: string) => {

@@ -4,6 +4,8 @@ import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 // xterm can't render in jsdom; stub the Terminal component.
 vi.mock('./src/Terminal', () => ({ Terminal: () => <div aria-label="terminal" /> }));
+// monaco-setup imports monaco-editor (no jsdom entry); stub the accent applier.
+vi.mock('./src/monaco-setup', () => ({ applyAccent: vi.fn() }));
 
 // Monaco can't render in jsdom; stub the editor so FileViewer yields a textarea.
 vi.mock('@strix/editor', () => ({

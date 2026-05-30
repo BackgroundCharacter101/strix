@@ -157,11 +157,98 @@
   --text-muted: #6a6a6a;
   --icon-muted: #6a6a6a;
 
-  --selection: rgba(232, 163, 61, 0.28); /* amber wash on light surfaces */
   --scrollbar: #c4c4c4;
   --scrollbar-hover: #b0b0b0;
   --overlay-subtle: rgba(0, 0, 0, 0.06);
   --scrim: rgba(0, 0, 0, 0.25);
   --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.25);
-  --link: var(--amber-600); /* darker amber for contrast on white */
+}
+
+/* Midnight — deep blue-black surfaces. */
+:root[data-theme='midnight'] {
+  --bg: #14161c;
+  --bg-elevated: #1a1d26;
+  --bg-titlebar: #1f2330;
+  --bg-activity: #1c2029;
+  --bg-input: #232838;
+  --bg-hover: #232838;
+  --border: #2a2f3d;
+  --text: #d7dbe6;
+  --text-muted: #8b93a7;
+  --icon-muted: #8b93a7;
+  --scrollbar: #3a4150;
+  --scrollbar-hover: #4a5160;
+  --overlay-subtle: rgba(255, 255, 255, 0.06);
+}
+
+/* High contrast — black with bright edges for maximum legibility. */
+:root[data-theme='high-contrast'] {
+  --bg: #000000;
+  --bg-elevated: #0a0a0a;
+  --bg-titlebar: #0a0a0a;
+  --bg-activity: #000000;
+  --bg-input: #0d0d0d;
+  --bg-hover: #1a1a1a;
+  --border: #6b6b6b;
+  --text: #ffffff;
+  --text-muted: #d0d0d0;
+  --icon-muted: #d0d0d0;
+  --scrollbar: #777777;
+  --scrollbar-hover: #999999;
+  --overlay-subtle: rgba(255, 255, 255, 0.12);
+}
+
+/* =========================================================================
+   ACCENTS — own the accent-family tokens (theme blocks above only touch
+   surfaces/text). document.documentElement[data-accent] selects one.
+   ========================================================================= */
+:root[data-accent='amber'] {
+  --accent: #e8a33d;
+  --accent-hover: #f4b860;
+  --accent-ink: #231a07;
+  --selection: rgba(232, 163, 61, 0.22);
+  --statusbar: #e8a33d;
+  --statusbar-hover: #f4b860;
+  --statusbar-ink: #231a07;
+  --link: #f4b860;
+}
+:root[data-accent='violet'] {
+  --accent: #7c5cff;
+  --accent-hover: #9a7dff;
+  --accent-ink: #ffffff;
+  --selection: rgba(124, 92, 255, 0.26);
+  --statusbar: #6a4af0;
+  --statusbar-hover: #7c5cff;
+  --statusbar-ink: #ffffff;
+  --link: #b3a0ff;
+}
+:root[data-accent='teal'] {
+  --accent: #1fb6a6;
+  --accent-hover: #2ed3c0;
+  --accent-ink: #04201d;
+  --selection: rgba(31, 182, 166, 0.24);
+  --statusbar: #1fb6a6;
+  --statusbar-hover: #2ed3c0;
+  --statusbar-ink: #04201d;
+  --link: #43d6c6;
+}
+:root[data-accent='emerald'] {
+  --accent: #2ea36b;
+  --accent-hover: #36c07f;
+  --accent-ink: #03210f;
+  --selection: rgba(46, 163, 107, 0.24);
+  --statusbar: #2ea36b;
+  --statusbar-hover: #36c07f;
+  --statusbar-ink: #03210f;
+  --link: #4cc78a;
+}
+:root[data-accent='blue'] {
+  --accent: #3b82f6;
+  --accent-hover: #5a97f8;
+  --accent-ink: #ffffff;
+  --selection: rgba(59, 130, 246, 0.26);
+  --statusbar: #2f6fd6;
+  --statusbar-hover: #3b82f6;
+  --statusbar-ink: #ffffff;
+  --link: #8fb8fb;
 }
