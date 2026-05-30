@@ -1,31 +1,48 @@
 import React from 'react';
-import { useGitStatus } from './useGitStatus';
+import type { GitStatus } from '../../main/git';
 import { GitBranchIcon } from './icons';
 
-export function GitStatusBar({ rootPath }: { rootPath: string | null }) {
-  const status = useGitStatus(rootPath);
-
+// Presentational git indicator for the status bar. The status is owned by App
+// (so the activity-bar badge can share it). Clickable → opens Source Control.
+export function GitStatusBar({
+  status,
+  onClick,
+}: {
+  status: GitStatus | null;
+  onClick?: () => void;
+}) {
+  let body: React.ReactNode;
   if (!status) {
-    return (
-      <span className="statusbar-item" aria-label="git status">
-        …
-      </span>
-    );
-  }
-  if (!status.isRepo) {
-    return (
-      <span className="statusbar-item" aria-label="git status">
-        not a git repo
-      </span>
+    body = '…';
+  } else if (!status.isRepo) {
+    body = 'not a git repo';
+  } else {
+    const changed = status.files.length;
+    body = (
+      <>
+        <GitBranchIcon />
+        {status.branch ?? 'detached'}
+        {changed === 0 ? '' : ` ${changed} changed`}
+      </>
     );
   }
 
-  const changed = status.files.length;
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className="statusbar-item statusbar-git statusbar-btn"
+        aria-label="git status"
+        title="Source Control"
+        onClick={onClick}
+      >
+        {body}
+      </button>
+    );
+  }
   return (
     <span className="statusbar-item statusbar-git" aria-label="git status">
-      <GitBranchIcon />
-      {status.branch ?? 'detached'}
-      {changed === 0 ? '' : ` ${changed} changed`}
+      {body}
     </span>
   );
 }

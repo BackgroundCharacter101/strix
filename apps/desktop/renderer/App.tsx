@@ -23,6 +23,7 @@ import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
+import { useGitStatus } from './src/useGitStatus';
 import {
   ExtensionsIcon,
   FilesIcon,
@@ -262,6 +263,9 @@ export default function App() {
       .map((p) => ({ id: `recent:${p}`, label: `Open Recent: ${p}`, detail: '', run: () => setRoot(p) })),
   ];
 
+  const gitStatus = useGitStatus(root);
+  const changedCount = gitStatus?.isRepo ? gitStatus.files.length : 0;
+
   const editorTheme = monacoThemeFor(settings.theme);
 
   // Keep the Monaco editor accent in sync with the chosen accent.
@@ -308,12 +312,14 @@ export default function App() {
           </button>
           <button
             type="button"
+            className="activity-with-badge"
             aria-label="Source Control"
             aria-pressed={showSidebar && sidebarView === 'scm'}
-            title="Source Control"
+            title={`Source Control${changedCount ? ` — ${changedCount} changed` : ''}`}
             onClick={() => selectView('scm')}
           >
             <SourceControlIcon />
+            {changedCount > 0 && <span className="activity-badge">{changedCount}</span>}
           </button>
           <button
             type="button"
@@ -455,12 +461,13 @@ export default function App() {
         </div>
       </div>
       <StatusBar
-        rootPath={root}
+        gitStatus={gitStatus}
         path={tabs.activePath}
         dirty={tabs.active?.dirty ?? false}
         cursor={cursor}
         content={tabs.active?.draft ?? ''}
         problems={tabs.activePath ? problems : { errors: 0, warnings: 0 }}
+        onOpenScm={() => selectView('scm')}
       />
       {palette === 'files' && (
         <Palette

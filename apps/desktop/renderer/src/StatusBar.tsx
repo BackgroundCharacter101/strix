@@ -1,15 +1,17 @@
 import React from 'react';
 import { languageForPath } from '@strix/editor';
+import type { GitStatus } from '../../main/git';
 import { GitStatusBar } from './GitStatusBar';
 import { ErrorIcon, WarningIcon } from './icons';
 
 export interface StatusBarProps {
-  rootPath: string | null;
+  gitStatus: GitStatus | null;
   path: string | null;
   dirty: boolean;
   cursor: { line: number; column: number };
   content?: string;
   problems?: { errors: number; warnings: number };
+  onOpenScm?: () => void;
 }
 
 // Windows files use CRLF; everything else LF. Detect from the buffer.
@@ -41,34 +43,49 @@ function detectIndent(content: string): string {
 }
 
 export function StatusBar({
-  rootPath,
+  gitStatus,
   path,
   dirty,
   cursor,
   content = '',
   problems = { errors: 0, warnings: 0 },
+  onOpenScm,
 }: StatusBarProps) {
   return (
     <footer className="statusbar" aria-label="status bar">
       <div className="statusbar-section statusbar-left">
-        <GitStatusBar rootPath={rootPath} />
-        <span className="statusbar-item statusbar-problems" aria-label="problems">
+        <GitStatusBar status={gitStatus} onClick={onOpenScm} />
+        <button
+          type="button"
+          className="statusbar-item statusbar-problems statusbar-btn"
+          aria-label="problems"
+          title={`${problems.errors} errors, ${problems.warnings} warnings — open Source Control`}
+          onClick={onOpenScm}
+        >
           <ErrorIcon /> {problems.errors}
           <WarningIcon /> {problems.warnings}
-        </span>
+        </button>
       </div>
       <div className="statusbar-section statusbar-right">
         {path ? (
           <>
-            <span className="statusbar-item">
+            <span className="statusbar-item" title="Line and column">
               Ln {cursor.line}, Col {cursor.column}
             </span>
-            <span className="statusbar-item">{detectIndent(content)}</span>
-            <span className="statusbar-item">UTF-8</span>
-            <span className="statusbar-item">{detectEol(content)}</span>
-            <span className="statusbar-item">{languageForPath(path)}</span>
+            <span className="statusbar-item" title="Indentation">
+              {detectIndent(content)}
+            </span>
+            <span className="statusbar-item" title="Encoding">
+              UTF-8
+            </span>
+            <span className="statusbar-item" title="End of line sequence">
+              {detectEol(content)}
+            </span>
+            <span className="statusbar-item" title="Language mode">
+              {languageForPath(path)}
+            </span>
             {dirty && (
-              <span className="statusbar-item dirty-dot" aria-label="unsaved changes">
+              <span className="statusbar-item dirty-dot" aria-label="unsaved changes" title="Unsaved changes">
                 ●
               </span>
             )}
