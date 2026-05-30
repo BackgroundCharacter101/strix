@@ -829,6 +829,18 @@ body {
   font-size: var(--text-sm);
 }
 
+.palette-hl {
+  background: transparent;
+  color: var(--accent);
+  font-weight: var(--weight-bold);
+}
+
+.palette-item[data-active='true'] .palette-hl {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 2px;
+}
+
 .palette-item[data-active='true'] .palette-detail {
   color: var(--text);
 }

@@ -54,6 +54,13 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [claudeSignal, setClaudeSignal] = useState(0);
   const [zen, setZen] = useState(false);
+  const [recentCommands, setRecentCommands] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('strix.recentCommands') ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
   const [settings, updateSettings] = useSettings();
   // Latest runCommand, so the menu subscription (mounted once) never goes stale.
   const runCommandRef = useRef<(id: string) => void>(() => {});
@@ -296,6 +303,19 @@ export default function App() {
     applyAccent(accentHex(settings.accent), editorTheme);
   }, [settings.accent, editorTheme]);
 
+  const recordRecentCommand = (id: string) => {
+    if (id.startsWith('recent:')) return; // don't track "open recent folder" entries
+    setRecentCommands((prev) => {
+      const next = [id, ...prev.filter((x) => x !== id)].slice(0, 12);
+      try {
+        localStorage.setItem('strix.recentCommands', JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   // Run a command by id — shared by the command palette and the native menu.
   const runCommand = (id: string) => {
     if (id === 'view.commandPalette') {
@@ -511,8 +531,10 @@ export default function App() {
         <Palette
           items={commands.map((c) => ({ id: c.id, label: c.label, detail: c.detail }))}
           placeholder="Type a command…"
+          recentIds={recentCommands}
           onSelect={(item) => {
             setPalette(null);
+            recordRecentCommand(item.id);
             commands.find((c) => c.id === item.id)?.run();
           }}
           onClose={() => setPalette(null)}

@@ -39,6 +39,30 @@ describe('Palette', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('fuzzy-matches non-contiguous characters and highlights them', () => {
+    render(<Palette items={items} placeholder="Search" onSelect={vi.fn()} onClose={vi.fn()} />);
+    // 'rdm' is a subsequence of 'readme.md'.
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'rdm' } });
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(1);
+    expect(options[0]).toHaveTextContent('readme.md');
+    // The matched characters are wrapped for highlighting.
+    expect(options[0].querySelectorAll('.palette-hl').length).toBe(3);
+  });
+
+  it('orders recent ids first when the query is empty', () => {
+    render(
+      <Palette
+        items={items}
+        placeholder="Search"
+        recentIds={['/ws/readme.md']}
+        onSelect={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole('option')[0]).toHaveTextContent('readme.md');
+  });
+
   it('shows an empty state when nothing matches', () => {
     render(<Palette items={items} placeholder="Search" onSelect={vi.fn()} onClose={vi.fn()} />);
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'zzz' } });
