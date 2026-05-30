@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 164 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 170 tests / 40 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -354,7 +354,7 @@ strix/ (folder: tabea)
 | 4 | AI gateway + all §8 editor features | ✅ chat/explain/vuln/autocomplete/Fix/Refactor/generate/model-picker/context |
 | 5 | Terminal + LSP | ✅ terminal; LSP diagnostics (Py/TS/JS/C/C++/Bash/Rust/Go). Hover/go-to-def TODO |
 | 6 | Yjs collaboration | ✅ opt-in (`collab.ts`; COLLAB_SERVER_URL + `npm run collab:start`) |
-| 7 | Hex viewer / CTF / vuln linter | 🚧 hex viewer done (`HexViewer`, `fs.readBytes`, auto on binary + Hex/Text toggle); CTF/vuln linter TODO |
+| 7 | Hex viewer / CTF / vuln linter | 🚧 hex viewer (`HexViewer`, `fs.readBytes`) + in-IDE **security scan** (`main/securityScan.ts`, `security.scan` bridge, `SecurityView` shield panel — same secret rules as the commit gate, click-to-open). CTF tooling TODO |
 | 8 | Packaging / installers | ⛔ not started |
 
 ---
