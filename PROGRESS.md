@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 166 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 167 tests / 38 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -361,7 +361,7 @@ strix/ (folder: tabea)
 | 5 | Terminal + LSP | ✅ terminal; LSP diagnostics (Py/TS/JS/C/C++/Bash/Rust/Go). Hover/go-to-def TODO |
 | 6 | Yjs collaboration | ✅ opt-in (`collab.ts`; COLLAB_SERVER_URL + `npm run collab:start`) |
 | 7 | Hex viewer / CTF / vuln linter | 🚧 hex viewer done (`HexViewer`, `fs.readBytes`, auto on binary + Hex/Text toggle); CTF/vuln linter TODO |
-| 8 | Packaging / installers | ⛔ not started |
+| 8 | Packaging / installers | 🚧 electron-builder config + AI-server-as-node fix (`docs/PACKAGING.md`); needs a real Windows build + freellmapi writable-DB fix |
 
 ---
 

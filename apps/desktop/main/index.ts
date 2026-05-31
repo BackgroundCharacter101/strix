@@ -80,7 +80,13 @@ if (!gotLock) {
 
     app.whenReady().then(() => {
         registerIpcHandlers();
-        startAiServer(__dirname);
+        // Packaged builds have no system `node`: run the bundled FreeLLMAPI via
+        // the Electron binary as Node, from the extraResources copy.
+        startAiServer(__dirname, {
+            nodeExec: app.isPackaged ? process.execPath : 'node',
+            runAsNode: app.isPackaged,
+            baseDir: app.isPackaged ? process.resourcesPath : undefined,
+        });
         createWindow();
     });
 }
