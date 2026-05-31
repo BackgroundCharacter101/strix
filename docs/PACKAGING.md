@@ -33,25 +33,18 @@ npm --workspace @strix/desktop run package:dir
 ## How it's wired (`apps/desktop/package.json` → `build`)
 
 - **files**: the built `dist/**` (main) + `renderer/dist/**` (renderer) + manifest.
-- **extraResources**: the vendored `freellmapi/` is copied into the app's
-  `resources/` so the AI server ships with the app.
 - **asarUnpack**: `node-pty` (native module) is left unpacked so the terminal works.
 - **win.target**: `nsis` (installer) + `portable`.
-- The AI server is launched (in `main/aiServer.ts`) with the **Electron binary
-  run as Node** (`ELECTRON_RUN_AS_NODE=1`, `process.execPath`) and resolved from
-  `process.resourcesPath/freellmapi` — packaged apps have no guaranteed system
-  `node`. In dev it still uses plain `node` and the repo path.
+- The packaged exe is **IDE-only** — it does **not** bundle or auto-start a
+  FreeLLMAPI server. The recommended team model is one shared AI host that every
+  Strix points at (Settings → AI → AI server URL). See **`docs/TEAM_SETUP.md`**.
+  (For a single-machine local build, the AI server can still run via
+  `main/aiServer.ts`, which launches it with the Electron binary as Node from
+  `process.resourcesPath` when packaged — but no server is bundled by default.)
 
 ## Known limitations / TODO before shipping
 
-1. **FreeLLMAPI writable data.** The bundled server keeps its key/settings in a
-   SQLite DB inside its own folder. Under `resources/` that location may be
-   **read-only**, so the server may fail to persist the provider key. Fix:
-   point the server's data dir at a writable per-user path (e.g. Electron
-   `app.getPath('userData')`) — a small change in the vendored server. Until
-   then, run with `STRIX_NO_AI_SERVER=1` and a separately-started server, or
-   verify whether the install dir is writable on the target machine.
-2. **App icon.** No `.ico` yet — electron-builder uses a default icon. Add
+1. **App icon.** No `.ico` yet — electron-builder uses a default icon. Add
    `build.win.icon` pointing at a 256×256 `.ico` (derive from the owl mark).
 3. **Code signing.** Unsigned builds trigger SmartScreen warnings on Windows.
    Add a code-signing certificate (`build.win.certificateFile` / env) for

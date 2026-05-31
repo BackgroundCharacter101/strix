@@ -256,7 +256,10 @@ strix/ (folder: tabea)
 - **lsp:** `start(language)` · `send(id,msg)` · `stop(id)` · `onMessage(cb)` ·
   `hasServer(command)` → bool · `installServer(id)` / `uninstallServer(id)` →
   `{ok, output}` (vetted commands) — supported: python/typescript/javascript/c/cpp/bash/rust/go/ruby/php
-- **ai:** `config()` → `{baseURL, apiKey}` (live from FreeLLMAPI) · `models()` → string[]
+- **ai:** `config(url?)` → `{baseURL, apiKey}` · `models(url?)` → string[] — the
+  optional url points at a **shared FreeLLMAPI host** (Settings → AI server URL);
+  blank = local. CSP allows `http://*:3001`. Packaged exe is IDE-only (no bundled
+  server). Team model in `docs/TEAM_SETUP.md`.
 - **collab:** `url()` → string|null (COLLAB_SERVER_URL)
 - **menu:** `onCommand(cb)` → unsubscribe (native menu → renderer command ids)
 

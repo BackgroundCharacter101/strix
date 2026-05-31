@@ -26,18 +26,6 @@
             "renderer/dist/**/*",
             "package.json"
         ],
-        "extraResources": [
-            {
-                "from": "../../freellmapi",
-                "to": "freellmapi",
-                "filter": [
-                    "server/dist/**/*",
-                    "server/package.json",
-                    "node_modules/**/*",
-                    "package.json"
-                ]
-            }
-        ],
         "asarUnpack": [
             "**/node_modules/node-pty/**/*"
         ],

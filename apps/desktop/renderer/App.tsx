@@ -602,6 +602,7 @@ export default function App() {
                     onApplyEdit={(content) => activeTabs.active?.setDraft(content)}
                     onAskClaude={askClaude}
                     selectionRequest={selectionReq}
+                    aiServerUrl={settings.aiServerUrl}
                   />
                 </aside>
               </>

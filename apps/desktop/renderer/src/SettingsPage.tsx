@@ -177,6 +177,23 @@ export function SettingsPage({
             />
           </Row>
         </section>
+
+        <section className="set-section">
+          <h3>AI</h3>
+          <Row
+            query={query}
+            label="AI server URL"
+            desc="A shared FreeLLMAPI host for the team (e.g. http://192.168.1.50:3001). Leave blank to use the local server."
+          >
+            <input
+              type="text"
+              aria-label="AI server URL"
+              placeholder="http://localhost:3001"
+              value={settings.aiServerUrl}
+              onChange={(e) => onChange({ aiServerUrl: e.target.value })}
+            />
+          </Row>
+        </section>
       </div>
     </div>
   );

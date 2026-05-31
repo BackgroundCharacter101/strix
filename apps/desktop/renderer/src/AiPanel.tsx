@@ -20,6 +20,7 @@ export function AiPanel({
   onApplyEdit,
   onAskClaude,
   selectionRequest,
+  aiServerUrl,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -28,6 +29,8 @@ export function AiPanel({
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
   selectionRequest?: { nonce: number; kind: 'explain' | 'fix'; selection: string };
+  // Shared FreeLLMAPI host URL (blank = local server).
+  aiServerUrl?: string;
 }) {
   const [input, setInput] = useState('');
   const [model, setModel] = useState('auto');
@@ -39,11 +42,13 @@ export function AiPanel({
   const [proposal, setProposal] = useState<{ original: string; suggested: string } | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
-  // Point the AI client at the running FreeLLMAPI and load its model list.
+  // Point the AI client at the FreeLLMAPI server (local or a shared host) and
+  // load its model list. Re-runs if the server URL changes in Settings.
   useEffect(() => {
-    window.strix.ai.config().then(configureAi);
-    window.strix.ai.models().then(setModels);
-  }, []);
+    const url = aiServerUrl || undefined;
+    window.strix.ai.config(url).then(configureAi);
+    window.strix.ai.models(url).then(setModels);
+  }, [aiServerUrl]);
 
   // Persist the conversation so it survives restarts and any model switch.
   useEffect(() => {

@@ -112,31 +112,37 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('lsp:installServer', (_event, id: string) => installServer(id));
   ipcMain.handle('lsp:uninstallServer', (_event, id: string) => uninstallServer(id));
 
-  // --- AI: bridge the renderer to the local FreeLLMAPI server ---
-  const aiPort = process.env.FREELLMAPI_PORT ?? '3001';
-  const aiBase = `http://localhost:${aiPort}`;
+  // --- AI: bridge the renderer to a FreeLLMAPI server ---
+  // Default is a local server, but a URL can be passed (from Settings) so a team
+  // can point every Strix at one shared FreeLLMAPI host on the LAN.
+  const defaultBase =
+    process.env.FREELLMAPI_URL ?? `http://localhost:${process.env.FREELLMAPI_PORT ?? '3001'}`;
+  const baseFrom = (url?: string) =>
+    url && url.trim() ? url.trim().replace(/\/+$/, '') : defaultBase;
 
-  const fetchKey = async (): Promise<string> => {
-    const res = await fetch(`${aiBase}/api/settings/api-key`);
+  const fetchKey = async (base: string): Promise<string> => {
+    const res = await fetch(`${base}/api/settings/api-key`);
     const body = (await res.json()) as { apiKey: string };
     return body.apiKey;
   };
 
-  ipcMain.handle('ai:config', async () => {
+  ipcMain.handle('ai:config', async (_event, url?: string) => {
+    const base = baseFrom(url);
     try {
-      return { baseURL: `${aiBase}/v1`, apiKey: await fetchKey() };
+      return { baseURL: `${base}/v1`, apiKey: await fetchKey(base) };
     } catch {
-      return { baseURL: `${aiBase}/v1`, apiKey: '' };
+      return { baseURL: `${base}/v1`, apiKey: '' };
     }
   });
 
   // Collaboration is opt-in: set COLLAB_SERVER_URL to enable (off by default).
   ipcMain.handle('collab:url', () => process.env.COLLAB_SERVER_URL ?? null);
 
-  ipcMain.handle('ai:models', async () => {
+  ipcMain.handle('ai:models', async (_event, url?: string) => {
+    const base = baseFrom(url);
     try {
-      const apiKey = await fetchKey();
-      const res = await fetch(`${aiBase}/v1/models`, {
+      const apiKey = await fetchKey(base);
+      const res = await fetch(`${base}/v1/models`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       const body = (await res.json()) as { data?: { id: string }[] };

@@ -12,6 +12,8 @@ export interface Settings {
   lineNumbers: 'on' | 'off' | 'relative';
   cursorStyle: 'line' | 'block' | 'underline';
   renderWhitespace: 'none' | 'boundary' | 'selection' | 'all';
+  // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
+  aiServerUrl: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -25,6 +27,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lineNumbers: 'on',
   cursorStyle: 'line',
   renderWhitespace: 'selection',
+  aiServerUrl: '',
 };
 
 const KEY = 'strix.settings';

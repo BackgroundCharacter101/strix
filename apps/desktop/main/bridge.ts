@@ -62,8 +62,9 @@ export interface StrixLspApi {
 }
 
 export interface StrixAiApi {
-  config(): Promise<{ baseURL: string; apiKey: string }>;
-  models(): Promise<string[]>;
+  // Optional url points at a shared FreeLLMAPI host (else the local default).
+  config(url?: string): Promise<{ baseURL: string; apiKey: string }>;
+  models(url?: string): Promise<string[]>;
 }
 
 export interface StrixCollabApi {
