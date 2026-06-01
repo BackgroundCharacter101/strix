@@ -712,8 +712,15 @@ body {
 }
 
 .group-divider {
-  flex: 0 0 1px;
+  flex: 0 0 5px;
   background: var(--border);
+  cursor: col-resize;
+  transition: background 0.1s ease;
+}
+.group-divider:hover,
+.group-divider:focus-visible {
+  background: var(--accent);
+  outline: none;
 }
 
 /* Split button at the right end of the tab strip. */

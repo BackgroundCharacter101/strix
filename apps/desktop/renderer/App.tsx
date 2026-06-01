@@ -90,7 +90,30 @@ export default function App() {
   const tabs = useEditorTabs();
   const tabsB = useEditorTabs();
   const [split, setSplit] = useState(false);
+  const [splitRatio, setSplitRatio] = useState(0.5); // width fraction of group A
   const [activeGroup, setActiveGroup] = useState<'a' | 'b'>('a');
+  const groupsRef = useRef<HTMLDivElement>(null);
+
+  // Drag the split divider to resize the two editor groups (percentage-based so
+  // it clamps naturally to the container).
+  const onDividerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const el = groupsRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const move = (ev: PointerEvent) => {
+      const r = Math.min(0.85, Math.max(0.15, (ev.clientX - rect.left) / rect.width));
+      setSplitRatio(r);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.style.cursor = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
   // The group that receives new file-opens / save / close, and feeds the AI
   // panel + status bar.
   const activeTabs = split && activeGroup === 'b' ? tabsB : tabs;
@@ -497,6 +520,7 @@ export default function App() {
     <div
       className="editor-group"
       data-active={split && which === activeGroup}
+      style={split && which === 'a' ? { flex: `0 0 ${splitRatio * 100}%` } : undefined}
       onMouseDown={() => setActiveGroup(which)}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('text/strix-path')) e.preventDefault();
@@ -649,11 +673,25 @@ export default function App() {
                   onClose={() => setDiff(null)}
                 />
               ) : (
-                <div className="editor-groups">
+                <div className="editor-groups" ref={groupsRef}>
                   {renderGroup(tabs, 'a')}
                   {split && (
                     <>
-                      <div className="group-divider" />
+                      <div
+                        className="group-divider"
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label="Resize editor split"
+                        tabIndex={0}
+                        onPointerDown={onDividerDown}
+                        onKeyDown={(e) => {
+                          if (e.key === 'ArrowLeft')
+                            setSplitRatio((r) => Math.max(0.15, r - 0.05));
+                          else if (e.key === 'ArrowRight')
+                            setSplitRatio((r) => Math.min(0.85, r + 0.05));
+                        }}
+                        onDoubleClick={() => setSplitRatio(0.5)}
+                      />
                       {renderGroup(tabsB, 'b')}
                     </>
                   )}
