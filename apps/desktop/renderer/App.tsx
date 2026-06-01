@@ -80,6 +80,13 @@ export default function App() {
       return [];
     }
   });
+  const [recentFiles, setRecentFiles] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('strix.recentFiles') ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
   const tabs = useEditorTabs();
   const tabsB = useEditorTabs();
   const [split, setSplit] = useState(false);
@@ -87,6 +94,27 @@ export default function App() {
   // The group that receives new file-opens / save / close, and feeds the AI
   // panel + status bar.
   const activeTabs = split && activeGroup === 'b' ? tabsB : tabs;
+
+  // Track recently opened files (most-recent first, capped, persisted) whenever
+  // the active file changes — surfaced first in Quick Open.
+  useEffect(() => {
+    const p = activeTabs.activePath;
+    if (!p) return;
+    setRecentFiles((prev) => {
+      const next = [p, ...prev.filter((x) => x !== p)].slice(0, 15);
+      try {
+        localStorage.setItem('strix.recentFiles', JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, [activeTabs.activePath]);
+  // Mirror recentFiles into a ref so openQuickFiles can read it without
+  // re-creating on every file change.
+  const recentFilesRef = useRef<string[]>(recentFiles);
+  recentFilesRef.current = recentFiles;
+
   const chordRef = useRef(false);
   const formatRef = useRef<(() => void) | null>(null);
   const zenRef = useRef(false);
@@ -171,7 +199,14 @@ export default function App() {
       }
     };
     walk(tree);
-    setFileItems(items);
+    // Surface recently opened files first (MRU order), then the rest.
+    const byPath = new Map(items.map((it) => [it.id, it]));
+    const recentOrdered = recentFilesRef.current
+      .map((p) => byPath.get(p))
+      .filter((it): it is PaletteItem => Boolean(it));
+    const recentIds = new Set(recentOrdered.map((it) => it.id));
+    const rest = items.filter((it) => !recentIds.has(it.id));
+    setFileItems([...recentOrdered, ...rest]);
     setPalette('files');
   }, [root]);
 
