@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import Database from 'better-sqlite3';
+import type { SqlDatabase } from '../db/sqljs-adapter.js';
 
 const ALGORITHM = 'aes-256-gcm';
 
@@ -29,7 +29,7 @@ function parseHexKey(value: string, source: 'env' | 'db'): Buffer {
  * Initialize encryption key from env, DB, or generate a new one.
  * Must be called after DB is initialized.
  */
-export function initEncryptionKey(db: Database.Database): void {
+export function initEncryptionKey(db: SqlDatabase): void {
   // 1. Check env var
   const envKey = process.env.ENCRYPTION_KEY;
   if (envKey && envKey !== 'your-64-char-hex-key-here') {

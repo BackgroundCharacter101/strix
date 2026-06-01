@@ -6,7 +6,7 @@ import { initDb, getDb } from '../db/index.js';
 import { decrypt } from '../lib/crypto.js';
 import { getProvider } from '../providers/index.js';
 
-initDb();
+await initDb();
 const db = getDb();
 
 interface Row {

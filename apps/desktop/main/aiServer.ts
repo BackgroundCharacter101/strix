@@ -19,6 +19,10 @@ export interface AiServerOptions {
   // Set ELECTRON_RUN_AS_NODE=1 so the Electron binary runs as Node (packaged
   // apps have no guaranteed system `node`).
   runAsNode?: boolean;
+  // Writable directory for the server's database. The packaged install dir is
+  // read-only, so we point FreeLLMAPI's sql.js DB at a per-user folder (e.g.
+  // app.getPath('userData')). Left unset in dev (server uses its in-repo data/).
+  dataDir?: string;
 }
 
 // Resolve the vendored FreeLLMAPI server. Dev layout:
@@ -56,6 +60,9 @@ export function startAiServer(
     PORT: process.env.FREELLMAPI_PORT ?? '3001',
   };
   if (opts.runAsNode) env.ELECTRON_RUN_AS_NODE = '1';
+  // Point the (now native-module-free, sql.js-backed) DB at a writable path so
+  // the bundled server can persist provider keys from the read-only install dir.
+  if (opts.dataDir) env.FREELLMAPI_DB_PATH = path.join(opts.dataDir, 'freeapi.db');
 
   proc = spawn(opts.nodeExec ?? 'node', [entry], {
     cwd: dir,

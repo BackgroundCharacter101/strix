@@ -26,9 +26,9 @@ async function request(app: Express, method: string, path: string, body?: any, h
 describe('Proxy authentication and CORS', () => {
   let app: Express;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    initDb(':memory:');
+    await initDb(':memory:');
     app = createApp();
   });
 

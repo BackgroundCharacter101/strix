@@ -3,9 +3,9 @@ import { initDb } from '../../db/index.js';
 import { encrypt, decrypt, maskKey } from '../../lib/crypto.js';
 
 describe('Crypto', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    initDb(':memory:');
+    await initDb(':memory:');
   });
 
   it('should encrypt and decrypt a key round-trip', () => {

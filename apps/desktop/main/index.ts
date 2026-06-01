@@ -86,6 +86,9 @@ if (!gotLock) {
             nodeExec: app.isPackaged ? process.execPath : 'node',
             runAsNode: app.isPackaged,
             baseDir: app.isPackaged ? process.resourcesPath : undefined,
+            // Persist the bundled server's DB in the per-user data dir (the
+            // install dir is read-only once packaged).
+            dataDir: app.isPackaged ? app.getPath('userData') : undefined,
         });
         createWindow();
     });

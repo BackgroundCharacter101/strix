@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-05-27
+> Last updated: 2026-05-31
 
 ---
 
@@ -316,6 +316,24 @@ strix/ (folder: tabea)
 - **Unified key** lives in its SQLite DB; renderer fetches it live via
   `ai.config()` → `GET :3001/api/settings/api-key` (no `.env` copying). Auth
   check is in `freellmapi/server/src/routes/proxy.ts`.
+- **Storage = sql.js (WASM), NOT better-sqlite3.** As of the "Option B" swap the
+  DB engine is **pure-JS sql.js** behind a better-sqlite3-compatible adapter
+  (`freellmapi/server/src/db/sqljs-adapter.ts`). This removes the **only** native
+  module from the server so it bundles into `Strix.exe` and runs under Electron's
+  Node with **no ABI rebuild** — ever, on any OS. Consequences to remember:
+  - `initDb()` is now **async** (sql.js loads WASM async); all callers `await` it.
+  - The adapter only covers what FreeLLMAPI uses: `prepare().{get,all,run}`
+    (positional params), `exec`, `pragma` (WAL is a no-op), `transaction` (nestable
+    via savepoints), `close`. `get/all` return `unknown`/`unknown[]` (like
+    better-sqlite3) so `as Row` casts at call sites are unchanged.
+  - DB persists by writing the whole file on each top-level write; path is
+    `FREELLMAPI_DB_PATH` (Strix passes `app.getPath('userData')` when packaged).
+  - **Deployment model is now local-per-machine**: each Strix bundles + auto-starts
+    its **own** server (blank `aiServerUrl`). The shared-host option still works but
+    is no longer the default. See `docs/PACKAGING.md`.
+  - **Unverified in sandbox** (sql.js isn't installed here): production code
+    typechecks, but run `npm install` + `npm -w @freellmapi/server test` + a real
+    `package:dir` build to validate the adapter and the bundled WASM.
 
 ---
 

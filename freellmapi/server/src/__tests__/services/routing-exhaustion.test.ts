@@ -25,8 +25,8 @@ vi.mock('../../lib/crypto.js', async () => {
 });
 
 describe('Routing Key Exhaustion', () => {
-  beforeEach(() => {
-    initDb(':memory:');
+  beforeEach(async () => {
+    await initDb(':memory:');
     const db = getDb();
     
     // Setup: 2 models (Pro and Flash)

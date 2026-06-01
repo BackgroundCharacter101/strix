@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import Database from 'better-sqlite3';
 import { initDb } from '../../db/index.js';
 
 /**
@@ -7,12 +6,12 @@ import { initDb } from '../../db/index.js';
  * physical database file should produce identical state.
  */
 describe('Migration idempotency', () => {
-  it('initDb on a fresh in-memory DB then re-run produces identical row counts', () => {
+  it('initDb on a fresh in-memory DB then re-run produces identical row counts', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
     // Use a single shared file so both inits hit the same DB.
     const tmpPath = `/tmp/freeapi-idempotency-${Date.now()}.db`;
 
-    const db1 = initDb(tmpPath);
+    const db1 = await initDb(tmpPath);
     const before = {
       models: (db1.prepare('SELECT COUNT(*) AS c FROM models').get() as { c: number }).c,
       fallback: (db1.prepare('SELECT COUNT(*) AS c FROM fallback_config').get() as { c: number }).c,
@@ -27,7 +26,7 @@ describe('Migration idempotency', () => {
     db1.close();
 
     // Re-init the same DB file — V1..V9 should all no-op idempotently.
-    const db2 = initDb(tmpPath);
+    const db2 = await initDb(tmpPath);
     const after = {
       models: (db2.prepare('SELECT COUNT(*) AS c FROM models').get() as { c: number }).c,
       fallback: (db2.prepare('SELECT COUNT(*) AS c FROM fallback_config').get() as { c: number }).c,
@@ -45,9 +44,9 @@ describe('Migration idempotency', () => {
     expect(after.orphanFallbacks).toBe(0);
   });
 
-  it('every catalog row has exactly one fallback_config entry', () => {
+  it('every catalog row has exactly one fallback_config entry', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    const db = initDb(':memory:');
+    const db = await initDb(':memory:');
 
     const rows = db.prepare(`
       SELECT m.id, COUNT(f.id) AS fb_count
@@ -60,9 +59,9 @@ describe('Migration idempotency', () => {
     expect(rows).toEqual([]);
   });
 
-  it('UNIQUE(platform, model_id) constraint holds — no duplicate catalog rows', () => {
+  it('UNIQUE(platform, model_id) constraint holds — no duplicate catalog rows', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    const db = initDb(':memory:');
+    const db = await initDb(':memory:');
 
     const dups = db.prepare(`
       SELECT platform, model_id, COUNT(*) AS c FROM models
@@ -73,9 +72,9 @@ describe('Migration idempotency', () => {
     expect(dups).toEqual([]);
   });
 
-  it('V12: dead OR :free rows are absent and the four new rows are present', () => {
+  it('V12: dead OR :free rows are absent and the four new rows are present', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    const db = initDb(':memory:');
+    const db = await initDb(':memory:');
 
     const dead = db.prepare(`
       SELECT model_id FROM models
@@ -114,9 +113,9 @@ describe('Migration idempotency', () => {
     ]);
   });
 
-  it('V13: cross-provider catalog refresh applies cleanly', () => {
+  it('V13: cross-provider catalog refresh applies cleanly', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    const db = initDb(':memory:');
+    const db = await initDb(':memory:');
 
     // Disables — row kept but enabled=0.
     const disabled = db.prepare(`
@@ -190,9 +189,9 @@ describe('Migration idempotency', () => {
     ]);
   });
 
-  it('V14: cerebras deprecation disables qwen-3-235b and llama3.1-8b but keeps gpt-oss-120b enabled', () => {
+  it('V14: cerebras deprecation disables qwen-3-235b and llama3.1-8b but keeps gpt-oss-120b enabled', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    const db = initDb(':memory:');
+    const db = await initDb(':memory:');
 
     const rows = db.prepare(`
       SELECT model_id, enabled FROM models
@@ -210,7 +209,7 @@ describe('Migration idempotency', () => {
 
   it('all enabled catalog platforms have a registered provider', async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    const db = initDb(':memory:');
+    const db = await initDb(':memory:');
     const { hasProvider } = await import('../../providers/index.js');
 
     const platforms = (db.prepare(

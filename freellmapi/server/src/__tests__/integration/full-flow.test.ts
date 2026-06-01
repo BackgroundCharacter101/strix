@@ -30,9 +30,9 @@ function authHeaders() {
 describe('Full Integration Flow', () => {
   let app: Express;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    initDb(':memory:');
+    await initDb(':memory:');
     app = createApp();
     // Clean
     const db = getDb();

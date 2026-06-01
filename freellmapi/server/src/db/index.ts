@@ -1,23 +1,27 @@
 import crypto from 'crypto';
-import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { initEncryptionKey } from '../lib/crypto.js';
+import { openDatabase, SqlDatabase } from './sqljs-adapter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.resolve(__dirname, '../../data/freeapi.db');
+// Writable DB location. Strix passes FREELLMAPI_DB_PATH (a per-user folder) when
+// the server is bundled inside the packaged app, where the install dir is
+// read-only. Defaults to the in-repo data/ folder for dev / run-from-source.
+const DB_PATH =
+  process.env.FREELLMAPI_DB_PATH ?? path.resolve(__dirname, '../../data/freeapi.db');
 
-let db: Database.Database;
+let db: SqlDatabase;
 
-export function getDb(): Database.Database {
+export function getDb(): SqlDatabase {
   if (!db) {
     throw new Error('Database not initialized. Call initDb() first.');
   }
   return db;
 }
 
-export function initDb(dbPath?: string): Database.Database {
+export async function initDb(dbPath?: string): Promise<SqlDatabase> {
   const resolvedPath = dbPath ?? DB_PATH;
   const isMemory = resolvedPath === ':memory:';
 
@@ -28,7 +32,7 @@ export function initDb(dbPath?: string): Database.Database {
     }
   }
 
-  db = new Database(resolvedPath);
+  db = await openDatabase(resolvedPath);
   if (!isMemory) db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
 
@@ -55,7 +59,7 @@ export function initDb(dbPath?: string): Database.Database {
   return db;
 }
 
-function createTables(db: Database.Database) {
+function createTables(db: SqlDatabase) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS models (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,7 +123,7 @@ function createTables(db: Database.Database) {
   `);
 }
 
-function seedModels(db: Database.Database) {
+function seedModels(db: SqlDatabase) {
   const count = db.prepare('SELECT COUNT(*) as cnt FROM models').get() as { cnt: number };
   if (count.cnt > 0) return;
 
@@ -194,7 +198,7 @@ function seedModels(db: Database.Database) {
  * corrects stale rate-limits / monthly budgets, adds new smarter models
  * and three new providers (Zhipu, Moonshot, MiniMax).
  */
-function migrateModels(db: Database.Database) {
+function migrateModels(db: SqlDatabase) {
   // 1) Replace outdated models in-place (preserves fallback_config & any references)
   const renames: Array<[string, string, string, string, number, string, number | null, number | null, number]> = [
     // platform, oldModelId, newModelId, newDisplayName, intelligenceRank, monthlyBudget, rpdLimit, contextWindow, sizeLabelPriority(unused)
@@ -273,7 +277,7 @@ function migrateModels(db: Database.Database) {
  * the current free tier, and adds real :free OpenRouter models found in the
  * live catalog (April 2026).
  */
-function migrateModelsV2(db: Database.Database) {
+function migrateModelsV2(db: SqlDatabase) {
   // Helper: delete a model and its fallback_config entry (FK is RESTRICT-by-default)
   const deleteModel = db.prepare(`DELETE FROM models WHERE platform = ? AND model_id = ?`);
   const deleteFallback = db.prepare(`
@@ -349,7 +353,7 @@ function migrateModelsV2(db: Database.Database) {
  * SWE-bench Verified, Terminal-Bench 2, TAU-Bench, Aider Polyglot.
  * Higher rank = weaker. Ties are allowed (same weights across providers).
  */
-function migrateModelsV3Ranks(db: Database.Database) {
+function migrateModelsV3Ranks(db: SqlDatabase) {
   const setRank = db.prepare(`UPDATE models SET intelligence_rank = ? WHERE platform = ? AND model_id = ?`);
   const ranks: Array<[number, string, string]> = [
     // #1-10 frontier coders / agents
@@ -404,7 +408,7 @@ function migrateModelsV3Ranks(db: Database.Database) {
  * (no structured tools), OR/gemma-4 (weak at tools). Renames CF llama-3.1 → 3.3
  * fp8-fast. Corrects stale limits.
  */
-function migrateModelsV4(db: Database.Database) {
+function migrateModelsV4(db: SqlDatabase) {
   // 1) Remove entries that are unavailable or fail agentic tool use
   const deleteModel = db.prepare(`DELETE FROM models WHERE platform = ? AND model_id = ?`);
   const deleteFallback = db.prepare(`
@@ -559,7 +563,7 @@ function migrateModelsV4(db: Database.Database) {
  * free tier but throttled to 10 RPM / 100 RPD due to high demand; context capped
  * at 8192 on free tier).
  */
-function migrateModelsV5(db: Database.Database) {
+function migrateModelsV5(db: SqlDatabase) {
   db.prepare(`UPDATE models SET enabled = 0 WHERE platform = 'google' AND model_id = 'gemini-2.5-pro'`).run();
 
   const insert = db.prepare(`
@@ -600,7 +604,7 @@ function migrateModelsV5(db: Database.Database) {
  *     against the same 20 RPD pool, confirming free-tier eligibility)
  *   - 2 OpenRouter :free models with no expiration_date
  */
-function migrateModelsV6(db: Database.Database) {
+function migrateModelsV6(db: SqlDatabase) {
   // 1) Remove confirmed-dead OR route
   const deleteModel = db.prepare(`DELETE FROM models WHERE platform = ? AND model_id = ?`);
   const deleteFallback = db.prepare(`
@@ -678,7 +682,7 @@ function migrateModelsV6(db: Database.Database) {
  *   api.z.ai and open.bigmodel.cn keys.
  * HF and NVIDIA left as-is: HF still serves chat with current key; NVIDIA already disabled.
  */
-function migrateModelsV7(db: Database.Database) {
+function migrateModelsV7(db: SqlDatabase) {
   const deleteModel = db.prepare(`DELETE FROM models WHERE platform = ? AND model_id = ?`);
   const deleteFallback = db.prepare(`
     DELETE FROM fallback_config WHERE model_db_id IN (
@@ -737,7 +741,7 @@ function migrateModelsV7(db: Database.Database) {
  * "Couldn't find valid service tier", so the 200s on these rows confirm free-tier
  * access. Cloudflare's @cf/* models share the 10K Neurons/day free pool.
  */
-function migrateModelsV8(db: Database.Database) {
+function migrateModelsV8(db: SqlDatabase) {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO models (platform, model_id, display_name, intelligence_rank, speed_rank, size_label, rpm_limit, rpd_limit, tpm_limit, tpd_limit, monthly_token_budget, context_window)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -774,7 +778,7 @@ function migrateModelsV8(db: Database.Database) {
  * zai-glm-4.7 due to high demand. Row kept (not deleted) so it can be
  * re-enabled later without losing fallback_config history.
  */
-function migrateModelsV9(db: Database.Database) {
+function migrateModelsV9(db: SqlDatabase) {
   db.prepare(
     "UPDATE models SET enabled = 0 WHERE platform = 'cerebras' AND model_id = 'zai-glm-4.7'"
   ).run();
@@ -794,7 +798,7 @@ function migrateModelsV9(db: Database.Database) {
  * Quota shape: GPU-time, not tokens. monthly_token_budget reflects rough
  * Free-tier "session" capacity rather than a hard token cap.
  */
-function migrateModelsV10(db: Database.Database) {
+function migrateModelsV10(db: SqlDatabase) {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO models (platform, model_id, display_name, intelligence_rank, speed_rank, size_label, rpm_limit, rpd_limit, tpm_limit, tpd_limit, monthly_token_budget, context_window)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -851,7 +855,7 @@ function migrateModelsV10(db: Database.Database) {
  *    please pay with fiat or send tao". The "free" tier requires a paid
  *    balance, which conflicts with the no-card criterion.
  */
-function migrateModelsV11(db: Database.Database) {
+function migrateModelsV11(db: SqlDatabase) {
   // 1) Rename cerebras qwen3-235b → qwen-3-235b-a22b-instruct-2507 if the
   //    old id still exists on this DB. Safe to re-run because of the WHERE.
   db.prepare(`
@@ -963,7 +967,7 @@ function migrateModelsV11(db: Database.Database) {
  *   - nvidia/nemotron-3-super-120b-a12b:free  262144 → 1000000
  *   - qwen/qwen3-coder:free                   262144 → 1048576
  */
-function migrateModelsV12(db: Database.Database) {
+function migrateModelsV12(db: SqlDatabase) {
   const deleteModel = db.prepare(`DELETE FROM models WHERE platform = ? AND model_id = ?`);
   const deleteFallback = db.prepare(`
     DELETE FROM fallback_config WHERE model_db_id IN (
@@ -1097,7 +1101,7 @@ function migrateModelsV12(db: Database.Database) {
  *   - github: gpt-5 family + xai/grok-3 both 400 "unavailable_model" on free
  *     tier — keep gpt-4o (V2 verdict still holds).
  */
-function migrateModelsV13(db: Database.Database) {
+function migrateModelsV13(db: SqlDatabase) {
   // 1) Disables (row kept; can be re-enabled without losing fallback history).
   const disable = db.prepare(`UPDATE models SET enabled = 0 WHERE platform = ? AND model_id = ?`);
   const disables: Array<[string, string]> = [
@@ -1222,7 +1226,7 @@ function migrateModelsV13(db: Database.Database) {
  * Cerebras `gpt-oss-120b` is NOT in the deprecation list and stays enabled
  * as the sole free-tier Cerebras route.
  */
-function migrateModelsV14(db: Database.Database) {
+function migrateModelsV14(db: SqlDatabase) {
   db.prepare(`
     UPDATE models SET enabled = 0
      WHERE platform = 'cerebras'
@@ -1230,7 +1234,7 @@ function migrateModelsV14(db: Database.Database) {
   `).run();
 }
 
-function ensureUnifiedKey(db: Database.Database) {
+function ensureUnifiedKey(db: SqlDatabase) {
   const existing = db.prepare("SELECT value FROM settings WHERE key = 'unified_api_key'").get() as { value: string } | undefined;
   if (!existing) {
     const key = `freellmapi-${crypto.randomBytes(24).toString('hex')}`;

@@ -22,13 +22,13 @@ async function request(app: Express, method: string, path: string, body?: any) {
 describe('Keys API', () => {
   let app: Express;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     process.env.ENCRYPTION_KEY = '0'.repeat(64);
-    initDb(':memory:');
+    await initDb(':memory:');
     app = createApp();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const db = getDb();
     db.prepare('DELETE FROM api_keys').run();
   });
