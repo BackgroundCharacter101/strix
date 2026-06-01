@@ -50,6 +50,28 @@
   }
 }
 
+/* ---- Compact density — tighten the dense list areas so more fits on screen.
+   document.documentElement[data-density='compact'] toggles it. --------------- */
+:root[data-density='compact'] .tree-row {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  font-size: 12px;
+}
+:root[data-density='compact'] .editor-tab button[role='tab'] {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+:root[data-density='compact'] .search-match,
+:root[data-density='compact'] .search-file {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+:root[data-density='compact'] .ext-row,
+:root[data-density='compact'] .set-row {
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
 /* ---- Scrollbars --------------------------------------------------------- */
 * {
   scrollbar-width: thin;

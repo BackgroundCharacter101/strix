@@ -99,6 +99,16 @@ export function SettingsPage({
               ))}
             </div>
           </Row>
+          <Row query={query} label="Density" desc="Spacing of list rows and tabs.">
+            <select
+              aria-label="Density"
+              value={settings.density}
+              onChange={(e) => onChange({ density: e.target.value as Settings['density'] })}
+            >
+              <option value="comfortable">Comfortable</option>
+              <option value="compact">Compact</option>
+            </select>
+          </Row>
         </section>
 
         <section className="set-section">

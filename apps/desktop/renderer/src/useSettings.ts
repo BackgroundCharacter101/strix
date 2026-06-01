@@ -13,6 +13,8 @@ export interface Settings {
   lineNumbers: 'on' | 'off' | 'relative';
   cursorStyle: 'line' | 'block' | 'underline';
   renderWhitespace: 'none' | 'boundary' | 'selection' | 'all';
+  // UI density: 'comfortable' (default) or 'compact' (tighter list rows/tabs).
+  density: 'comfortable' | 'compact';
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
   // Workbench mode: 'normal' (clean coding) or 'cybersec' (pentester vibe +
@@ -36,6 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lineNumbers: 'on',
   cursorStyle: 'line',
   renderWhitespace: 'selection',
+  density: 'comfortable',
   aiServerUrl: '',
   mode: 'normal',
   securityStance: 'balanced',
@@ -64,6 +67,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     document.documentElement.dataset.theme = settings.theme;
     document.documentElement.dataset.accent = settings.accent;
     document.documentElement.dataset.mode = settings.mode;
+    document.documentElement.dataset.density = settings.density;
   }, [settings]);
 
   const update = useCallback(
