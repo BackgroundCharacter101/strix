@@ -969,6 +969,66 @@ body {
   gap: var(--space-3);
 }
 
+/* ---- Keyboard shortcuts dialog ------------------------------------------ */
+.shortcuts-dialog {
+  width: 520px;
+  max-width: 92vw;
+}
+
+.shortcuts-body {
+  max-height: 56vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.shortcuts-group-name {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: 3px 0;
+}
+
+.shortcuts-label {
+  color: var(--text);
+  font-size: var(--text-sm);
+}
+
+.kbd-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.kbd-step {
+  display: inline-flex;
+  gap: 2px;
+}
+
+kbd {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: 1;
+  padding: 3px 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 /* ---- About dialog ------------------------------------------------------- */
 .about-dialog {
   width: 380px;

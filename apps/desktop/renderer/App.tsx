@@ -12,6 +12,7 @@ import { ExtensionsView } from './src/ExtensionsView';
 import { DiffView } from './src/DiffView';
 import { SettingsPage } from './src/SettingsPage';
 import { AboutDialog } from './src/AboutDialog';
+import { ShortcutsDialog } from './src/ShortcutsDialog';
 import { Toaster } from './src/Toaster';
 import { TitleBar } from './src/TitleBar';
 import { showToast } from './src/toast';
@@ -50,6 +51,7 @@ export default function App() {
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [claudeLaunch, setClaudeLaunch] = useState<{ nonce: number; prompt?: string }>({
@@ -369,6 +371,12 @@ export default function App() {
       run: toggleMode,
     },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
+    {
+      id: 'help.shortcuts',
+      label: 'Help: Keyboard Shortcuts',
+      detail: '',
+      run: () => setShortcutsOpen(true),
+    },
     { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void activeTabs.active?.save() },
     {
@@ -691,6 +699,7 @@ export default function App() {
         />
       )}
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
       <Toaster />
     </div>
   );
