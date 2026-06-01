@@ -121,7 +121,7 @@ describe('FileTree', () => {
 
     fireEvent.contextMenu(await screen.findByText('src')); // a directory
     fireEvent.click(screen.getByRole('menuitem', { name: 'New File…' }));
-    fireEvent.change(screen.getByLabelText('New file name'), { target: { value: 'x.ts' } });
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'x.ts' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
 
     expect(create).toHaveBeenCalledWith('/root/src/x.ts', 'file');

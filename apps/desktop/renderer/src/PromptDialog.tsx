@@ -30,8 +30,16 @@ export function PromptDialog({
 
   return (
     <div className="palette-overlay" onMouseDown={onCancel}>
-      <div className="dialog" onMouseDown={(e) => e.stopPropagation()}>
-        <h2 className="dialog-title">{title}</h2>
+      <div
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="strix-prompt-title"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <h2 className="dialog-title" id="strix-prompt-title">
+          {title}
+        </h2>
         <input
           ref={inputRef}
           className="dialog-input"

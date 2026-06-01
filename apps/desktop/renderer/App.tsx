@@ -399,12 +399,16 @@ export default function App() {
 
   zenRef.current = zen;
 
-  const editorTheme = monacoThemeFor(settings.theme);
+  // In Cybersec mode the editor uses a dedicated green-on-black theme + green
+  // accent so it matches the pentester chrome (instead of the user's theme).
+  const cybersec = settings.mode === 'cybersec';
+  const editorTheme = cybersec ? 'strix-cybersec' : monacoThemeFor(settings.theme);
+  const editorAccent = cybersec ? '#21d07a' : accentHex(settings.accent);
 
-  // Keep the Monaco editor accent in sync with the chosen accent.
+  // Keep the Monaco editor theme + accent in sync with the chosen accent/mode.
   useEffect(() => {
-    applyAccent(accentHex(settings.accent), editorTheme);
-  }, [settings.accent, editorTheme]);
+    applyAccent(editorAccent, editorTheme);
+  }, [editorAccent, editorTheme]);
 
   const recordRecentCommand = (id: string) => {
     if (id.startsWith('recent:')) return; // don't track "open recent folder" entries

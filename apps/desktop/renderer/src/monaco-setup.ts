@@ -105,6 +105,45 @@ function defineStrixThemes(accent: string) {
       'editorOverviewRuler.border': '#00000000',
     },
   });
+
+  // Cybersec mode: a green-tinted near-black editor that matches the pentester
+  // chrome (so the editor doesn't sit as a light/grey island in green-black UI).
+  monaco.editor.defineTheme('strix-cybersec', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '4f7d63', fontStyle: 'italic' },
+      { token: 'type', foreground: '7fd6a8' },
+      { token: 'string', foreground: 'b8e6c8' },
+      { token: 'number', foreground: '8fe3b0' },
+    ],
+    colors: {
+      'editor.background': '#0a0f0c',
+      'editor.foreground': '#c7f5db',
+      'editorLineNumber.foreground': '#2f5a44',
+      'editorLineNumber.activeForeground': accent,
+      'editorCursor.foreground': accent,
+      'editor.selectionBackground': withAlpha(accent, '3a'),
+      'editor.inactiveSelectionBackground': withAlpha(accent, '20'),
+      'editor.selectionHighlightBackground': withAlpha(accent, '22'),
+      'editor.wordHighlightBackground': withAlpha(accent, '1f'),
+      'editor.lineHighlightBackground': '#21d07a10',
+      'editor.lineHighlightBorder': '#00000000',
+      'editorIndentGuide.background': '#16271d',
+      'editorIndentGuide.activeBackground': withAlpha(accent, '55'),
+      'editorBracketMatch.border': accent,
+      'editorBracketMatch.background': withAlpha(accent, '22'),
+      'editorGutter.background': '#0a0f0c',
+      'editorWidget.background': '#0d140f',
+      'editorWidget.border': '#1c3a2b',
+      'editorSuggestWidget.background': '#0d140f',
+      'editorSuggestWidget.selectedBackground': withAlpha(accent, '33'),
+      'editorOverviewRuler.border': '#00000000',
+      'scrollbarSlider.background': '#21d07a33',
+      'scrollbarSlider.hoverBackground': '#21d07a55',
+      'minimap.background': '#0a0f0c',
+    },
+  });
 }
 
 defineStrixThemes('#e8a33d');

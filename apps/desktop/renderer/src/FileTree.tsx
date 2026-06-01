@@ -88,7 +88,7 @@ function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContex
           onContextMenu={(e) => onContext(node, e)}
         >
           <FileIcon name={node.name} />
-          {node.name}
+          <span className="tree-name">{node.name}</span>
         </button>
       </li>
     );
@@ -108,7 +108,7 @@ function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContex
         <span className="tree-folder-icon">
           <FolderGlyph open={isOpen} />
         </span>
-        {node.name}
+        <span className="tree-name">{node.name}</span>
       </button>
       {isOpen && node.children && node.children.length > 0 && (
         <ul>

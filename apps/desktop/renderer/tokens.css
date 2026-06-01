@@ -281,4 +281,8 @@
   --border: #1c3a2b;
   --text: #c7f5db;
   --text-muted: #5f9c7e;
+  --icon-muted: #5f9c7e;
+  --scrollbar: #1f4533;
+  --scrollbar-hover: #2c6149;
+  --dirty: #3df29a;
 }

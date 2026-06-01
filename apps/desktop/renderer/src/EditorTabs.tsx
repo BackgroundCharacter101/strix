@@ -40,7 +40,7 @@ export function EditorTabs({ tabs, onSplit }: { tabs: EditorTabsApi; onSplit?: (
               onClick={() => tabs.activate(path)}
             >
               <FileIcon name={name} />
-              {name}
+              <span className="tab-name">{name}</span>
               {tabs.isDirty(path) ? <span className="tab-dirty"> ●</span> : null}
             </button>
             <button
