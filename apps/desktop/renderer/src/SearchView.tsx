@@ -49,12 +49,14 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <div className="search-summary">
+      <div className="search-summary" aria-live="polite">
         {busy
           ? 'Searching…'
           : query.trim() === ''
             ? ''
-            : `${results.length} result${results.length === 1 ? '' : 's'} in ${groups.length} file${groups.length === 1 ? '' : 's'}`}
+            : results.length === 0
+              ? 'No matches'
+              : `${results.length} result${results.length === 1 ? '' : 's'} in ${groups.length} file${groups.length === 1 ? '' : 's'}`}
       </div>
       <div className="search-results" aria-label="search results">
         {groups.map(([path, matches]) => (

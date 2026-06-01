@@ -2114,9 +2114,6 @@ button {
   padding: 4px 10px;
   font-size: 12px;
   cursor: pointer;
-}
-
-button {
   transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
 }
 
