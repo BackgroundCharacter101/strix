@@ -29,4 +29,33 @@ describe('renderMarkdown', () => {
     // The javascript: link is not rendered as an anchor.
     expect(screen.queryByRole('link', { name: 'bad' })).not.toBeInTheDocument();
   });
+
+  it('renders GFM tables with header and body cells', () => {
+    const { container } = show('| Name | Role |\n| --- | --- |\n| Ada | Eng |\n| Bob | PM |');
+    expect(container.querySelector('table')).toBeInTheDocument();
+    expect(container.querySelectorAll('thead th')).toHaveLength(2);
+    expect(screen.getByText('Name').tagName).toBe('TH');
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2);
+    expect(screen.getByText('Ada').tagName).toBe('TD');
+  });
+
+  it('renders inline markup inside table cells', () => {
+    show('| Tech | Note |\n| --- | --- |\n| **Electron** | `fs` API |');
+    expect(screen.getByText('Electron').tagName).toBe('STRONG');
+    expect(screen.getByText('fs').tagName).toBe('CODE');
+  });
+
+  it('applies column alignment from the separator row', () => {
+    const { container } = show('| L | C | R |\n| :-- | :-: | --: |\n| a | b | c |');
+    const cells = container.querySelectorAll('tbody td');
+    expect((cells[0] as HTMLElement).style.textAlign).toBe('left');
+    expect((cells[1] as HTMLElement).style.textAlign).toBe('center');
+    expect((cells[2] as HTMLElement).style.textAlign).toBe('right');
+  });
+
+  it('does not mistake a horizontal rule for a table', () => {
+    const { container } = show('Above\n\n---\n\nBelow');
+    expect(container.querySelector('table')).not.toBeInTheDocument();
+    expect(container.querySelector('hr')).toBeInTheDocument();
+  });
 });

@@ -4,7 +4,9 @@ import { SparkleIcon } from './icons';
 
 interface TabDesc {
   id: number;
-  title: string;
+  // Named tabs (e.g. Claude Code) set a title. Shell tabs leave it undefined and
+  // are numbered by position via terminalTitle().
+  title?: string;
   bootCommand?: string;
   notice?: string;
 }
@@ -13,6 +15,17 @@ const CLAUDE_INSTALL =
   'Claude Code CLI not found on PATH.\r\n' +
   'Install it with:  npm install -g @anthropic-ai/claude-code\r\n' +
   'Then type:  claude';
+
+// Display title for a tab. Shell tabs are numbered by their position among other
+// shell tabs, so the tab bar always reads "Terminal 1, 2, 3…" in order — no gaps
+// or out-of-order numbers when tabs are opened/closed. Named tabs keep their
+// title and don't consume a number.
+export function terminalTitle(tabs: Pick<TabDesc, 'title'>[], index: number): string {
+  if (tabs[index].title) return tabs[index].title as string;
+  let n = 0;
+  for (let i = 0; i <= index; i++) if (!tabs[i].title) n++;
+  return `Terminal ${n}`;
+}
 
 // Wrap a prompt as a single safe CLI argument (double-quoted; inner double
 // quotes downgraded to single quotes, newlines flattened) so it works across
@@ -32,13 +45,13 @@ export function TerminalTabs({
   // session, optionally seeded with a prompt.
   launch?: { nonce: number; prompt?: string };
 }) {
-  const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0, title: 'Terminal 1' }]);
+  const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0 }]);
   const [active, setActive] = useState(0);
   const nextId = useRef(1);
 
   const addShell = () => {
     const id = nextId.current++;
-    setTabs((prev) => [...prev, { id, title: `Terminal ${id + 1}` }]);
+    setTabs((prev) => [...prev, { id }]);
     setActive(id);
   };
 
@@ -75,25 +88,28 @@ export function TerminalTabs({
   return (
     <div className="terminal-tabs" aria-label="terminals">
       <div className="tablist" role="tablist">
-        {tabs.map((tab) => (
-          <span key={tab.id}>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab.id === active}
-              onClick={() => setActive(tab.id)}
-            >
-              {tab.title}
-            </button>
-            <button
-              type="button"
-              aria-label={`close ${tab.title}`}
-              onClick={() => closeTab(tab.id)}
-            >
-              ×
-            </button>
-          </span>
-        ))}
+        {tabs.map((tab, index) => {
+          const title = terminalTitle(tabs, index);
+          return (
+            <span key={tab.id}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab.id === active}
+                onClick={() => setActive(tab.id)}
+              >
+                {title}
+              </button>
+              <button
+                type="button"
+                aria-label={`close ${title}`}
+                onClick={() => closeTab(tab.id)}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
         <button type="button" aria-label="new terminal" onClick={addShell}>
           +
         </button>

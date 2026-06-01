@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { DEFAULT_SECURITY_PERSONA, type SecurityStance, type SecurityPersona } from '@strix/ai-gateway';
 import type { ThemeId, AccentId } from './themes';
 
 export interface Settings {
@@ -14,6 +15,14 @@ export interface Settings {
   renderWhitespace: 'none' | 'boundary' | 'selection' | 'all';
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
+  // Workbench mode: 'normal' (clean coding) or 'cybersec' (pentester vibe +
+  // security-expert AI persona).
+  mode: 'normal' | 'cybersec';
+  // In Cybersec mode, tunes the AI security persona.
+  securityStance: SecurityStance;
+  // Editable security-persona instructions (base + per-stance). Defaults to the
+  // built-in DEFAULT_SECURITY_PERSONA; user-customizable in Settings.
+  securityPersona: SecurityPersona;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +37,9 @@ export const DEFAULT_SETTINGS: Settings = {
   cursorStyle: 'line',
   renderWhitespace: 'selection',
   aiServerUrl: '',
+  mode: 'normal',
+  securityStance: 'balanced',
+  securityPersona: { ...DEFAULT_SECURITY_PERSONA },
 };
 
 const KEY = 'strix.settings';
@@ -51,6 +63,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     }
     document.documentElement.dataset.theme = settings.theme;
     document.documentElement.dataset.accent = settings.accent;
+    document.documentElement.dataset.mode = settings.mode;
   }, [settings]);
 
   const update = useCallback(

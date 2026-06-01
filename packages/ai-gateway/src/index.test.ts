@@ -57,6 +57,56 @@ describe('buildPrompt', () => {
     const [system] = buildPrompt('vuln_check', { filePath: 'a.ts', fileContent: '' });
     expect(system.content.toLowerCase()).toContain('security');
   });
+
+  it('prepends the security persona when securityMode is set (Cybersec mode)', () => {
+    const [system] = buildPrompt('chat', { filePath: 'a.ts', fileContent: '', securityMode: true });
+    expect(system.role).toBe('system');
+    expect(system.content.toLowerCase()).toContain('cybersec mode');
+    expect(system.content.toLowerCase()).toContain('offensive');
+    expect(system.content.toLowerCase()).toContain('defensive');
+    // The task's base prompt is still appended after the persona.
+    expect(system.content).toContain('coding assistant');
+  });
+
+  it('omits the security persona in normal mode', () => {
+    const [system] = buildPrompt('chat', { filePath: 'a.ts', fileContent: '' });
+    expect(system.content.toLowerCase()).not.toContain('cybersec mode');
+  });
+
+  it('uses a red-team emphasis for the offensive stance', () => {
+    const [system] = buildPrompt('chat', {
+      filePath: 'a.ts',
+      fileContent: '',
+      securityMode: true,
+      securityStance: 'offensive',
+    });
+    expect(system.content.toLowerCase()).toContain('red-team');
+  });
+
+  it('uses a blue-team emphasis for the defensive stance', () => {
+    const [system] = buildPrompt('chat', {
+      filePath: 'a.ts',
+      fileContent: '',
+      securityMode: true,
+      securityStance: 'defensive',
+    });
+    expect(system.content.toLowerCase()).toContain('blue-team');
+  });
+
+  it('honors a custom persona text, overriding the stance default', () => {
+    const [system] = buildPrompt('chat', {
+      filePath: 'a.ts',
+      fileContent: '',
+      securityMode: true,
+      securityStance: 'offensive',
+      securityPersonaText: 'CUSTOM PERSONA RULES',
+    });
+    expect(system.content).toContain('CUSTOM PERSONA RULES');
+    // The default offensive emphasis is replaced, not appended.
+    expect(system.content.toLowerCase()).not.toContain('red-team');
+    // The task's base prompt is still appended.
+    expect(system.content).toContain('coding assistant');
+  });
 });
 
 function chunk(content?: string, model?: string): ChatCompletionChunk {

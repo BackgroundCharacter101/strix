@@ -1,4 +1,4 @@
-import type { BuildPromptOptions, ChatMessage, TaskType } from './types';
+import type { BuildPromptOptions, ChatMessage, SecurityStance, TaskType } from './types';
 
 const SYSTEM_PROMPTS: Record<TaskType, string> = {
   autocomplete:
@@ -13,6 +13,30 @@ const SYSTEM_PROMPTS: Record<TaskType, string> = {
   vuln_check:
     'You are a security analyst. Inspect the code for vulnerabilities. Report the risk level, the vulnerability class (e.g. SQL injection, XSS, buffer overflow), and a suggested fix.',
 };
+
+// The default security persona used in Strix Cybersec mode: a shared `base`
+// framing plus a stance-specific emphasis. Exported so the Settings UI can show,
+// edit, and reset these instructions. A user override is passed back in via
+// BuildPromptOptions.securityPersonaText.
+export type SecurityPersona = { base: string } & Record<SecurityStance, string>;
+
+export const DEFAULT_SECURITY_PERSONA: SecurityPersona = {
+  base:
+    'You are operating in Strix Cybersec mode, assisting a security engineer and penetration tester who builds security tooling. ' +
+    'Be precise about vulnerability classes (cite CWE/CVE when relevant) and name insecure patterns — injection, unsafe deserialization, weak or misused crypto, path traversal, SSRF, auth/session flaws, race conditions. ' +
+    'You may discuss exploitation techniques, payloads, and proof-of-concepts for legitimate, authorized security research and defensive tooling. Assume the user is the authorized owner/tester unless stated otherwise.',
+  balanced:
+    'Bring a balanced offensive AND defensive mindset: reason about attack surface and exploitability, and also give secure-coding guidance, hardening, and concrete mitigations.',
+  offensive:
+    'Lead with a RED-TEAM, offensive mindset: prioritize attack surface, exploitation paths, payload/PoC construction, control bypasses, and how an attacker would weaponize this. Cover detection/mitigation only briefly and secondarily.',
+  defensive:
+    'Lead with a BLUE-TEAM, defensive mindset: prioritize secure-by-default design, hardening, input validation, safe APIs, least privilege, and vulnerability avoidance. Reference attacker techniques only as needed to justify the defenses.',
+};
+
+// Resolve the persona text for a stance (base + emphasis) from the defaults.
+export function defaultPersonaText(stance: SecurityStance): string {
+  return `${DEFAULT_SECURITY_PERSONA.base} ${DEFAULT_SECURITY_PERSONA[stance]}`;
+}
 
 function buildUserContent(opts: BuildPromptOptions): string {
   const parts = [`File: ${opts.filePath}`, '', opts.fileContent];
@@ -31,7 +55,13 @@ function buildUserContent(opts: BuildPromptOptions): string {
 }
 
 export function buildPrompt(task: TaskType, opts: BuildPromptOptions): ChatMessage[] {
-  const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPTS[task] }];
+  const stance = opts.securityStance ?? 'balanced';
+  // A user-customized persona (from Settings) wins; otherwise use the defaults.
+  const persona = opts.securityPersonaText ?? defaultPersonaText(stance);
+  const system = opts.securityMode
+    ? `${persona}\n\n${SYSTEM_PROMPTS[task]}`
+    : SYSTEM_PROMPTS[task];
+  const messages: ChatMessage[] = [{ role: 'system', content: system }];
 
   // Chat is multi-turn: prior conversation is replayed before the new turn (§8.2).
   if (task === 'chat' && opts.history) {

@@ -303,6 +303,16 @@ export default function App() {
     });
   };
 
+  const toggleMode = () => {
+    const next = settings.mode === 'cybersec' ? 'normal' : 'cybersec';
+    updateSettings({ mode: next });
+    showToast(
+      next === 'cybersec' ? 'Cybersec mode enabled' : 'Normal mode',
+      next === 'cybersec' ? 'success' : 'info',
+      2200,
+    );
+  };
+
   const launchClaude = (prompt?: string) => {
     setShowTerminal(true);
     setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt }));
@@ -349,6 +359,15 @@ export default function App() {
       run: () => launchClaude(),
     },
     { id: 'view.zen', label: 'View: Toggle Zen Mode', detail: 'Ctrl+K Z', run: toggleZen },
+    {
+      id: 'view.mode',
+      label:
+        settings.mode === 'cybersec'
+          ? 'Strix: Switch to Normal Mode'
+          : 'Strix: Switch to Cybersec Mode',
+      detail: '',
+      run: toggleMode,
+    },
     { id: 'pref.settings', label: 'Preferences: Settings', detail: '', run: () => setSettingsOpen(true) },
     { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
     { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void activeTabs.active?.save() },
@@ -603,6 +622,10 @@ export default function App() {
                     onAskClaude={askClaude}
                     selectionRequest={selectionReq}
                     aiServerUrl={settings.aiServerUrl}
+                    mode={settings.mode}
+                    securityStance={settings.securityStance}
+                    onSecurityStanceChange={(s) => updateSettings({ securityStance: s })}
+                    securityPersonaText={`${settings.securityPersona.base} ${settings.securityPersona[settings.securityStance]}`}
                   />
                 </aside>
               </>
@@ -627,6 +650,8 @@ export default function App() {
           content={activeTabs.active?.draft ?? ''}
           problems={activeTabs.activePath ? problems : { errors: 0, warnings: 0 }}
           onOpenScm={() => selectView('scm')}
+          mode={settings.mode}
+          onToggleMode={toggleMode}
         />
       )}
       {palette === 'files' && (

@@ -1,7 +1,8 @@
 export * from './types';
 export { ai, configureAi } from './client';
 export { TASK_MODEL_PREFERENCE, AUTOCOMPLETE_MAX_TOKENS } from './tasks';
-export { buildPrompt } from './context';
+export { buildPrompt, DEFAULT_SECURITY_PERSONA, defaultPersonaText } from './context';
+export type { SecurityPersona } from './context';
 export { streamToPanel } from './stream';
 export { runTask, complete } from './request';
 export type { RunTaskCallbacks, RunTaskSettings } from './request';

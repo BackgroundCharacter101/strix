@@ -51,6 +51,7 @@ const MODERN_OPTIONS = {
   renderLineHighlight: 'all' as const,
   bracketPairColorization: { enabled: true },
   guides: { bracketPairs: true, indentation: true },
+  stickyScroll: { enabled: true },
   overviewRulerBorder: false,
   scrollbar: { verticalScrollbarSize: 11, horizontalScrollbarSize: 11 },
 };

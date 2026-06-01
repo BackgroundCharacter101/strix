@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { runTask, complete, configureAi, type TaskType, type ChatMessage } from '@strix/ai-gateway';
+import {
+  runTask,
+  complete,
+  configureAi,
+  type TaskType,
+  type ChatMessage,
+  type SecurityStance,
+} from '@strix/ai-gateway';
 import { CodeProposal } from './CodeProposal';
 import { SparkleIcon } from './icons';
 
@@ -21,6 +28,10 @@ export function AiPanel({
   onAskClaude,
   selectionRequest,
   aiServerUrl,
+  mode = 'normal',
+  securityStance = 'balanced',
+  onSecurityStanceChange,
+  securityPersonaText,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -31,7 +42,16 @@ export function AiPanel({
   selectionRequest?: { nonce: number; kind: 'explain' | 'fix'; selection: string };
   // Shared FreeLLMAPI host URL (blank = local server).
   aiServerUrl?: string;
+  // Workbench mode; 'cybersec' switches the AI to a security-expert persona.
+  mode?: 'normal' | 'cybersec';
+  // Security-expert stance (only meaningful in cybersec mode).
+  securityStance?: SecurityStance;
+  onSecurityStanceChange?: (stance: SecurityStance) => void;
+  // Resolved persona instructions for the active stance (base + emphasis),
+  // possibly user-customized in Settings. Falls back to gateway defaults.
+  securityPersonaText?: string;
 }) {
+  const securityMode = mode === 'cybersec';
   const [input, setInput] = useState('');
   const [model, setModel] = useState('auto');
   const [models, setModels] = useState<string[]>(['auto']);
@@ -82,7 +102,7 @@ export function AiPanel({
     try {
       await runTask(
         task,
-        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory },
+        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, securityMode, securityStance, securityPersonaText },
         {
           onToken: (token) => {
             acc += token;
@@ -117,7 +137,7 @@ export function AiPanel({
     try {
       await runTask(
         kind,
-        { filePath: filePath ?? '', fileContent: selection, userMessage: '' },
+        { filePath: filePath ?? '', fileContent: selection, userMessage: '', securityMode, securityStance, securityPersonaText },
         {
           onToken: (token) => {
             acc += token;
@@ -154,6 +174,9 @@ export function AiPanel({
           filePath: filePath ?? '',
           fileContent,
           userMessage: 'Return the full updated file. Code only, no explanation or fences.',
+          securityMode,
+          securityStance,
+          securityPersonaText,
         },
         { model },
       );
@@ -195,6 +218,23 @@ export function AiPanel({
           ))}
         </select>
       </div>
+
+      {securityMode && (
+        <div className="ai-stance" role="group" aria-label="security AI stance">
+          {(['offensive', 'balanced', 'defensive'] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`ai-stance-btn${securityStance === s ? ' is-active' : ''}`}
+              aria-pressed={securityStance === s}
+              title={`Security AI stance: ${s}`}
+              onClick={() => onSecurityStanceChange?.(s)}
+            >
+              {s === 'offensive' ? '🗡 Offensive' : s === 'defensive' ? '🛡 Defensive' : '⚖ Balanced'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {proposal ? (
         <CodeProposal

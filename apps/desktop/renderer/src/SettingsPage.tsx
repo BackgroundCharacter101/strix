@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gateway';
 import type { Settings } from './useSettings';
 import { THEMES, ACCENTS } from './themes';
 
@@ -37,6 +38,13 @@ export function SettingsPage({
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
+
+  const persona = settings.securityPersona;
+  const setPersona = (key: keyof SecurityPersona, value: string) =>
+    onChange({ securityPersona: { ...persona, [key]: value } });
+  const personaEdited = (Object.keys(DEFAULT_SECURITY_PERSONA) as (keyof SecurityPersona)[]).some(
+    (k) => persona[k] !== DEFAULT_SECURITY_PERSONA[k],
+  );
 
   return (
     <div className="settings-page" aria-label="settings">
@@ -192,6 +200,47 @@ export function SettingsPage({
               value={settings.aiServerUrl}
               onChange={(e) => onChange({ aiServerUrl: e.target.value })}
             />
+          </Row>
+        </section>
+
+        <section className="set-section">
+          <h3>Security AI persona</h3>
+          <p className="set-section-note">
+            Instructions prepended to the AI in <strong>Cybersec mode</strong>. The <em>base</em>{' '}
+            always applies; the offensive / balanced / defensive text is added based on the active
+            stance (chosen in the AI panel).
+          </p>
+          {(
+            [
+              ['base', 'Base instructions', 'Always applied in Cybersec mode.'],
+              ['offensive', 'Offensive (red-team)', 'Added when the stance is Offensive.'],
+              ['balanced', 'Balanced', 'Added when the stance is Balanced.'],
+              ['defensive', 'Defensive (blue-team)', 'Added when the stance is Defensive.'],
+            ] as [keyof SecurityPersona, string, string][]
+          ).map(([key, label, desc]) => (
+            <Row key={key} query={query} label={label} desc={desc}>
+              <textarea
+                className="set-textarea"
+                aria-label={label}
+                rows={4}
+                value={persona[key]}
+                onChange={(e) => setPersona(key, e.target.value)}
+              />
+            </Row>
+          ))}
+          <Row
+            query={query}
+            label="Reset persona"
+            desc="Restore the default security instructions."
+          >
+            <button
+              type="button"
+              className="set-reset-btn"
+              disabled={!personaEdited}
+              onClick={() => onChange({ securityPersona: { ...DEFAULT_SECURITY_PERSONA } })}
+            >
+              Reset to defaults
+            </button>
           </Row>
         </section>
       </div>

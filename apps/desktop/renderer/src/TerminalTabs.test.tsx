@@ -103,4 +103,22 @@ describe('TerminalTabs', () => {
       'true',
     );
   });
+
+  it('keeps terminal numbers sequential and in order when tabs are closed', () => {
+    render(<TerminalTabs />);
+    const newTerminal = () => fireEvent.click(screen.getByRole('button', { name: 'new terminal' }));
+
+    newTerminal(); // Terminal 2
+    newTerminal(); // Terminal 3 → bar reads 1, 2, 3
+    fireEvent.click(screen.getByRole('button', { name: 'close Terminal 2' }));
+
+    // Closing #2 reflows the old #3 down to #2 — no gap, no out-of-order numbers.
+    expect(screen.getByRole('tab', { name: 'Terminal 2' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Terminal 3' })).not.toBeInTheDocument();
+
+    // The next terminal is #3 again (not #4) and sits at the end in order.
+    newTerminal();
+    expect(screen.getByRole('tab', { name: 'Terminal 3' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Terminal 4' })).not.toBeInTheDocument();
+  });
 });

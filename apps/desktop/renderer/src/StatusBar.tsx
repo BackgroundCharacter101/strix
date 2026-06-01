@@ -12,6 +12,8 @@ export interface StatusBarProps {
   content?: string;
   problems?: { errors: number; warnings: number };
   onOpenScm?: () => void;
+  mode?: 'normal' | 'cybersec';
+  onToggleMode?: () => void;
 }
 
 // Windows files use CRLF; everything else LF. Detect from the buffer.
@@ -50,10 +52,27 @@ export function StatusBar({
   content = '',
   problems = { errors: 0, warnings: 0 },
   onOpenScm,
+  mode = 'normal',
+  onToggleMode,
 }: StatusBarProps) {
   return (
     <footer className="statusbar" aria-label="status bar">
       <div className="statusbar-section statusbar-left">
+        {onToggleMode && (
+          <button
+            type="button"
+            className={`statusbar-item statusbar-btn statusbar-mode${mode === 'cybersec' ? ' is-cybersec' : ''}`}
+            aria-label={`workbench mode: ${mode === 'cybersec' ? 'Cybersec' : 'Normal'}, click to toggle`}
+            title={
+              mode === 'cybersec'
+                ? 'Cybersec mode — click to switch to Normal'
+                : 'Normal mode — click to switch to Cybersec'
+            }
+            onClick={onToggleMode}
+          >
+            {mode === 'cybersec' ? '◆ CYBERSEC' : '◇ Normal'}
+          </button>
+        )}
         <GitStatusBar status={gitStatus} onClick={onOpenScm} />
         <button
           type="button"
