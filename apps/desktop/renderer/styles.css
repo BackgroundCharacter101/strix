@@ -1843,6 +1843,54 @@ kbd {
   margin-bottom: var(--space-8);
 }
 
+.welcome-recent {
+  width: 320px;
+  max-width: 80vw;
+  margin-bottom: var(--space-8);
+  text-align: left;
+}
+.welcome-recent-title {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+.welcome-recent ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.welcome-recent-item {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.welcome-recent-item:hover {
+  background: var(--bg-hover);
+}
+.welcome-recent-name {
+  color: var(--link);
+  flex: 0 0 auto;
+}
+.welcome-recent-path {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 .welcome-hints {
   list-style: none;
   margin: 0;

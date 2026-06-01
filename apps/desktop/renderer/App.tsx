@@ -479,6 +479,8 @@ export default function App() {
         onOpenFile={openFile}
         onCloneRepo={() => setCloneOpen(true)}
         onLanguages={() => selectView('extensions')}
+        recents={root ? [] : recents}
+        onOpenRecent={(p) => setRoot(p)}
         editorOptions={editorOptions}
         theme={editorTheme}
         registerFormat={registerFormat}

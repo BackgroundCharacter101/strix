@@ -18,6 +18,8 @@ export function FileViewer({
   onOpenFile,
   onCloneRepo,
   onLanguages,
+  recents,
+  onOpenRecent,
   editorOptions,
   theme,
   registerFormat,
@@ -31,6 +33,9 @@ export function FileViewer({
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
   onLanguages?: () => void;
+  // Recently opened folders (most-recent first) + open-one callback.
+  recents?: string[];
+  onOpenRecent?: (path: string) => void;
   editorOptions?: EditorOptions;
   theme?: string;
   // Hands a "format the document" callback up to App (null on unmount).
@@ -75,6 +80,29 @@ export function FileViewer({
                 Languages & Extensions…
               </button>
             )}
+          </div>
+        )}
+        {recents && recents.length > 0 && onOpenRecent && (
+          <div className="welcome-recent">
+            <div className="welcome-recent-title">Recent</div>
+            <ul>
+              {recents.slice(0, 5).map((p) => {
+                const name = p.split(/[\\/]/).filter(Boolean).pop() ?? p;
+                return (
+                  <li key={p}>
+                    <button
+                      type="button"
+                      className="welcome-recent-item"
+                      title={p}
+                      onClick={() => onOpenRecent(p)}
+                    >
+                      <span className="welcome-recent-name">{name}</span>
+                      <span className="welcome-recent-path">{p}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
         <ul className="welcome-hints">

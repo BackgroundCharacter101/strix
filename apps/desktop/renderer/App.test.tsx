@@ -31,6 +31,7 @@ const read = vi.fn<[string], Promise<string>>();
 const gitStatus = vi.fn<[string], Promise<GitStatus>>();
 
 beforeEach(() => {
+  localStorage.clear(); // isolate persisted state (settings, recent folders, …)
   root.mockReset();
   tree.mockReset();
   read.mockReset();
