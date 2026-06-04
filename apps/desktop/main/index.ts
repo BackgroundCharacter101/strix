@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { registerIpcHandlers } from './ipc.js';
@@ -28,6 +28,19 @@ function createWindow() {
             // ESM preload scripts require the sandbox to be disabled.
             sandbox: false,
         },
+    });
+
+    // Security hardening: this is a single-page app that never navigates its top
+    // frame, and should never spawn uncontrolled child windows. Block both, and
+    // route real http(s) links (e.g. from rendered markdown) to the OS browser.
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (/^https?:\/\//i.test(url)) void shell.openExternal(url);
+        return { action: 'deny' };
+    });
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        if (url === mainWindow.webContents.getURL()) return; // in-place reload is fine
+        event.preventDefault();
+        if (/^https?:\/\//i.test(url)) void shell.openExternal(url);
     });
 
     mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {

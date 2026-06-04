@@ -23,8 +23,13 @@ git clone https://github.com/BackgroundCharacter101/strix.git
 cd strix
 npm install
 npm run ai:setup          # install + build FreeLLMAPI, generate its key
+$env:HOST = "0.0.0.0"     # bind all interfaces so teammates can reach it
 npm run ai:start          # start the server on :3001
 ```
+
+> The server binds **localhost only by default** (so a per-machine install isn't
+> exposed to the network). Setting `HOST=0.0.0.0` is what makes it reachable from
+> other machines — only do this on the intended team host.
 
 Then:
 - Open `http://localhost:3001` → **Keys** → paste your free provider keys
@@ -33,9 +38,8 @@ Then:
 - Make sure the server is reachable on the LAN:
   - Find the host IP: `ipconfig` → IPv4 Address (e.g. `192.168.1.50`).
   - Allow **inbound TCP 3001** through Windows Firewall.
-  - Express binds all interfaces by default, so `http://<host-ip>:3001` should
-    work from other machines. Test from a teammate's browser:
-    `http://192.168.1.50:3001`.
+  - With `HOST=0.0.0.0` set (above), `http://<host-ip>:3001` works from other
+    machines. Test from a teammate's browser: `http://192.168.1.50:3001`.
 - To keep it running, leave the terminal open, run it as a service, or use a
   process manager (pm2, nssm, a scheduled task).
 
