@@ -3,11 +3,92 @@ import type * as Monaco from 'monaco-editor';
 import { CodeEditor, languageForPath, type EditorOptions } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
 import type { FileBuffer } from './useFileBuffer';
-import { LspClient, languageForLsp, lspToMonacoMarkers } from './lspClient';
+import {
+  LspClient,
+  languageForLsp,
+  lspToMonacoMarkers,
+  normalizeCompletionItems,
+  hoverToMarkdown,
+  normalizeLocations,
+  LSP_COMPLETION_KIND,
+  type LspPosition,
+} from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
 import { MarkdownPreview } from './MarkdownPreview';
 import { HexViewer } from './HexViewer';
 import { OwlIcon } from './icons';
+
+// LSP completion/hover/definition need ONE global Monaco provider per language
+// that routes to the client for the queried model (Monaco providers are global,
+// but each open file has its own LspClient). The registry maps model URI →
+// client; providers are registered once per language.
+const lspClients = new Map<string, LspClient>();
+const lspProviderLangs = new Set<string>();
+
+function toLspPos(p: Monaco.Position): LspPosition {
+  return { line: p.lineNumber - 1, character: p.column - 1 };
+}
+
+function ensureLspProviders(monaco: typeof import('monaco-editor'), languageId: string): void {
+  if (lspProviderLangs.has(languageId)) return;
+  lspProviderLangs.add(languageId);
+
+  monaco.languages.registerCompletionItemProvider(languageId, {
+    triggerCharacters: ['.', ':', '>', '"', "'", '/', '@', '('],
+    provideCompletionItems: async (model, position) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return { suggestions: [] };
+      const items = normalizeCompletionItems(await client.completion(toLspPos(position)));
+      const word = model.getWordUntilPosition(position);
+      const range = new monaco.Range(
+        position.lineNumber,
+        word.startColumn,
+        position.lineNumber,
+        word.endColumn,
+      );
+      return {
+        suggestions: items.map((it) => ({
+          label: it.label,
+          kind: monaco.languages.CompletionItemKind[
+            (LSP_COMPLETION_KIND[it.kind ?? 1] ??
+              'Text') as keyof typeof monaco.languages.CompletionItemKind
+          ],
+          insertText: it.insertText ?? it.label,
+          detail: it.detail,
+          documentation:
+            typeof it.documentation === 'string' ? it.documentation : it.documentation?.value,
+          sortText: it.sortText,
+          range,
+        })),
+      };
+    },
+  });
+
+  monaco.languages.registerHoverProvider(languageId, {
+    provideHover: async (model, position) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return null;
+      const md = hoverToMarkdown(await client.hover(toLspPos(position)));
+      return md ? { contents: [{ value: md }] } : null;
+    },
+  });
+
+  monaco.languages.registerDefinitionProvider(languageId, {
+    provideDefinition: async (model, position) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return null;
+      return normalizeLocations(await client.definition(toLspPos(position))).map((l) => ({
+        uri: monaco.Uri.parse(l.uri),
+        range: new monaco.Range(
+          l.range.start.line + 1,
+          l.range.start.character + 1,
+          l.range.end.line + 1,
+          l.range.end.character + 1,
+        ),
+      }));
+    },
+  });
+}
 
 export function FileViewer({
   path,
@@ -291,10 +372,14 @@ export function FileViewer({
                   ),
               });
               void client.start();
+              const uriKey = model.uri.toString();
+              lspClients.set(uriKey, client);
+              ensureLspProviders(monaco, model.getLanguageId());
               const sub = editor.onDidChangeModelContent(() => client.didChange(model.getValue()));
               disposers.push(() => {
                 sub.dispose();
                 client.stop();
+                lspClients.delete(uriKey);
               });
             }
 

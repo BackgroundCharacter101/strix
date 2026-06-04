@@ -87,6 +87,9 @@ export class LspClient {
   private initId = 1;
   private nextId = 2;
   private version = 1;
+  // In-flight request id → resolver, for request/response methods (completion,
+  // hover, definition). Resolved when the matching response arrives.
+  private pending = new Map<number, (message: JsonRpcMessage) => void>();
 
   constructor(
     private readonly transport: LspTransport,
@@ -109,6 +112,12 @@ export class LspClient {
         });
         return;
       }
+      if (typeof message.id === 'number' && this.pending.has(message.id)) {
+        const resolve = this.pending.get(message.id);
+        this.pending.delete(message.id);
+        resolve?.(message);
+        return;
+      }
       if (message.method === 'textDocument/publishDiagnostics') {
         const params = message.params as { diagnostics?: LspDiagnostic[] };
         this.opts.onDiagnostics(params.diagnostics ?? []);
@@ -118,7 +127,52 @@ export class LspClient {
     this.request(this.initId, 'initialize', {
       processId: null,
       rootUri: null,
-      capabilities: {},
+      capabilities: {
+        textDocument: {
+          completion: { completionItem: { snippetSupport: false } },
+          hover: { contentFormat: ['markdown', 'plaintext'] },
+          definition: {},
+        },
+      },
+    });
+  }
+
+  // --- Request/response features (completion, hover, go-to-definition) ------
+  // Resolves with the server's `result` (or null on error/timeout/no-session).
+  private sendRequest<T>(method: string, params: unknown, timeoutMs = 4000): Promise<T | null> {
+    if (!this.id) return Promise.resolve(null);
+    const id = this.nextId++;
+    return new Promise<T | null>((resolve) => {
+      const timer = setTimeout(() => {
+        this.pending.delete(id);
+        resolve(null);
+      }, timeoutMs);
+      this.pending.set(id, (message) => {
+        clearTimeout(timer);
+        resolve('result' in message ? ((message.result ?? null) as T | null) : null);
+      });
+      this.sendRaw({ jsonrpc: '2.0', id, method, params });
+    });
+  }
+
+  completion(position: LspPosition): Promise<unknown> {
+    return this.sendRequest('textDocument/completion', {
+      textDocument: { uri: this.opts.uri },
+      position,
+    });
+  }
+
+  hover(position: LspPosition): Promise<unknown> {
+    return this.sendRequest('textDocument/hover', {
+      textDocument: { uri: this.opts.uri },
+      position,
+    });
+  }
+
+  definition(position: LspPosition): Promise<unknown> {
+    return this.sendRequest('textDocument/definition', {
+      textDocument: { uri: this.opts.uri },
+      position,
     });
   }
 
@@ -151,3 +205,87 @@ export class LspClient {
     if (this.id) this.transport.send(this.id, message);
   }
 }
+
+// --- Request/response result types + pure normalizers (testable) ----------
+export interface LspPosition {
+  line: number; // 0-based
+  character: number; // 0-based
+}
+
+interface LspMarkup {
+  kind?: string;
+  value: string;
+}
+
+export interface LspCompletionItem {
+  label: string;
+  kind?: number;
+  detail?: string;
+  documentation?: string | LspMarkup;
+  insertText?: string;
+  sortText?: string;
+}
+
+export interface LspLocation {
+  uri: string;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+}
+
+// completion result: CompletionItem[] | { items: CompletionItem[] } | null
+export function normalizeCompletionItems(result: unknown): LspCompletionItem[] {
+  if (!result) return [];
+  if (Array.isArray(result)) return result as LspCompletionItem[];
+  const list = result as { items?: LspCompletionItem[] };
+  return Array.isArray(list.items) ? list.items : [];
+}
+
+// hover result: { contents } where contents is string | MarkedString |
+// MarkedString[] | MarkupContent. Flattened to a markdown string.
+export function hoverToMarkdown(result: unknown): string | null {
+  const contents = (result as { contents?: unknown } | null)?.contents;
+  if (contents == null) return null;
+  const one = (c: unknown): string => {
+    if (typeof c === 'string') return c;
+    if (c && typeof c === 'object') {
+      const m = c as { value?: string; language?: string };
+      if (typeof m.value === 'string') {
+        return m.language ? `\`\`\`${m.language}\n${m.value}\n\`\`\`` : m.value;
+      }
+    }
+    return '';
+  };
+  const text = Array.isArray(contents)
+    ? contents.map(one).filter(Boolean).join('\n\n')
+    : one(contents);
+  return text.trim() || null;
+}
+
+// definition result: Location | Location[] | LocationLink[] | null
+export function normalizeLocations(result: unknown): LspLocation[] {
+  if (!result) return [];
+  const arr = Array.isArray(result) ? result : [result];
+  const out: LspLocation[] = [];
+  for (const item of arr) {
+    const o = item as Record<string, unknown>;
+    if (o.uri && o.range) {
+      out.push({ uri: o.uri as string, range: o.range as LspLocation['range'] });
+    } else if (o.targetUri && o.targetRange) {
+      // LocationLink shape
+      out.push({ uri: o.targetUri as string, range: o.targetRange as LspLocation['range'] });
+    }
+  }
+  return out;
+}
+
+// LSP CompletionItemKind (number) → name. Monaco's CompletionItemKind enum uses
+// the same names, so a provider does monaco.languages.CompletionItemKind[name].
+export const LSP_COMPLETION_KIND: Record<number, string> = {
+  1: 'Text', 2: 'Method', 3: 'Function', 4: 'Constructor', 5: 'Field',
+  6: 'Variable', 7: 'Class', 8: 'Interface', 9: 'Module', 10: 'Property',
+  11: 'Unit', 12: 'Value', 13: 'Enum', 14: 'Keyword', 15: 'Snippet',
+  16: 'Color', 17: 'File', 18: 'Reference', 19: 'Folder', 20: 'EnumMember',
+  21: 'Constant', 22: 'Struct', 23: 'Event', 24: 'Operator', 25: 'TypeParameter',
+};
