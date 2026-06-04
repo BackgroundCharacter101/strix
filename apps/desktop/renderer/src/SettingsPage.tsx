@@ -194,6 +194,29 @@ export function SettingsPage({
               onChange={(e) => onChange({ minimap: e.target.checked })}
             />
           </Row>
+          <Row query={query} label="Auto save" desc="Periodically write unsaved changes to disk.">
+            <input
+              type="checkbox"
+              aria-label="Auto save"
+              checked={settings.autoSave}
+              onChange={(e) => onChange({ autoSave: e.target.checked })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Auto save interval"
+            desc="Seconds between auto-saves (min 5)."
+          >
+            <input
+              type="number"
+              aria-label="Auto save interval"
+              min={5}
+              value={settings.autoSaveSeconds}
+              onChange={(e) =>
+                onChange({ autoSaveSeconds: Math.max(5, Number(e.target.value) || 60) })
+              }
+            />
+          </Row>
         </section>
 
         <section className="set-section">

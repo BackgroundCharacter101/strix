@@ -15,6 +15,9 @@ export interface Settings {
   renderWhitespace: 'none' | 'boundary' | 'selection' | 'all';
   // UI density: 'comfortable' (default) or 'compact' (tighter list rows/tabs).
   density: 'comfortable' | 'compact';
+  // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
+  autoSave: boolean;
+  autoSaveSeconds: number;
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
   // Workbench mode: 'normal' (clean coding) or 'cybersec' (pentester vibe +
@@ -39,6 +42,8 @@ export const DEFAULT_SETTINGS: Settings = {
   cursorStyle: 'line',
   renderWhitespace: 'selection',
   density: 'comfortable',
+  autoSave: true,
+  autoSaveSeconds: 60,
   aiServerUrl: '',
   mode: 'normal',
   securityStance: 'balanced',

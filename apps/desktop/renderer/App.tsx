@@ -138,6 +138,20 @@ export default function App() {
   const recentFilesRef = useRef<string[]>(recentFiles);
   recentFilesRef.current = recentFiles;
 
+  // Auto-save: periodically write dirty buffers in both groups. The ref always
+  // points at the latest saveAll, so the interval needn't be recreated on edits.
+  const autoSaveRef = useRef<() => void>(() => {});
+  autoSaveRef.current = () => {
+    void tabs.saveAll();
+    void tabsB.saveAll();
+  };
+  useEffect(() => {
+    if (!settings.autoSave) return;
+    const ms = Math.max(5, settings.autoSaveSeconds) * 1000;
+    const id = window.setInterval(() => autoSaveRef.current(), ms);
+    return () => window.clearInterval(id);
+  }, [settings.autoSave, settings.autoSaveSeconds]);
+
   const chordRef = useRef(false);
   const formatRef = useRef<(() => void) | null>(null);
   const zenRef = useRef(false);
