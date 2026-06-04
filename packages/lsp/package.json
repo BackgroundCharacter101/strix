@@ -2,8 +2,5 @@
     "name": "@strix/lsp",
     "version": "0.1.0",
     "main": "src/index.ts",
-    "private": true,
-    "dependencies": {
-        "monaco-languageclient": "^10.7.0"
-    }
+    "private": true
 }
