@@ -79,6 +79,7 @@ const api: StrixApi = {
     toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),
     close: () => ipcRenderer.send('win:close'),
     setFullScreen: (on) => ipcRenderer.send('win:setFullScreen', on),
+    openExternal: (url) => ipcRenderer.send('win:openExternal', url),
     isMaximized: () => ipcRenderer.invoke('win:isMaximized'),
     onMaximizeChange: (cb) => {
       const handler = (_event: unknown, maximized: boolean) => cb(maximized);

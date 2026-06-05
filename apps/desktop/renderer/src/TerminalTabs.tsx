@@ -41,9 +41,10 @@ export function TerminalTabs({
   launch = { nonce: 0 },
 }: {
   cwd?: string;
-  // Bumping nonce (from a command / menu / AI hand-off) opens a Claude Code
-  // session, optionally seeded with a prompt.
-  launch?: { nonce: number; prompt?: string };
+  // Bumping nonce (from a command / menu / AI hand-off) opens a session. With no
+  // command it's a Claude Code session (optionally seeded with a prompt); with a
+  // command it's a generic run target (e.g. "npm run dev") in a titled tab.
+  launch?: { nonce: number; prompt?: string; command?: string; title?: string };
 }) {
   const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0 }]);
   const [active, setActive] = useState(0);
@@ -70,12 +71,23 @@ export function TerminalTabs({
     setActive(id);
   };
 
-  // Open a Claude Code session when App signals it (command / menu / AI hand-off).
-  const launchRef = useRef(launchClaude);
-  launchRef.current = launchClaude;
+  // Open a titled tab running an arbitrary command (Run/Serve targets).
+  const runCommand = (command: string, title: string) => {
+    const id = nextId.current++;
+    setTabs((prev) => [...prev, { id, title, bootCommand: command, notice: `▶ ${command}` }]);
+    setActive(id);
+  };
+
+  // React to a launch signal from App: a command opens a run tab, otherwise a
+  // Claude Code session.
+  const launchRef = useRef<(l: typeof launch) => void>(() => {});
+  launchRef.current = (l) => {
+    if (l.command) runCommand(l.command, l.title ?? 'Run');
+    else void launchClaude(l.prompt);
+  };
   useEffect(() => {
-    if (launch.nonce > 0) void launchRef.current(launch.prompt);
-  }, [launch.nonce, launch.prompt]);
+    if (launch.nonce > 0) launchRef.current(launch);
+  }, [launch.nonce, launch]);
 
   const closeTab = (id: number) => {
     const remaining = tabs.filter((x) => x.id !== id);

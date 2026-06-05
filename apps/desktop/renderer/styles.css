@@ -1506,6 +1506,60 @@ kbd {
   padding: var(--space-3) var(--space-4);
 }
 
+/* ---- Run & Serve view --------------------------------------------------- */
+.run-view {
+  padding: var(--space-2) 0;
+  overflow: auto;
+}
+
+.run-list {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+}
+
+.run-row {
+  margin: 0;
+}
+
+.run-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px var(--space-4);
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.run-target:hover {
+  background: var(--bg-hover);
+}
+
+.run-target svg {
+  color: var(--accent-hover);
+  flex: 0 0 auto;
+}
+
+.run-label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  flex: 0 0 auto;
+}
+
+.run-cmd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .scm-message-wrap {
   position: relative;
 }

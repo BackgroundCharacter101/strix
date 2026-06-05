@@ -29,11 +29,14 @@ import {
   ExtensionsIcon,
   FilesIcon,
   GearIcon,
+  RunIcon,
   SearchIcon,
   SourceControlIcon,
   SparkleIcon,
   TerminalIcon,
 } from './src/icons';
+import { RunView } from './src/RunView';
+import { extractLocalUrl } from './src/runTargets';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm' | 'extensions'>(
+  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm' | 'run' | 'extensions'>(
     'explorer',
   );
   const [diff, setDiff] = useState<{ path: string; original: string; modified: string } | null>(
@@ -54,7 +57,12 @@ export default function App() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [claudeLaunch, setClaudeLaunch] = useState<{ nonce: number; prompt?: string }>({
+  const [claudeLaunch, setClaudeLaunch] = useState<{
+    nonce: number;
+    prompt?: string;
+    command?: string;
+    title?: string;
+  }>({
     nonce: 0,
   });
   const [selectionReq, setSelectionReq] = useState<{
@@ -361,7 +369,7 @@ export default function App() {
   useEffect(() => window.strix.menu.onCommand((id) => runCommandRef.current(id)), []);
 
   // Activity-bar view switch: re-clicking the active view hides the sidebar.
-  const selectView = (view: 'explorer' | 'search' | 'scm' | 'extensions') => {
+  const selectView = (view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions') => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
     } else {
@@ -390,6 +398,13 @@ export default function App() {
   const launchClaude = (prompt?: string) => {
     setShowTerminal(true);
     setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt }));
+  };
+
+  // Run a project target (npm script / Python) in a new integrated terminal.
+  const runTarget = (command: string, title: string) => {
+    setShowTerminal(true);
+    setClaudeLaunch((p) => ({ nonce: p.nonce + 1, command, title }));
+    showToast(`Running ${title}…`, 'info', 2500);
   };
 
   // Run Explain/Fix on an editor selection — reveal the AI panel and ask it.
@@ -424,6 +439,7 @@ export default function App() {
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
+    { id: 'view.run', label: 'View: Run & Serve', detail: '', run: () => selectView('run') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     {
@@ -485,6 +501,21 @@ export default function App() {
   useEffect(() => {
     window.strix.win.setFullScreen(zen);
   }, [zen]);
+
+  // Watch terminal output for a dev-server URL (e.g. after "npm run dev") and
+  // open it in the browser once. A ref tracks already-opened URLs so we don't
+  // re-open on every repaint/log line.
+  const openedUrls = useRef(new Set<string>());
+  useEffect(() => {
+    return window.strix.terminal.onData(({ data }) => {
+      const url = extractLocalUrl(data);
+      if (url && !openedUrls.current.has(url)) {
+        openedUrls.current.add(url);
+        window.strix.win.openExternal(url);
+        showToast(`Opened dev server: ${url}`, 'success', 4000);
+      }
+    });
+  }, []);
 
   // In Cybersec mode the editor uses a dedicated green-on-black theme + green
   // accent so it matches the pentester chrome (instead of the user's theme).
@@ -607,6 +638,15 @@ export default function App() {
           </button>
           <button
             type="button"
+            aria-label="Run and Serve"
+            aria-pressed={showSidebar && sidebarView === 'run'}
+            title="Run & Serve"
+            onClick={() => selectView('run')}
+          >
+            <RunIcon />
+          </button>
+          <button
+            type="button"
             aria-label="Extensions"
             aria-pressed={showSidebar && sidebarView === 'extensions'}
             title="Languages & Extensions"
@@ -653,9 +693,11 @@ export default function App() {
                       ? 'Search'
                       : sidebarView === 'scm'
                         ? 'Source Control'
-                        : sidebarView === 'extensions'
-                          ? 'Languages & Extensions'
-                          : 'Explorer'}
+                        : sidebarView === 'run'
+                          ? 'Run & Serve'
+                          : sidebarView === 'extensions'
+                            ? 'Languages & Extensions'
+                            : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={(p) => activeTabs.open(p)} />
@@ -664,6 +706,12 @@ export default function App() {
                       rootPath={root}
                       onOpenDiff={(abs) => void openDiff(abs)}
                       aiServerUrl={settings.aiServerUrl}
+                    />
+                  ) : sidebarView === 'run' ? (
+                    <RunView
+                      rootPath={root}
+                      activeFilePath={activeTabs.activePath}
+                      onRun={runTarget}
                     />
                   ) : sidebarView === 'extensions' ? (
                     <ExtensionsView />

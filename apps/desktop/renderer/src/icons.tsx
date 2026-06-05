@@ -117,6 +117,23 @@ export function GearIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function RunIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10 8.5l5 3.5-5 3.5z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M7 5l11 7-11 7z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function SaveIcon({ size = 16 }: IconProps) {
   return (
     <svg {...base(size)}>

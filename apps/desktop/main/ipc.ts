@@ -67,6 +67,9 @@ export function registerIpcHandlers(): void {
   });
   ipcMain.on('win:close', (event) => winOf(event)?.close());
   ipcMain.on('win:setFullScreen', (event, on: boolean) => winOf(event)?.setFullScreen(!!on));
+  ipcMain.on('win:openExternal', (_event, url: string) => {
+    if (typeof url === 'string' && /^https?:\/\//i.test(url)) void shell.openExternal(url);
+  });
   ipcMain.handle('win:isMaximized', (event) => winOf(event)?.isMaximized() ?? false);
   ipcMain.on('win:popupMenu', (event, { label, x, y }: { label: string; x: number; y: number }) => {
     const w = winOf(event);

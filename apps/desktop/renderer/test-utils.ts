@@ -85,6 +85,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       toggleMaximize: vi.fn(),
       close: vi.fn(),
       setFullScreen: vi.fn(),
+      openExternal: vi.fn(),
       isMaximized: vi.fn(async (): Promise<boolean> => false),
       onMaximizeChange: vi.fn(() => () => {}),
       popupMenu: vi.fn(),

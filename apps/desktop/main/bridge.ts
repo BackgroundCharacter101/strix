@@ -94,6 +94,8 @@ export interface StrixWindowApi {
   close(): void;
   // Enter/leave true OS fullscreen (hides the taskbar) — used by Zen mode.
   setFullScreen(on: boolean): void;
+  // Open an http(s) URL in the system browser (e.g. a detected dev-server URL).
+  openExternal(url: string): void;
   isMaximized(): Promise<boolean>;
   onMaximizeChange(cb: (maximized: boolean) => void): () => void;
   // Pop a top-level application menu (by label) at the given screen-relative point.
