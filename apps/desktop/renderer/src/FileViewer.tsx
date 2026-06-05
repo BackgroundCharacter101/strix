@@ -18,7 +18,6 @@ import {
 } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
 import { MarkdownPreview } from './MarkdownPreview';
-import { HexViewer } from './HexViewer';
 import { OwlIcon } from './icons';
 
 // LSP completion/hover/definition need ONE global Monaco provider per language
@@ -166,11 +165,9 @@ export function FileViewer({
   onSelectionAction?: (kind: 'explain' | 'fix', selection: string) => void;
 }) {
   const [showPreview, setShowPreview] = useState(true);
-  const [hexOverride, setHexOverride] = useState<boolean | null>(null);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
   // A NUL byte in the decoded text strongly implies a binary file.
   const isBinary = (buffer?.draft ?? '').includes(String.fromCharCode(0));
-  const showHex = hexOverride ?? isBinary;
 
   if (!path || !buffer) {
     return (
@@ -272,16 +269,7 @@ export function FileViewer({
         )}
         {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
         <span className="toolbar-right" />
-        <button
-          type="button"
-          className="ai-ghost-btn"
-          aria-pressed={showHex}
-          title="Toggle hex view"
-          onClick={() => setHexOverride(!showHex)}
-        >
-          {showHex ? 'Text' : 'Hex'}
-        </button>
-        {isMarkdown && !showHex && (
+        {isMarkdown && !isBinary && (
           <button
             type="button"
             className="ai-ghost-btn"
@@ -293,8 +281,11 @@ export function FileViewer({
         )}
       </div>
       <div className="editor-host">
-        {showHex ? (
-          <HexViewer path={path} />
+        {isBinary ? (
+          <div className="binary-notice" role="note">
+            <p>This is a binary file and can’t be shown in the text editor.</p>
+            <p className="binary-notice-path">{path}</p>
+          </div>
         ) : isMarkdown && showPreview ? (
           <MarkdownPreview content={buffer.draft} />
         ) : (

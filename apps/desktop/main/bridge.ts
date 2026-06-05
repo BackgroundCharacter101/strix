@@ -14,8 +14,6 @@ export interface StrixFsApi {
   create(targetPath: string, type: 'file' | 'directory'): Promise<void>;
   rename(from: string, to: string): Promise<void>;
   remove(targetPath: string): Promise<void>;
-  // Read up to ~1 MB of a file as base64 (for the hex viewer).
-  readBytes(filePath: string): Promise<{ base64: string; size: number; truncated: boolean }>;
 }
 
 export interface StrixWorkspaceApi {
@@ -85,6 +83,8 @@ export interface StrixWindowApi {
   minimize(): void;
   toggleMaximize(): void;
   close(): void;
+  // Enter/leave true OS fullscreen (hides the taskbar) — used by Zen mode.
+  setFullScreen(on: boolean): void;
   isMaximized(): Promise<boolean>;
   onMaximizeChange(cb: (maximized: boolean) => void): () => void;
   // Pop a top-level application menu (by label) at the given screen-relative point.

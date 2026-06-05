@@ -9,7 +9,6 @@ const api: StrixApi = {
     create: (targetPath, type) => ipcRenderer.invoke('file:create', targetPath, type),
     rename: (from, to) => ipcRenderer.invoke('file:rename', from, to),
     remove: (targetPath) => ipcRenderer.invoke('file:remove', targetPath),
-    readBytes: (filePath) => ipcRenderer.invoke('file:readBytes', filePath),
   },
   workspace: {
     root: () => ipcRenderer.invoke('workspace:root'),
@@ -77,6 +76,7 @@ const api: StrixApi = {
     minimize: () => ipcRenderer.send('win:minimize'),
     toggleMaximize: () => ipcRenderer.send('win:toggleMaximize'),
     close: () => ipcRenderer.send('win:close'),
+    setFullScreen: (on) => ipcRenderer.send('win:setFullScreen', on),
     isMaximized: () => ipcRenderer.invoke('win:isMaximized'),
     onMaximizeChange: (cb) => {
       const handler = (_event: unknown, maximized: boolean) => cb(maximized);

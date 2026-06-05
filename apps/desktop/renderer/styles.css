@@ -1735,12 +1735,35 @@ kbd {
 }
 
 /* ---- Markdown preview --------------------------------------------------- */
+.binary-notice {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+}
+
+.binary-notice-path {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
 .markdown-preview {
   height: 100%;
   overflow: auto;
-  padding: var(--space-8) var(--space-10);
-  max-width: 900px;
-  line-height: 1.6;
+  /* Center the readable column in the editor pane instead of hugging the left,
+     and give it comfortable gutters at any width. */
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-10) 48px;
+  line-height: 1.7;
 }
 
 .markdown-preview h1,

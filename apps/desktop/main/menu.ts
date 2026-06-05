@@ -92,7 +92,6 @@ export function buildAppMenu(win: BrowserWindow): void {
         cmd('Languages & Extensions…', 'lang.manage'),
         { type: 'separator' },
         { role: 'reload' },
-        { role: 'toggleDevTools' },
         { role: 'togglefullscreen' },
         { type: 'separator' },
         { role: 'resetZoom' },

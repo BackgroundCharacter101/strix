@@ -24,24 +24,6 @@ export async function writeFileContents(filePath: string, content: string): Prom
   await fs.writeFile(filePath, content, 'utf8');
 }
 
-// Read up to `maxBytes` of a file as base64 (for the hex viewer). Reads only the
-// capped prefix via a file handle so huge files don't blow up memory.
-export async function readFileBytes(
-  filePath: string,
-  maxBytes = 1_048_576,
-): Promise<{ base64: string; size: number; truncated: boolean }> {
-  const fh = await fs.open(filePath, 'r');
-  try {
-    const stat = await fh.stat();
-    const len = Math.min(stat.size, maxBytes);
-    const buf = Buffer.alloc(len);
-    if (len > 0) await fh.read(buf, 0, len, 0);
-    return { base64: buf.toString('base64'), size: stat.size, truncated: stat.size > maxBytes };
-  } finally {
-    await fh.close();
-  }
-}
-
 export async function createEntry(targetPath: string, type: 'file' | 'directory'): Promise<void> {
   if (type === 'directory') {
     await fs.mkdir(targetPath, { recursive: true });

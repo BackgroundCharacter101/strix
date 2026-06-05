@@ -479,6 +479,13 @@ export default function App() {
 
   zenRef.current = zen;
 
+  // Zen mode goes truly full-screen (hides the OS taskbar), and restores the
+  // normal window on exit. Driven by the zen state so every entry/exit path
+  // (toggle, chord, Esc, command, menu) is covered.
+  useEffect(() => {
+    window.strix.win.setFullScreen(zen);
+  }, [zen]);
+
   // In Cybersec mode the editor uses a dedicated green-on-black theme + green
   // accent so it matches the pentester chrome (instead of the user's theme).
   const cybersec = settings.mode === 'cybersec';
