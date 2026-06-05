@@ -3,7 +3,7 @@ import type { BuildPromptOptions, ChatMessage, SecurityStance, TaskType } from '
 const SYSTEM_PROMPTS: Record<TaskType, string> = {
   autocomplete:
     'You are a coding assistant. Complete the code. Respond with code only, no explanation.',
-  chat: 'You are a helpful coding assistant embedded in the Strix IDE. Answer questions about the user’s code and project.',
+  chat: 'You are a helpful coding assistant embedded in the Strix IDE. Answer questions about the user’s code and project. When a "Project structure" listing is provided, use it to reason about the whole project; if you need the contents of a specific file that is not shown, tell the user to open it (or name it) so you can see it.',
   explain: 'You are a coding assistant. Explain the selected code clearly and concisely.',
   fix: 'You are a coding assistant. Given an error and the surrounding code, suggest a fix.',
   generate:
@@ -39,7 +39,18 @@ export function defaultPersonaText(stance: SecurityStance): string {
 }
 
 function buildUserContent(opts: BuildPromptOptions): string {
-  const parts = [`File: ${opts.filePath}`, '', opts.fileContent];
+  const parts: string[] = [];
+
+  // Whole-project context first, so questions like "explain this project" work
+  // even when no file is open.
+  if (opts.projectContext) {
+    parts.push('Project structure:', opts.projectContext, '');
+  }
+
+  // The open file (if any). With no file open we omit the empty "File:" header.
+  if (opts.filePath) {
+    parts.push(`File: ${opts.filePath}`, '', opts.fileContent);
+  }
 
   if (opts.selection) {
     parts.push('', 'Selected code:', opts.selection);

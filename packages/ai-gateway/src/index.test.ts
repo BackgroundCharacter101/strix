@@ -28,6 +28,20 @@ describe('buildPrompt', () => {
     expect(user.content).toContain('Selected code:');
   });
 
+  it('includes project context and omits the empty File header with no file open', () => {
+    const messages = buildPrompt('chat', {
+      filePath: '',
+      fileContent: '',
+      userMessage: 'explain this project',
+      projectContext: 'Project: demo\nsrc/\n  index.ts',
+    });
+    const user = messages[messages.length - 1];
+    expect(user.content).toContain('Project structure:');
+    expect(user.content).toContain('Project: demo');
+    expect(user.content).toContain('explain this project');
+    expect(user.content).not.toContain('File:');
+  });
+
   it('replays conversation history for chat tasks', () => {
     const history: ChatMessage[] = [
       { role: 'user', content: 'hi' },

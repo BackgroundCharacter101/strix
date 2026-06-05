@@ -16,7 +16,7 @@ vi.mock('@strix/editor', () => ({
   ),
 }));
 
-import { AiPanel } from './AiPanel';
+import { AiPanel, flattenTree } from './AiPanel';
 import { makeStrixApi } from '../test-utils';
 
 beforeEach(() => {
@@ -167,6 +167,22 @@ describe('AiPanel', () => {
     );
     render(<AiPanel filePath={null} fileContent="" />);
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('earlier question');
+  });
+
+  it('flattens a workspace tree into an indented listing', () => {
+    const out = flattenTree({
+      name: 'root',
+      type: 'directory',
+      children: [
+        {
+          name: 'src',
+          type: 'directory',
+          children: [{ name: 'index.ts', type: 'file' }],
+        },
+        { name: 'README.md', type: 'file' },
+      ],
+    });
+    expect(out).toBe('src/\n  index.ts\nREADME.md');
   });
 
   it('keeps AI history separate per workspace', () => {

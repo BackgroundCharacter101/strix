@@ -22,6 +22,9 @@ export interface BuildPromptOptions {
   errorMessage?: string;
   userMessage?: string;
   history?: ChatMessage[];
+  // Compact workspace context (e.g. project name + file tree) so the assistant
+  // can answer questions about the whole project, not just the open file.
+  projectContext?: string;
   // When true (Strix Cybersec mode), prepend a security-expert persona to the
   // system prompt. The stance tunes that persona offensive/defensive/balanced.
   securityMode?: boolean;

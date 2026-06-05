@@ -25,6 +25,43 @@ function loadHistory(key: string): ChatMessage[] {
   }
 }
 
+// A file-tree node (mirrors main/fs.ts FileNode) for building project context.
+interface TreeNode {
+  name: string;
+  type: 'file' | 'directory';
+  children?: TreeNode[];
+}
+
+// Flatten a workspace tree into an indented path listing, capped so we never
+// blow the prompt budget on huge repos.
+export function flattenTree(root: TreeNode | null, cap = 240): string {
+  if (!root) return '';
+  const lines: string[] = [];
+  const walk = (nodes: TreeNode[], depth: number) => {
+    for (const n of nodes) {
+      if (lines.length >= cap) return;
+      lines.push(`${'  '.repeat(depth)}${n.name}${n.type === 'directory' ? '/' : ''}`);
+      if (n.children && n.children.length) walk(n.children, depth + 1);
+    }
+  };
+  walk(root.children ?? [], 0);
+  if (lines.length >= cap) lines.push('… (truncated)');
+  return lines.join('\n');
+}
+
+// Build the compact "project context" string from a workspace root.
+async function loadProjectContext(workspaceKey: string | null | undefined): Promise<string> {
+  if (!workspaceKey) return '';
+  try {
+    const tree = (await window.strix.fs.tree(workspaceKey)) as TreeNode & { name: string };
+    const name = tree.name || workspaceKey.split(/[\\/]/).filter(Boolean).pop() || 'workspace';
+    const listing = flattenTree(tree);
+    return listing ? `Project: ${name}\n${listing}` : `Project: ${name}`;
+  } catch {
+    return '';
+  }
+}
+
 export function AiPanel({
   filePath,
   fileContent,
@@ -69,6 +106,9 @@ export function AiPanel({
   const [routedVia, setRoutedVia] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [proposal, setProposal] = useState<{ original: string; suggested: string } | null>(null);
+  // Compact whole-project context (name + file tree) so the AI can answer
+  // questions about the project even with no file open. Loaded per workspace.
+  const [projectContext, setProjectContext] = useState('');
   const threadRef = useRef<HTMLDivElement>(null);
   // The key the current history belongs to (so saves go to the right project,
   // even right after a workspace switch).
@@ -87,6 +127,18 @@ export function AiPanel({
     const key = historyKeyFor(workspaceKey);
     histKeyRef.current = key;
     setHistory(loadHistory(key));
+  }, [workspaceKey]);
+
+  // Load the project structure for the active workspace so chat/explain can see
+  // the whole project, not just the open file. Cancels on workspace switch.
+  useEffect(() => {
+    let cancelled = false;
+    void loadProjectContext(workspaceKey).then((ctx) => {
+      if (!cancelled) setProjectContext(ctx);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [workspaceKey]);
 
   // Persist to the current project's key (via the ref, so switching workspaces
@@ -122,7 +174,7 @@ export function AiPanel({
     try {
       await runTask(
         task,
-        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, securityMode, securityStance, securityPersonaText },
+        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext, securityMode, securityStance, securityPersonaText },
         {
           onToken: (token) => {
             acc += token;
