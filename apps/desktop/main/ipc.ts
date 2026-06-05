@@ -101,7 +101,11 @@ export function registerIpcHandlers(): void {
 
   const lsp = new LspManager();
   ipcMain.handle('lsp:start', (event, language: Language) =>
-    lsp.start(language, {}, (id, message) => event.sender.send('lsp:message', { id, message })),
+    // Run the server in the workspace root so it finds tsconfig.json / node_modules
+    // and resolves project + builtin modules (otherwise files analyse in isolation).
+    lsp.start(language, { cwd: getRoot() || undefined }, (id, message) =>
+      event.sender.send('lsp:message', { id, message }),
+    ),
   );
   ipcMain.on(
     'lsp:send',

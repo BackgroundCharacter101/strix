@@ -76,6 +76,9 @@ export interface LspClientOptions {
   uri: string;
   languageId: string;
   text: string;
+  // Workspace root as a file:// URI, so the server loads the project config
+  // (tsconfig.json, etc.) instead of analysing the file in isolation.
+  rootUri?: string | null;
   onDiagnostics: (diagnostics: LspDiagnostic[]) => void;
 }
 
@@ -126,7 +129,10 @@ export class LspClient {
 
     this.request(this.initId, 'initialize', {
       processId: null,
-      rootUri: null,
+      rootUri: this.opts.rootUri ?? null,
+      workspaceFolders: this.opts.rootUri
+        ? [{ uri: this.opts.rootUri, name: 'workspace' }]
+        : null,
       capabilities: {
         textDocument: {
           completion: { completionItem: { snippetSupport: false } },

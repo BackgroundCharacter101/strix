@@ -554,6 +554,7 @@ export default function App() {
         onLanguages={() => selectView('extensions')}
         recents={root ? [] : recents}
         onOpenRecent={(p) => setRoot(p)}
+        rootPath={root}
         editorOptions={editorOptions}
         theme={editorTheme}
         registerFormat={registerFormat}

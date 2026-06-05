@@ -131,6 +131,7 @@ export function FileViewer({
   onLanguages,
   recents,
   onOpenRecent,
+  rootPath,
   editorOptions,
   theme,
   registerFormat,
@@ -147,6 +148,8 @@ export function FileViewer({
   // Recently opened folders (most-recent first) + open-one callback.
   recents?: string[];
   onOpenRecent?: (path: string) => void;
+  // Workspace root — used as the LSP rootUri so servers load the project config.
+  rootPath?: string | null;
   editorOptions?: EditorOptions;
   theme?: string;
   // Hands a "format the document" callback up to App (null on unmount).
@@ -394,6 +397,9 @@ export function FileViewer({
                 uri: model.uri.toString(),
                 languageId: model.getLanguageId(),
                 text: model.getValue(),
+                // Use Monaco to build the root URI so its encoding matches the
+                // document URIs the server receives (drive-letter casing, etc.).
+                rootUri: rootPath ? monaco.Uri.file(rootPath).toString() : null,
                 onDiagnostics: (diags) =>
                   monaco.editor.setModelMarkers(
                     model,
