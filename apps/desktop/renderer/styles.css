@@ -747,6 +747,15 @@ body {
   outline: none;
 }
 
+/* 3-up divider: equal thirds, not draggable. */
+.group-divider.is-static {
+  flex-basis: 1px;
+  cursor: default;
+}
+.group-divider.is-static:hover {
+  background: var(--border);
+}
+
 /* Split button at the right end of the tab strip. */
 .editor-tabs-split {
   all: unset;

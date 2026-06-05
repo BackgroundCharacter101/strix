@@ -97,10 +97,17 @@ export default function App() {
   });
   const tabs = useEditorTabs();
   const tabsB = useEditorTabs();
-  const [split, setSplit] = useState(false);
-  const [splitRatio, setSplitRatio] = useState(0.5); // width fraction of group A
-  const [activeGroup, setActiveGroup] = useState<'a' | 'b'>('a');
+  const tabsC = useEditorTabs();
+  // Editor groups: 1 (single), 2 or 3 side-by-side. `split` is the legacy
+  // "more than one group" flag used throughout the UI.
+  const [splitCount, setSplitCount] = useState<1 | 2 | 3>(1);
+  const split = splitCount > 1;
+  const [splitRatio, setSplitRatio] = useState(0.5); // width fraction of group A (2-up only)
+  const [activeGroup, setActiveGroup] = useState<'a' | 'b' | 'c'>('a');
   const groupsRef = useRef<HTMLDivElement>(null);
+
+  const GROUP_ORDER = ['a', 'b', 'c'] as const;
+  const groupTabs = { a: tabs, b: tabsB, c: tabsC } as const;
 
   // Drag the split divider to resize the two editor groups (percentage-based so
   // it clamps naturally to the container).
@@ -123,8 +130,10 @@ export default function App() {
     window.addEventListener('pointerup', up);
   };
   // The group that receives new file-opens / save / close, and feeds the AI
-  // panel + status bar.
-  const activeTabs = split && activeGroup === 'b' ? tabsB : tabs;
+  // panel + status bar. Clamp to a visible group if the active one was closed.
+  const visibleGroups = GROUP_ORDER.slice(0, splitCount);
+  const effectiveActive = visibleGroups.includes(activeGroup) ? activeGroup : 'a';
+  const activeTabs = split ? groupTabs[effectiveActive] : tabs;
 
   // Track recently opened files (most-recent first, capped, persisted) whenever
   // the active file changes — surfaced first in Quick Open.
@@ -152,6 +161,7 @@ export default function App() {
   autoSaveRef.current = () => {
     void tabs.saveAll();
     void tabsB.saveAll();
+    void tabsC.saveAll();
   };
   useEffect(() => {
     if (!settings.autoSave) return;
@@ -178,27 +188,37 @@ export default function App() {
     if (filePath) activeTabs.open(filePath);
   }, [activeTabs]);
 
-  const toggleSplit = () => {
-    if (split) {
-      setSplit(false);
+  // Cycle the editor layout 1 → 2 → 3 → 1 group(s). Each step opens the active
+  // file in the newly added group and focuses it; wrapping back to 1 collapses.
+  const cycleSplit = () => {
+    const next: 1 | 2 | 3 = splitCount >= 3 ? 1 : ((splitCount + 1) as 2 | 3);
+    setSplitCount(next);
+    if (next === 1) {
       setActiveGroup('a');
-    } else {
-      setSplit(true);
-      if (tabs.activePath) tabsB.open(tabs.activePath);
-      setActiveGroup('b');
+      return;
     }
+    const newGroup = GROUP_ORDER[next - 1];
+    if (tabs.activePath) groupTabs[newGroup].open(tabs.activePath);
+    setActiveGroup(newGroup);
   };
 
-  // Open a file in the second group (splitting if needed) — right-click
+  // Collapse back to a single group.
+  const unsplit = () => {
+    setSplitCount(1);
+    setActiveGroup('a');
+  };
+
+  // Open a file in the next group (splitting if needed) — right-click
   // "Open to the Side" or dropping on the right of a single group.
   const openToSide = (path: string) => {
-    setSplit(true);
-    tabsB.open(path);
-    setActiveGroup('b');
+    const target: 'b' | 'c' = splitCount >= 2 ? 'c' : 'b';
+    setSplitCount((n) => (n < 2 ? 2 : 3));
+    groupTabs[target].open(path);
+    setActiveGroup(target);
   };
 
   // Handle a file dropped onto an editor group (from the tree or a tab).
-  const onGroupDrop = (which: 'a' | 'b', e: React.DragEvent) => {
+  const onGroupDrop = (which: 'a' | 'b' | 'c', e: React.DragEvent) => {
     const path = e.dataTransfer.getData('text/strix-path');
     if (!path) return;
     e.preventDefault();
@@ -211,7 +231,7 @@ export default function App() {
       tabs.open(path);
       setActiveGroup('a');
     } else {
-      (which === 'b' ? tabsB : tabs).open(path);
+      groupTabs[which].open(path);
       setActiveGroup(which);
     }
   };
@@ -337,7 +357,7 @@ export default function App() {
           break;
         case '\\':
           e.preventDefault();
-          toggleSplit();
+          cycleSplit();
           break;
         case 'p':
           e.preventDefault();
@@ -476,7 +496,8 @@ export default function App() {
         void tabsB.saveAll();
       },
     },
-    { id: 'view.split', label: 'View: Split Editor', detail: 'Ctrl+\\', run: toggleSplit },
+    { id: 'view.split', label: 'View: Split Editor (cycle 1/2/3)', detail: 'Ctrl+\\', run: cycleSplit },
+    { id: 'view.unsplit', label: 'View: Unsplit Editor', detail: '', run: unsplit },
     { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
     {
       id: 'view.closeEditor',
@@ -567,19 +588,20 @@ export default function App() {
   };
 
   // One editor group (tabs + breadcrumbs + editor). With split active there are
-  // two; clicking a group focuses it (new opens / save / status bar follow it).
-  const renderGroup = (group: typeof tabs, which: 'a' | 'b') => (
+  // up to three; clicking a group focuses it (new opens / save / status bar
+  // follow it). In 2-up, group A honours the draggable ratio; 3-up is equal.
+  const renderGroup = (group: typeof tabs, which: 'a' | 'b' | 'c') => (
     <div
       className="editor-group"
-      data-active={split && which === activeGroup}
-      style={split && which === 'a' ? { flex: `0 0 ${splitRatio * 100}%` } : undefined}
+      data-active={split && which === effectiveActive}
+      style={splitCount === 2 && which === 'a' ? { flex: `0 0 ${splitRatio * 100}%` } : undefined}
       onMouseDown={() => setActiveGroup(which)}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes('text/strix-path')) e.preventDefault();
       }}
       onDrop={(e) => onGroupDrop(which, e)}
     >
-      <EditorTabs tabs={group} onSplit={toggleSplit} />
+      <EditorTabs tabs={group} onSplit={cycleSplit} onCloseGroup={split ? unsplit : undefined} />
       {group.activePath && <Breadcrumbs rootPath={root} path={group.activePath} />}
       <FileViewer
         path={group.activePath}
@@ -748,26 +770,36 @@ export default function App() {
                   onClose={() => setDiff(null)}
                 />
               ) : (
-                <div className="editor-groups" ref={groupsRef}>
+                <div className="editor-groups" ref={groupsRef} data-count={splitCount}>
                   {renderGroup(tabs, 'a')}
-                  {split && (
+                  {splitCount >= 2 && (
                     <>
-                      <div
-                        className="group-divider"
-                        role="separator"
-                        aria-orientation="vertical"
-                        aria-label="Resize editor split"
-                        tabIndex={0}
-                        onPointerDown={onDividerDown}
-                        onKeyDown={(e) => {
-                          if (e.key === 'ArrowLeft')
-                            setSplitRatio((r) => Math.max(0.15, r - 0.05));
-                          else if (e.key === 'ArrowRight')
-                            setSplitRatio((r) => Math.min(0.85, r + 0.05));
-                        }}
-                        onDoubleClick={() => setSplitRatio(0.5)}
-                      />
+                      {splitCount === 2 ? (
+                        <div
+                          className="group-divider"
+                          role="separator"
+                          aria-orientation="vertical"
+                          aria-label="Resize editor split"
+                          tabIndex={0}
+                          onPointerDown={onDividerDown}
+                          onKeyDown={(e) => {
+                            if (e.key === 'ArrowLeft')
+                              setSplitRatio((r) => Math.max(0.15, r - 0.05));
+                            else if (e.key === 'ArrowRight')
+                              setSplitRatio((r) => Math.min(0.85, r + 0.05));
+                          }}
+                          onDoubleClick={() => setSplitRatio(0.5)}
+                        />
+                      ) : (
+                        <div className="group-divider is-static" aria-hidden="true" />
+                      )}
                       {renderGroup(tabsB, 'b')}
+                    </>
+                  )}
+                  {splitCount >= 3 && (
+                    <>
+                      <div className="group-divider is-static" aria-hidden="true" />
+                      {renderGroup(tabsC, 'c')}
                     </>
                   )}
                 </div>

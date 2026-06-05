@@ -96,7 +96,7 @@ describe('App', () => {
     expect(await screen.findByText('ws')).toBeInTheDocument();
   });
 
-  it('splits the editor into two groups with Ctrl+\\', async () => {
+  it('cycles the editor split 1 → 2 → 3 → 1 with Ctrl+\\', async () => {
     root.mockResolvedValue('/ws');
     tree.mockResolvedValue({
       name: 'ws',
@@ -110,13 +110,19 @@ describe('App', () => {
     fireEvent.click(await screen.findByText('a.ts'));
     expect(await screen.findByDisplayValue('export const a = 1;')).toBeInTheDocument();
 
-    // Split → the active file is mirrored into a second group.
+    // 1 → 2: the active file is mirrored into a second group.
     fireEvent.keyDown(window, { key: '\\', ctrlKey: true });
     await waitFor(() =>
       expect(screen.getAllByDisplayValue('export const a = 1;')).toHaveLength(2),
     );
 
-    // Toggle off → back to one group.
+    // 2 → 3: a third group.
+    fireEvent.keyDown(window, { key: '\\', ctrlKey: true });
+    await waitFor(() =>
+      expect(screen.getAllByDisplayValue('export const a = 1;')).toHaveLength(3),
+    );
+
+    // 3 → 1: collapses back to a single group.
     fireEvent.keyDown(window, { key: '\\', ctrlKey: true });
     await waitFor(() =>
       expect(screen.getAllByDisplayValue('export const a = 1;')).toHaveLength(1),

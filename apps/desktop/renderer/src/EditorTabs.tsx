@@ -8,7 +8,16 @@ function basename(path: string): string {
   return i === -1 ? path : path.slice(i + 1);
 }
 
-export function EditorTabs({ tabs, onSplit }: { tabs: EditorTabsApi; onSplit?: () => void }) {
+export function EditorTabs({
+  tabs,
+  onSplit,
+  onCloseGroup,
+}: {
+  tabs: EditorTabsApi;
+  onSplit?: () => void;
+  // When set, the group shows a ✕ to collapse the split back to one editor.
+  onCloseGroup?: () => void;
+}) {
   if (tabs.tabs.length === 0) {
     return null;
   }
@@ -59,10 +68,21 @@ export function EditorTabs({ tabs, onSplit }: { tabs: EditorTabsApi; onSplit?: (
           type="button"
           className="editor-tabs-split"
           aria-label="Split editor"
-          title="Split editor (Ctrl+\)"
+          title="Split editor — cycle 1/2/3 groups (Ctrl+\)"
           onClick={onSplit}
         >
           <SplitIcon />
+        </button>
+      )}
+      {onCloseGroup && (
+        <button
+          type="button"
+          className="editor-tabs-split"
+          aria-label="Close split"
+          title="Unsplit — back to one editor"
+          onClick={onCloseGroup}
+        >
+          ×
         </button>
       )}
     </div>
