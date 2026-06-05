@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-05-31
+> Last updated: 2026-06-05
 
 ---
 
@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 167 tests / 38 files.**
+  **`npm test`** (vitest) — **all green: 189 tests / 39 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -386,12 +386,49 @@ strix/ (folder: tabea)
 
 ---
 
+## 9b. Session update — 2026-06-05 (security + LSP IntelliSense + AI UX)
+
+- **Security pass:** removed unused `monaco-languageclient` (**44 → 0 npm vulns**);
+  Electron nav hardening (`setWindowOpenHandler` + `will-navigate` deny/external in
+  `main/index.ts`); FreeLLMAPI now **binds 127.0.0.1 by default** (was `0.0.0.0`
+  with an unauthenticated key endpoint) — set `HOST=0.0.0.0` to share on a LAN.
+- **LSP IntelliSense (Phase 5 hover/go-to-def — DONE):** `lspClient.ts` now does
+  request/response (`sendRequest` + `pending` map) for **completion / hover /
+  go-to-definition / document symbols**, with pure tested normalizers. `FileViewer`
+  registers once-per-language Monaco providers. Fixed project context: server `cwd`
+  = workspace root + `rootUri`/`workspaceFolders` in `initialize` (kills false
+  "cannot find module … nodenext" errors from isolated-file analysis).
+- **Per-project AI chat** (`AiPanel.tsx`): history keyed `strix.ai.history:<root>`;
+  switching folders switches the conversation (a ref keeps saves on the right key).
+- **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
+  corrected code straight into the selection (one undo step); "Explain" still chats.
+- **AI readability:** assistant messages render through `renderMarkdown`
+  (`src/markdown.tsx`, XSS-safe, no new deps) with new `.ai-md` styles — code
+  blocks, lists, headings, tables instead of raw `**`/```` ``` ````.
+
+### Pending / awaiting user
+
+- **Issue "Open Folder opens a new window":** NOT reproducible in code — every
+  Open-Folder path does in-place `setRoot`; single-instance lock only focuses the
+  existing window. Asked user whether a literal 2nd OS window appears vs. same
+  window reloading. Likely was the old project's chat/tabs lingering (chat fixed).
+  Possible follow-up: per-project open-tabs memory.
+- **Team Activity (LIVE) feature — design agreed, NOT built.** Lead sees each
+  member's code changes + AI summary + comments live over the network (NOT git).
+  IDE auto-saves snapshots → click a member → AI report of what they changed.
+  **HARD CONSTRAINT:** team server must NOT be the user's personal machine — AI
+  stays local per machine; server is cloud/Pi-hosted, offline-tolerant. Awaiting
+  hosting decision.
+- **Git index corruption warning:** a non-OneDrive sync drive wiped the index twice
+  mid-commit. User says it's now fully closed; still verify `git show --stat HEAD`
+  (expect a small file count) after each commit.
+
 ## 10. Open items / next candidates
 
 - **AI:** user adds provider key(s) at :3001 for real answers (auth is wired).
-- **LSP:** diagnostics done for 8 languages; **hover / go-to-definition / code
-  actions** still TODO (would extend `lspClient.ts`). Live IntelliSense needs the
-  matching server installed (Languages panel shows which).
+- **LSP:** diagnostics + completion/hover/go-to-def/symbols done; **code actions /
+  rename / find-references** still candidates. Live IntelliSense needs the matching
+  server installed (Languages panel shows which).
 - **Source Control:** view is read-only; an integrated **commit box** (stage +
   commit message) would be the next SCM step.
 - **Editor:** split editors / side-by-side; breadcrumb dropdown navigation.

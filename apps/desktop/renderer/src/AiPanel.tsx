@@ -9,6 +9,7 @@ import {
 } from '@strix/ai-gateway';
 import { CodeProposal } from './CodeProposal';
 import { SparkleIcon } from './icons';
+import { renderMarkdown } from './markdown';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -282,10 +283,18 @@ export function AiPanel({
             <>
               {history.map((m, i) => (
                 <div key={i} className={`ai-msg ai-${m.role}`}>
-                  {m.content}
+                  {m.role === 'assistant' ? (
+                    <div className="ai-md">{renderMarkdown(m.content)}</div>
+                  ) : (
+                    m.content
+                  )}
                 </div>
               ))}
-              {streaming && <div className="ai-msg ai-assistant">{streaming}</div>}
+              {streaming && (
+                <div className="ai-msg ai-assistant">
+                  <div className="ai-md">{renderMarkdown(streaming)}</div>
+                </div>
+              )}
             </>
           )}
         </div>
