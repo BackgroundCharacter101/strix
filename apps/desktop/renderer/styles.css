@@ -2049,7 +2049,8 @@ kbd {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  padding: 2px 2px 4px;
 }
 
 .ai-empty {
@@ -2081,25 +2082,32 @@ kbd {
 
 .ai-msg {
   white-space: pre-wrap;
-  border-radius: 8px;
-  padding: 7px 10px;
-  font-size: 12px;
-  line-height: 1.5;
+  border-radius: 10px;
+  padding: 9px 13px;
+  font-size: 13px;
+  /* Roomier leading is easier on the eyes for longer answers. */
+  line-height: 1.7;
+  letter-spacing: 0.1px;
   max-width: 92%;
 }
 
+/* Softer, translucent amber for the user's own turn — keeps the brand tint but
+   avoids a bright solid block that tires the eyes on a dark panel. */
 .ai-user {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--selection);
+  color: var(--text);
   align-self: flex-end;
-  border-bottom-right-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-bottom-right-radius: 3px;
 }
 
 .ai-assistant {
-  background: var(--bg);
-  border: 1px solid var(--border);
+  /* A gentle lift off the panel rather than stark base + hard border. */
+  background: var(--bg-elevated);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  color: var(--text);
   align-self: flex-start;
-  border-bottom-left-radius: 2px;
+  border-bottom-left-radius: 3px;
   /* Assistant replies (with code/tables) get the full column width. */
   max-width: 100%;
 }
@@ -2178,8 +2186,8 @@ kbd {
   display: block;
   background: none;
   padding: 0;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.6;
   white-space: pre;
   color: var(--text);
 }
