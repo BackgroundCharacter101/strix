@@ -660,7 +660,11 @@ export default function App() {
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={(p) => activeTabs.open(p)} />
                   ) : sidebarView === 'scm' ? (
-                    <SourceControlView rootPath={root} onOpenDiff={(abs) => void openDiff(abs)} />
+                    <SourceControlView
+                      rootPath={root}
+                      onOpenDiff={(abs) => void openDiff(abs)}
+                      aiServerUrl={settings.aiServerUrl}
+                    />
                   ) : sidebarView === 'extensions' ? (
                     <ExtensionsView />
                   ) : root ? (

@@ -1506,6 +1506,10 @@ kbd {
   padding: var(--space-3) var(--space-4);
 }
 
+.scm-message-wrap {
+  position: relative;
+}
+
 .scm-message {
   width: 100%;
   resize: vertical;
@@ -1513,9 +1517,49 @@ kbd {
   font-size: var(--text-sm);
 }
 
+/* Floating ✦ Generate (AI commit message) chip in the message box corner. */
+.scm-ai-btn {
+  position: absolute;
+  right: 6px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--accent-hover);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.scm-ai-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.scm-ai-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .scm-commit-btn {
   align-self: stretch;
   font-weight: var(--weight-medium);
+}
+
+/* Secondary "Create Pull Request" action below Commit. */
+.scm-pr-btn {
+  align-self: stretch;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.scm-pr-btn:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 .scm-group-head {

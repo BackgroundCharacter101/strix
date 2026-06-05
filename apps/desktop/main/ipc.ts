@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, shell } from 'electron';
 import {
   buildFileTree,
   readFileContents,
@@ -14,6 +14,8 @@ import {
   unstageFile,
   stageAll,
   commit,
+  getStagedDiff,
+  createPullRequest,
 } from './git.js';
 import {
   getRoot,
@@ -78,6 +80,12 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle('git:stageAll', (_event, root: string) => stageAll(root));
   ipcMain.handle('git:commit', (_event, root: string, message: string) => commit(root, message));
+  ipcMain.handle('git:diffStaged', (_event, root: string) => getStagedDiff(root));
+  ipcMain.handle('git:createPr', async (_event, root: string) => {
+    const res = await createPullRequest(root);
+    if (res.url) void shell.openExternal(res.url);
+    return res;
+  });
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>

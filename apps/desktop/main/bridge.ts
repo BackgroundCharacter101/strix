@@ -33,6 +33,15 @@ export interface StrixGitApi {
   unstage(rootPath: string, filepath: string): Promise<void>;
   stageAll(rootPath: string): Promise<void>;
   commit(rootPath: string, message: string): Promise<string>;
+  // Unified diff of staged changes (`git diff --cached`) — for AI commit drafts.
+  diffStaged(rootPath: string): Promise<string>;
+  // Push the current branch and open a GitHub PR compare page in the browser.
+  createPr(rootPath: string): Promise<{
+    url: string | null;
+    pushed: boolean;
+    branch: string | null;
+    error?: string;
+  }>;
 }
 
 export interface StrixTerminalApi {

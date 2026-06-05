@@ -23,6 +23,8 @@ const api: StrixApi = {
     unstage: (rootPath, filepath) => ipcRenderer.invoke('git:unstage', rootPath, filepath),
     stageAll: (rootPath) => ipcRenderer.invoke('git:stageAll', rootPath),
     commit: (rootPath, message) => ipcRenderer.invoke('git:commit', rootPath, message),
+    diffStaged: (rootPath) => ipcRenderer.invoke('git:diffStaged', rootPath),
+    createPr: (rootPath) => ipcRenderer.invoke('git:createPr', rootPath),
   },
   terminal: {
     create: (opts) => ipcRenderer.invoke('terminal:create', opts),

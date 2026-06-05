@@ -1,6 +1,11 @@
 import git from 'isomorphic-git';
 import * as fs from 'fs';
 import * as path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { prCompareUrl } from './gitRemote.js';
+
+const execFileAsync = promisify(execFile);
 
 export interface GitFileChange {
   path: string;
@@ -74,6 +79,55 @@ export async function commit(rootPath: string, message: string): Promise<string>
   const name = (await git.getConfig({ fs, dir, path: 'user.name' })) || 'Strix User';
   const email = (await git.getConfig({ fs, dir, path: 'user.email' })) || 'strix@local';
   return git.commit({ fs, dir, message, author: { name, email } });
+}
+
+// The unified diff of the staged changes (`git diff --cached`). Used to draft an
+// AI commit message. Shells out to git (fast, exact) within the repo root.
+export async function getStagedDiff(rootPath: string): Promise<string> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const { stdout } = await execFileAsync('git', ['diff', '--cached', '--no-color'], {
+    cwd: dir,
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  return stdout;
+}
+
+export interface CreatePrResult {
+  url: string | null;
+  pushed: boolean;
+  branch: string | null;
+  error?: string;
+}
+
+// Push the current branch to origin and produce a GitHub "compare" URL to open a
+// pull request. Pushing may fail (no remote/auth) — we still return the URL so
+// the user can finish in the browser, with the error surfaced.
+export async function createPullRequest(rootPath: string): Promise<CreatePrResult> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const branch = (await git.currentBranch({ fs, dir, fullname: false })) ?? null;
+  if (!branch) {
+    return { url: null, pushed: false, branch: null, error: 'Detached HEAD — checkout a branch first.' };
+  }
+
+  let remote = '';
+  try {
+    remote = (await git.getConfig({ fs, dir, path: 'remote.origin.url' })) ?? '';
+  } catch {
+    /* no origin configured */
+  }
+
+  let pushed = false;
+  let error: string | undefined;
+  try {
+    await execFileAsync('git', ['push', '-u', 'origin', branch], { cwd: dir, timeout: 90_000 });
+    pushed = true;
+  } catch (e) {
+    error = e instanceof Error ? e.message : String(e);
+  }
+
+  const url = prCompareUrl(remote, branch);
+  if (!url && !error) error = 'No GitHub origin remote found.';
+  return { url, pushed, branch, error };
 }
 
 // The committed (HEAD) content of a file, for diffing against the working copy.

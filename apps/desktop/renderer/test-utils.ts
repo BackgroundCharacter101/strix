@@ -46,6 +46,8 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       unstage: vi.fn(async (): Promise<void> => {}),
       stageAll: vi.fn(async (): Promise<void> => {}),
       commit: vi.fn(async (): Promise<string> => 'oid'),
+      diffStaged: vi.fn(async (): Promise<string> => ''),
+      createPr: vi.fn(async () => ({ url: null, pushed: false, branch: null })),
     },
     terminal: {
       create: vi.fn(async (): Promise<string> => 'term-1'),
