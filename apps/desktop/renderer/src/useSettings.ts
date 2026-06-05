@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_SECURITY_PERSONA, type SecurityStance, type SecurityPersona } from '@strix/ai-gateway';
 import type { ThemeId, AccentId } from './themes';
+import { setIconTheme, type IconTheme } from './iconTheme';
 
 export interface Settings {
   fontSize: number;
@@ -9,6 +10,8 @@ export interface Settings {
   minimap: boolean;
   theme: ThemeId;
   accent: AccentId;
+  // File-icon set used in the Explorer/tabs ('material' colourful or 'strix').
+  iconTheme: IconTheme;
   fontFamily: string;
   lineNumbers: 'on' | 'off' | 'relative';
   cursorStyle: 'line' | 'block' | 'underline';
@@ -37,6 +40,7 @@ export const DEFAULT_SETTINGS: Settings = {
   minimap: false,
   theme: 'dark',
   accent: 'amber',
+  iconTheme: 'material',
   fontFamily: '',
   lineNumbers: 'on',
   cursorStyle: 'line',
@@ -73,6 +77,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     document.documentElement.dataset.accent = settings.accent;
     document.documentElement.dataset.mode = settings.mode;
     document.documentElement.dataset.density = settings.density;
+    setIconTheme(settings.iconTheme);
   }, [settings]);
 
   const update = useCallback(

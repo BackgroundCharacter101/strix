@@ -4,6 +4,8 @@ import { useFileTree } from './useFileTree';
 import { FileGlyph, FolderGlyph } from './icons';
 import { ContextMenu } from './ContextMenu';
 import { PromptDialog } from './PromptDialog';
+import { useIconTheme } from './iconTheme';
+import { MaterialFileIcon, MaterialFolderIcon } from './materialIcons';
 
 const sepOf = (p: string) => (p.includes('\\') ? '\\' : '/');
 const dirnameOf = (p: string) => {
@@ -51,12 +53,28 @@ export function fileBadge(name: string): string {
 }
 
 // Shared file glyph, tinted by file kind. Reused by tree, tabs, breadcrumbs.
+// Honours the active icon theme (Material = colourful set, Strix = monochrome).
 export function FileIcon({ name }: { name: string }) {
+  const theme = useIconTheme();
+  if (theme === 'material') {
+    return (
+      <span className="ftype-icon ftype-material">
+        <MaterialFileIcon name={name} />
+      </span>
+    );
+  }
   return (
     <span className="ftype-icon" data-ext={fileKind(name)}>
       <FileGlyph />
     </span>
   );
+}
+
+// Theme-aware folder glyph (Material colourful folders vs the Strix outline).
+export function FolderIcon({ open, name }: { open?: boolean; name: string }) {
+  const theme = useIconTheme();
+  if (theme === 'material') return <MaterialFolderIcon open={open} name={name} />;
+  return <FolderGlyph open={open} />;
 }
 
 interface TreeNodeProps {
@@ -106,7 +124,7 @@ function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContex
       >
         <span className="tree-chevron">{isOpen ? '▾' : '▸'}</span>
         <span className="tree-folder-icon">
-          <FolderGlyph open={isOpen} />
+          <FolderIcon open={isOpen} name={node.name} />
         </span>
         <span className="tree-name">{node.name}</span>
       </button>

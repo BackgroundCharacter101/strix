@@ -386,6 +386,26 @@ strix/ (folder: tabea)
 
 ---
 
+## 9c. Session update — 2026-06-05 (feature batch)
+
+- **Removed Hex viewer** (HexViewer/hex.ts/fs.readFileBytes/file:readBytes) — binary
+  files show a notice. **Removed "Toggle Developer Tools"** from the View menu.
+- **Zen mode = true OS fullscreen** (hides the taskbar) via `win.setFullScreen`.
+- **Markdown/README preview** centered (max-width column, roomier leading).
+- **AI commit messages**: ✦ Generate in the SCM commit box drafts a Conventional
+  Commits message from the staged diff (`git.diffStaged` → `git diff --cached`,
+  reply tidied by `cleanCommitMessage`).
+- **Create Pull Request** (SCM): pushes the current branch and opens the GitHub
+  compare page (`git.createPr`; pure URL builder `gitRemote.ts`).
+- **Run & Serve panel** (new activity-bar view): detects npm scripts + Python
+  entrypoints, runs them in a titled integrated-terminal tab, and **auto-opens a
+  detected localhost dev-server URL** in the browser (`win.openExternal`). Pure
+  detectors in `runTargets.ts`.
+- **Material icon theme** (switchable, default Material): colourful per-language
+  file icons + colored folders (`materialIcons.tsx`), selected via an icon-theme
+  store (`iconTheme.ts`) and a Settings → Appearance → "File icon theme" picker.
+- Tests: gitRemote, commitMessage, runTargets, materialIcons (214 total green).
+
 ## 9b. Session update — 2026-06-05 (security + LSP IntelliSense + AI UX)
 
 - **Security pass:** removed unused `monaco-languageclient` (**44 → 0 npm vulns**);

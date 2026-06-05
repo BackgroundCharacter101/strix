@@ -128,6 +128,16 @@ export function SettingsPage({
               <option value="compact">Compact</option>
             </select>
           </Row>
+          <Row query={query} label="File icon theme" desc="Icons shown in the Explorer and tabs.">
+            <select
+              aria-label="File icon theme"
+              value={settings.iconTheme}
+              onChange={(e) => onChange({ iconTheme: e.target.value as Settings['iconTheme'] })}
+            >
+              <option value="material">Material Icons (colorful)</option>
+              <option value="strix">Strix (minimal)</option>
+            </select>
+          </Row>
         </section>
 
         <section className="set-section">
