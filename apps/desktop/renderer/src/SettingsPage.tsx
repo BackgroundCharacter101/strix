@@ -5,6 +5,15 @@ import { THEMES, ACCENTS } from './themes';
 import { SaveIcon } from './icons';
 import { showToast } from './toast';
 
+type SectionId = 'appearance' | 'editor' | 'ai' | 'security';
+
+const SECTIONS: { id: SectionId; title: string }[] = [
+  { id: 'appearance', title: 'Appearance' },
+  { id: 'editor', title: 'Editor' },
+  { id: 'ai', title: 'AI' },
+  { id: 'security', title: 'Security AI' },
+];
+
 function Row({
   query,
   label,
@@ -43,6 +52,11 @@ export function SettingsPage({
   onSave?: () => void;
 }) {
   const [query, setQuery] = useState('');
+  const [activeSection, setActiveSection] = useState<SectionId>('appearance');
+  const searching = query.trim() !== '';
+  // While searching, show every section so matches surface; otherwise show only
+  // the selected one (a clean, tabbed full-screen layout).
+  const showSection = (id: SectionId) => searching || activeSection === id;
 
   const handleSave = () => {
     onSave?.();
@@ -84,7 +98,26 @@ export function SettingsPage({
         </button>
       </div>
 
-      <div className="settings-body">
+      <div className="settings-main">
+        <nav className="settings-nav" aria-label="Settings sections">
+          {SECTIONS.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className="settings-nav-item"
+              aria-current={!searching && activeSection === s.id}
+              onClick={() => {
+                setQuery('');
+                setActiveSection(s.id);
+              }}
+            >
+              {s.title}
+            </button>
+          ))}
+        </nav>
+
+        <div className="settings-body">
+        {showSection('appearance') && (
         <section className="set-section">
           <h3>Appearance</h3>
           <Row query={query} label="Color theme" desc="Overall UI theme.">
@@ -139,7 +172,9 @@ export function SettingsPage({
             </select>
           </Row>
         </section>
+        )}
 
+        {showSection('editor') && (
         <section className="set-section">
           <h3>Editor</h3>
           <Row query={query} label="Font size" desc="Editor font size in pixels.">
@@ -247,7 +282,9 @@ export function SettingsPage({
             />
           </Row>
         </section>
+        )}
 
+        {showSection('ai') && (
         <section className="set-section">
           <h3>AI</h3>
           <Row
@@ -264,7 +301,9 @@ export function SettingsPage({
             />
           </Row>
         </section>
+        )}
 
+        {showSection('security') && (
         <section className="set-section">
           <h3>Security AI persona</h3>
           <p className="set-section-note">
@@ -305,6 +344,8 @@ export function SettingsPage({
             </button>
           </Row>
         </section>
+        )}
+        </div>
       </div>
     </div>
   );

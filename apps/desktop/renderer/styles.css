@@ -283,12 +283,72 @@ body {
 }
 
 /* ---- Settings page ------------------------------------------------------ */
+/* Full-window overlay so Settings takes over the whole app (above sidebar /
+   editor / panels), like a dedicated screen. */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  background: var(--bg);
+  animation: settings-fade 0.14s var(--ease, ease);
+}
+
+@keyframes settings-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .settings-page {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
   background: var(--bg);
+}
+
+/* Body splits into a left section-nav and the scrolling content. */
+.settings-main {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+}
+
+.settings-nav {
+  flex: 0 0 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-6) var(--space-4);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.settings-nav-item {
+  all: unset;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  transition: background var(--ease, 0.12s), color var(--ease, 0.12s);
+}
+
+.settings-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.settings-nav-item[aria-current='true'] {
+  background: var(--selection);
+  color: var(--text);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .settings-toolbar {
@@ -339,8 +399,14 @@ body {
 .settings-body {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: var(--space-6) var(--space-8) var(--space-10);
-  max-width: 820px;
+  /* Centered reading column, wider for the full-screen layout. */
+  padding: var(--space-8) var(--space-10) var(--space-10);
+}
+
+.settings-body > .set-section {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .set-section {

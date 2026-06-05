@@ -173,6 +173,7 @@ export default function App() {
   const chordRef = useRef(false);
   const formatRef = useRef<(() => void) | null>(null);
   const zenRef = useRef(false);
+  const settingsRef = useRef(false);
   const registerFormat = useCallback((fn: (() => void) | null) => {
     formatRef.current = fn;
   }, []);
@@ -304,6 +305,12 @@ export default function App() {
       if (e.key === 'Escape' && zenRef.current) {
         e.preventDefault();
         setZen(false);
+        return;
+      }
+      // Esc closes the full-screen Settings.
+      if (e.key === 'Escape' && settingsRef.current) {
+        e.preventDefault();
+        setSettingsOpen(false);
         return;
       }
       // Shift+Alt+F — Format Document (no Ctrl, so handle before the guard).
@@ -515,6 +522,7 @@ export default function App() {
   const changedCount = gitStatus?.isRepo ? gitStatus.files.length : 0;
 
   zenRef.current = zen;
+  settingsRef.current = settingsOpen;
 
   // Zen mode goes truly full-screen (hides the OS taskbar), and restores the
   // normal window on exit. Driven by the zen state so every entry/exit path
@@ -753,15 +761,7 @@ export default function App() {
               </>
             )}
             <main className="editor-pane">
-              {settingsOpen ? (
-                <SettingsPage
-                  settings={settings}
-                  onChange={updateSettings}
-                  onReset={() => updateSettings(DEFAULT_SETTINGS)}
-                  onClose={() => setSettingsOpen(false)}
-                  onSave={() => updateSettings({})}
-                />
-              ) : diff ? (
+              {diff ? (
                 <DiffView
                   path={diff.path}
                   original={diff.original}
@@ -848,6 +848,17 @@ export default function App() {
           mode={settings.mode}
           onToggleMode={toggleMode}
         />
+      )}
+      {settingsOpen && (
+        <div className="settings-overlay" role="dialog" aria-modal="true" aria-label="Settings">
+          <SettingsPage
+            settings={settings}
+            onChange={updateSettings}
+            onReset={() => updateSettings(DEFAULT_SETTINGS)}
+            onClose={() => setSettingsOpen(false)}
+            onSave={() => updateSettings({})}
+          />
+        </div>
       )}
       {palette === 'files' && (
         <Palette

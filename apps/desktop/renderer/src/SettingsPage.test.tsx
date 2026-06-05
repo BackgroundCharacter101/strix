@@ -26,16 +26,21 @@ function setup(overrides = {}) {
 describe('SettingsPage', () => {
   it('emits patches from controls', () => {
     const { onChange } = setup();
+    // Appearance is the default section.
     fireEvent.change(screen.getByLabelText('Color theme'), { target: { value: 'light' } });
     expect(onChange).toHaveBeenCalledWith({ theme: 'light' });
 
+    // Switch to the Editor section to reach its controls.
+    fireEvent.click(screen.getByRole('button', { name: 'Editor' }));
     fireEvent.change(screen.getByLabelText('Line numbers'), { target: { value: 'relative' } });
     expect(onChange).toHaveBeenCalledWith({ lineNumbers: 'relative' });
   });
 
   it('filters rows by the search query', () => {
     setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Editor' }));
     expect(screen.getByLabelText('Tab size')).toBeInTheDocument();
+    // Searching reveals all sections, then filters rows by the query.
     fireEvent.change(screen.getByLabelText('Search settings'), { target: { value: 'minimap' } });
     expect(screen.queryByLabelText('Tab size')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Minimap')).toBeInTheDocument();
