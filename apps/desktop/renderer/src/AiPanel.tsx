@@ -334,17 +334,41 @@ export function AiPanel({
           ) : (
             <>
               {history.map((m, i) => (
-                <div key={i} className={`ai-msg ai-${m.role}`}>
-                  {m.role === 'assistant' ? (
-                    <div className="ai-md">{renderMarkdown(m.content)}</div>
-                  ) : (
-                    m.content
+                <div key={i} className={`ai-row ai-row-${m.role}`}>
+                  {m.role === 'assistant' && (
+                    <span className="ai-avatar" aria-hidden="true">
+                      <SparkleIcon size={13} />
+                    </span>
                   )}
+                  <div className={`ai-msg ai-${m.role}`}>
+                    {m.role === 'assistant' ? (
+                      <div className="ai-md">{renderMarkdown(m.content)}</div>
+                    ) : (
+                      m.content
+                    )}
+                  </div>
                 </div>
               ))}
               {streaming && (
-                <div className="ai-msg ai-assistant">
-                  <div className="ai-md">{renderMarkdown(streaming)}</div>
+                <div className="ai-row ai-row-assistant">
+                  <span className="ai-avatar" aria-hidden="true">
+                    <SparkleIcon size={13} />
+                  </span>
+                  <div className="ai-msg ai-assistant">
+                    <div className="ai-md">{renderMarkdown(streaming)}</div>
+                  </div>
+                </div>
+              )}
+              {busy && !streaming && (
+                <div className="ai-row ai-row-assistant" aria-label="Assistant is thinking">
+                  <span className="ai-avatar" aria-hidden="true">
+                    <SparkleIcon size={13} />
+                  </span>
+                  <div className="ai-msg ai-assistant ai-thinking">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
                 </div>
               )}
             </>
