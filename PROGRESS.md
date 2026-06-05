@@ -402,6 +402,13 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **Settings apply live + Save button:** `CodeEditor` now pushes option changes to
+  the live Monaco instance via `editor.updateOptions` in an effect (font / size /
+  family / etc. update immediately instead of only on remount — `@monaco-editor/
+  react` wasn't re-pushing the options prop). Settings toolbar gains a primary
+  **Save** button (disk `SaveIcon`) that flushes + toasts "Settings saved".
+- **AI project context:** chat/explain now receive a compact project file tree
+  (`projectContext`) so "explain this project" works with no file open.
 - **AI readability:** assistant messages render through `renderMarkdown`
   (`src/markdown.tsx`, XSS-safe, no new deps) with new `.ai-md` styles — code
   blocks, lists, headings, tables instead of raw `**`/```` ``` ````.

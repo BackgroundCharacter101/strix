@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Editor, { DiffEditor, type OnMount } from '@monaco-editor/react';
+import type { editor as MonacoEditor } from 'monaco-editor';
 
 export interface CursorPosition {
   line: number;
@@ -75,7 +76,47 @@ export function CodeEditor({
   editorOptions,
   theme = 'strix-dark',
 }: CodeEditorProps) {
+  const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+
+  // The Monaco option object derived from the user's settings. Memoized on the
+  // individual fields so a settings change produces a new object (and triggers
+  // the live-apply effect below) without rebuilding on every render.
+  const options = useMemo<MonacoEditor.IStandaloneEditorConstructionOptions>(
+    () => ({
+      ...MODERN_OPTIONS,
+      readOnly,
+      minimap: { enabled: editorOptions?.minimap ?? false },
+      inlineSuggest: { enabled: true },
+      fontSize: editorOptions?.fontSize ?? 13,
+      tabSize: editorOptions?.tabSize ?? 2,
+      wordWrap: editorOptions?.wordWrap ? 'on' : 'off',
+      fontFamily: editorOptions?.fontFamily || MODERN_OPTIONS.fontFamily,
+      lineNumbers: editorOptions?.lineNumbers ?? 'on',
+      cursorStyle: editorOptions?.cursorStyle ?? 'line',
+      renderWhitespace: editorOptions?.renderWhitespace ?? 'selection',
+    }),
+    [
+      readOnly,
+      editorOptions?.minimap,
+      editorOptions?.fontSize,
+      editorOptions?.tabSize,
+      editorOptions?.wordWrap,
+      editorOptions?.fontFamily,
+      editorOptions?.lineNumbers,
+      editorOptions?.cursorStyle,
+      editorOptions?.renderWhitespace,
+    ],
+  );
+
+  // Apply option changes to a live editor instance. @monaco-editor/react does
+  // not reliably re-push the options prop, so font/size/etc. wouldn't update
+  // until a remount — this makes Settings changes take effect immediately.
+  useEffect(() => {
+    editorRef.current?.updateOptions(options);
+  }, [options]);
+
   const handleMount: OnMount = (editor, monaco) => {
+    editorRef.current = editor;
     editor.onDidChangeCursorPosition((e) =>
       onCursorChange?.({ line: e.position.lineNumber, column: e.position.column }),
     );
@@ -115,19 +156,7 @@ export function CodeEditor({
       value={value}
       language={language}
       theme={theme}
-      options={{
-        ...MODERN_OPTIONS,
-        readOnly,
-        minimap: { enabled: editorOptions?.minimap ?? false },
-        inlineSuggest: { enabled: true },
-        fontSize: editorOptions?.fontSize ?? 13,
-        tabSize: editorOptions?.tabSize ?? 2,
-        wordWrap: editorOptions?.wordWrap ? 'on' : 'off',
-        fontFamily: editorOptions?.fontFamily || MODERN_OPTIONS.fontFamily,
-        lineNumbers: editorOptions?.lineNumbers ?? 'on',
-        cursorStyle: editorOptions?.cursorStyle ?? 'line',
-        renderWhitespace: editorOptions?.renderWhitespace ?? 'selection',
-      }}
+      options={options}
       onChange={(next) => onChange?.(next ?? '')}
       onMount={handleMount}
     />

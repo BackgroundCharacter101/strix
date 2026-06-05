@@ -306,6 +306,30 @@ body {
   font-weight: var(--weight-medium);
 }
 
+/* Primary Save action in the Settings toolbar (amber, with the disk icon). */
+.set-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background var(--ease, 0.15s);
+}
+
+.set-save-btn:hover {
+  background: var(--accent-hover);
+}
+
+.set-save-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
 .settings-search {
   flex: 1 1 auto;
   max-width: 360px;

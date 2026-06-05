@@ -117,6 +117,16 @@ export function GearIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function SaveIcon({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M5 3h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+      <path d="M8 3v5h7V3" />
+      <rect x="8" y="13" width="8" height="6" />
+    </svg>
+  );
+}
+
 // --- Window controls (title bar) ---
 export function WinMinIcon() {
   return (

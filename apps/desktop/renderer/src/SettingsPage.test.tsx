@@ -9,16 +9,18 @@ function setup(overrides = {}) {
   const onChange = vi.fn();
   const onReset = vi.fn();
   const onClose = vi.fn();
+  const onSave = vi.fn();
   render(
     <SettingsPage
       settings={DEFAULT_SETTINGS}
       onChange={onChange}
       onReset={onReset}
       onClose={onClose}
+      onSave={onSave}
       {...overrides}
     />,
   );
-  return { onChange, onReset, onClose };
+  return { onChange, onReset, onClose, onSave };
 }
 
 describe('SettingsPage', () => {
@@ -37,6 +39,12 @@ describe('SettingsPage', () => {
     fireEvent.change(screen.getByLabelText('Search settings'), { target: { value: 'minimap' } });
     expect(screen.queryByLabelText('Tab size')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Minimap')).toBeInTheDocument();
+  });
+
+  it('Save fires its handler', () => {
+    const { onSave } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSave).toHaveBeenCalled();
   });
 
   it('reset and close fire their handlers', () => {

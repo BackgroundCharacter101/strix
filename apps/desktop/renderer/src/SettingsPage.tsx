@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gateway';
 import type { Settings } from './useSettings';
 import { THEMES, ACCENTS } from './themes';
+import { SaveIcon } from './icons';
+import { showToast } from './toast';
 
 function Row({
   query,
@@ -31,13 +33,21 @@ export function SettingsPage({
   onChange,
   onReset,
   onClose,
+  onSave,
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onReset: () => void;
   onClose: () => void;
+  // Explicitly persist the current settings (they already apply live).
+  onSave?: () => void;
 }) {
   const [query, setQuery] = useState('');
+
+  const handleSave = () => {
+    onSave?.();
+    showToast('Settings saved', 'success');
+  };
 
   const persona = settings.securityPersona;
   const setPersona = (key: keyof SecurityPersona, value: string) =>
@@ -57,6 +67,15 @@ export function SettingsPage({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <button
+          type="button"
+          className="set-save-btn"
+          onClick={handleSave}
+          title="Save settings"
+        >
+          <SaveIcon size={15} />
+          Save
+        </button>
         <button type="button" className="ai-ghost-btn" onClick={onReset}>
           Reset
         </button>
