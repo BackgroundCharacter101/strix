@@ -19,7 +19,7 @@ formerly named **tabea**; the on-disk folder is still
   xterm.js, node-pty, isomorphic-git, OpenAI SDK → FreeLLMAPI. Vitest, ESLint
   (flat) + typescript-eslint, npm workspaces, Turborepo.
 - **GitHub:** `https://github.com/BackgroundCharacter101/strix` (private).
-  **64 commits ahead of origin/main** — user pushes manually (assistant `gh`
+  **120 commits ahead of origin/main** — user pushes manually (assistant `gh`
   isn't authed).
 - **Design source of truth:** `ARCHITECTURE.md`. Agent roles: `AGENTS.md` +
   `.github/agents/strix-*.agent.md`.
@@ -54,7 +54,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 189 tests / 39 files.**
+  **`npm test`** (vitest) — **all green: 214 tests / 42 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -367,7 +367,7 @@ strix/ (folder: tabea)
 10. **Windows LSP spawn** needs `shell: true` to resolve `.cmd/.exe` shims
     (typescript-language-server, pylsp).
 11. **Bundle is ~4 MB** (full Monaco) — functional; code-split later.
-12. **64 commits ahead of origin/main** (local) — user pushes manually.
+12. **120 commits ahead of origin/main** (local) — user pushes manually.
 
 ---
 
@@ -464,7 +464,7 @@ strix/ (folder: tabea)
 - **Phase 7** (cybersec panels: hex viewer / CTF / vuln linter), **Phase 8**
   (electron-builder installer — needs `node` bundled or `ELECTRON_RUN_AS_NODE`
   for the FreeLLMAPI auto-start).
-- **Push to GitHub** to sync (64 commits ahead).
+- **Push to GitHub** to sync (120 commits ahead).
 
 ---
 
