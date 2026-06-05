@@ -728,6 +728,7 @@ export default function App() {
                     securityStance={settings.securityStance}
                     onSecurityStanceChange={(s) => updateSettings({ securityStance: s })}
                     securityPersonaText={`${settings.securityPersona.base} ${settings.securityPersona[settings.securityStance]}`}
+                    workspaceKey={root}
                   />
                 </aside>
               </>

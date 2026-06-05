@@ -10,11 +10,14 @@ import {
 import { CodeProposal } from './CodeProposal';
 import { SparkleIcon } from './icons';
 
-const HISTORY_KEY = 'strix.ai.history';
+// AI history is scoped per workspace so each project keeps its own conversation.
+function historyKeyFor(workspaceKey: string | null | undefined): string {
+  return `strix.ai.history:${workspaceKey || 'global'}`;
+}
 
-function loadHistory(): ChatMessage[] {
+function loadHistory(key: string): ChatMessage[] {
   try {
-    const raw = localStorage.getItem(HISTORY_KEY);
+    const raw = localStorage.getItem(key);
     return raw ? (JSON.parse(raw) as ChatMessage[]) : [];
   } catch {
     return [];
@@ -32,10 +35,13 @@ export function AiPanel({
   securityStance = 'balanced',
   onSecurityStanceChange,
   securityPersonaText,
+  workspaceKey,
 }: {
   filePath: string | null;
   fileContent: string;
   onApplyEdit?: (content: string) => void;
+  // Workspace root — AI chat history is saved/loaded per project.
+  workspaceKey?: string | null;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -55,12 +61,17 @@ export function AiPanel({
   const [input, setInput] = useState('');
   const [model, setModel] = useState('auto');
   const [models, setModels] = useState<string[]>(['auto']);
-  const [history, setHistory] = useState<ChatMessage[]>(loadHistory);
+  const [history, setHistory] = useState<ChatMessage[]>(() =>
+    loadHistory(historyKeyFor(workspaceKey)),
+  );
   const [streaming, setStreaming] = useState('');
   const [routedVia, setRoutedVia] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [proposal, setProposal] = useState<{ original: string; suggested: string } | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  // The key the current history belongs to (so saves go to the right project,
+  // even right after a workspace switch).
+  const histKeyRef = useRef(historyKeyFor(workspaceKey));
 
   // Point the AI client at the FreeLLMAPI server (local or a shared host) and
   // load its model list. Re-runs if the server URL changes in Settings.
@@ -70,10 +81,18 @@ export function AiPanel({
     window.strix.ai.models(url).then(setModels);
   }, [aiServerUrl]);
 
-  // Persist the conversation so it survives restarts and any model switch.
+  // Reload the conversation when the workspace changes (per-project chat).
+  useEffect(() => {
+    const key = historyKeyFor(workspaceKey);
+    histKeyRef.current = key;
+    setHistory(loadHistory(key));
+  }, [workspaceKey]);
+
+  // Persist to the current project's key (via the ref, so switching workspaces
+  // doesn't write the old conversation into the new project).
   useEffect(() => {
     try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      localStorage.setItem(histKeyRef.current, JSON.stringify(history));
     } catch {
       /* ignore quota/availability errors */
     }

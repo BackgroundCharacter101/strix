@@ -32,6 +32,14 @@ function toLspPos(p: Monaco.Position): LspPosition {
   return { line: p.lineNumber - 1, character: p.column - 1 };
 }
 
+// Strip a leading/trailing ``` fence from AI output so a code-only fix applies
+// cleanly into the editor.
+function stripCodeFences(s: string): string {
+  const t = s.trim();
+  const m = t.match(/^```[\w-]*\n([\s\S]*?)\n?```$/);
+  return m ? m[1] : t;
+}
+
 function ensureLspProviders(monaco: typeof import('monaco-editor'), languageId: string): void {
   if (lspProviderLangs.has(languageId)) return;
   lspProviderLangs.add(languageId);
@@ -323,7 +331,35 @@ export function FileViewer({
                   ev.stopPropagation();
                   const sel = editor.getSelection();
                   const text = sel ? model.getValueInRange(sel) : '';
-                  if (text.trim()) onSelectionAction(kind, text);
+                  if (!sel || !text.trim()) return;
+                  if (kind === 'explain') {
+                    onSelectionAction?.('explain', text);
+                    return;
+                  }
+                  // Fix: ask the AI for the corrected code and apply it to the
+                  // selection live (rather than just chatting the solution).
+                  const restore = b.textContent;
+                  b.textContent = '✦ Fixing…';
+                  b.setAttribute('disabled', 'true');
+                  void complete('fix', {
+                    filePath: path ?? '',
+                    fileContent: text,
+                    userMessage:
+                      'Return ONLY the corrected version of this exact code. No explanation, no commentary, no markdown fences.',
+                  })
+                    .then((out) => {
+                      const fixed = stripCodeFences(out);
+                      if (fixed.trim() && fixed !== text) {
+                        editor.executeEdits('strix-fix', [
+                          { range: sel, text: fixed, forceMoveMarkers: true },
+                        ]);
+                        editor.focus();
+                      }
+                    })
+                    .finally(() => {
+                      b.textContent = restore;
+                      b.removeAttribute('disabled');
+                    });
                 });
                 return b;
               };

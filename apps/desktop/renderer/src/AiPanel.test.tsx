@@ -84,7 +84,7 @@ describe('AiPanel', () => {
     );
     // user message persisted to the thread + localStorage
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('what is this?');
-    expect(localStorage.getItem('strix.ai.history')).toContain('what is this?');
+    expect(localStorage.getItem('strix.ai.history:global')).toContain('what is this?');
   });
 
   it('runs explain against the live editor content', async () => {
@@ -162,10 +162,29 @@ describe('AiPanel', () => {
 
   it('restores a persisted conversation from localStorage', () => {
     localStorage.setItem(
-      'strix.ai.history',
+      'strix.ai.history:global',
       JSON.stringify([{ role: 'user', content: 'earlier question' }]),
     );
     render(<AiPanel filePath={null} fileContent="" />);
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('earlier question');
+  });
+
+  it('keeps AI history separate per workspace', () => {
+    localStorage.setItem(
+      'strix.ai.history:/projA',
+      JSON.stringify([{ role: 'user', content: 'question in A' }]),
+    );
+    localStorage.setItem(
+      'strix.ai.history:/projB',
+      JSON.stringify([{ role: 'user', content: 'question in B' }]),
+    );
+    const { rerender } = render(
+      <AiPanel filePath={null} fileContent="" workspaceKey="/projA" />,
+    );
+    expect(screen.getByLabelText('AI conversation')).toHaveTextContent('question in A');
+
+    rerender(<AiPanel filePath={null} fileContent="" workspaceKey="/projB" />);
+    expect(screen.getByLabelText('AI conversation')).toHaveTextContent('question in B');
+    expect(screen.queryByText('question in A')).not.toBeInTheDocument();
   });
 });
