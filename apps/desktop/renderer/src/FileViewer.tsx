@@ -10,8 +10,11 @@ import {
   normalizeCompletionItems,
   hoverToMarkdown,
   normalizeLocations,
+  normalizeSymbols,
   LSP_COMPLETION_KIND,
+  LSP_SYMBOL_KIND,
   type LspPosition,
+  type NormalizedSymbol,
 } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
 import { MarkdownPreview } from './MarkdownPreview';
@@ -86,6 +89,33 @@ function ensureLspProviders(monaco: typeof import('monaco-editor'), languageId: 
           l.range.end.character + 1,
         ),
       }));
+    },
+  });
+
+  // Document symbols → Go to Symbol (Ctrl+Shift+O), outline, and sticky scroll.
+  const lspRange = (r: NormalizedSymbol['range']) =>
+    new monaco.Range(
+      r.start.line + 1,
+      r.start.character + 1,
+      r.end.line + 1,
+      r.end.character + 1,
+    );
+  const toMonacoSymbol = (s: NormalizedSymbol): Monaco.languages.DocumentSymbol => ({
+    name: s.name,
+    detail: s.detail ?? '',
+    kind: monaco.languages.SymbolKind[
+      (LSP_SYMBOL_KIND[s.kind] ?? 'Variable') as keyof typeof monaco.languages.SymbolKind
+    ],
+    tags: [],
+    range: lspRange(s.range),
+    selectionRange: lspRange(s.selectionRange),
+    children: s.children.map(toMonacoSymbol),
+  });
+  monaco.languages.registerDocumentSymbolProvider(languageId, {
+    provideDocumentSymbols: async (model) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return [];
+      return normalizeSymbols(await client.documentSymbols()).map(toMonacoSymbol);
     },
   });
 }

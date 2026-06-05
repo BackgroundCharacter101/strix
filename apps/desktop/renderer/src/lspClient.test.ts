@@ -6,9 +6,40 @@ import {
   normalizeCompletionItems,
   hoverToMarkdown,
   normalizeLocations,
+  normalizeSymbols,
   type LspTransport,
   type JsonRpcMessage,
 } from './lspClient';
+
+describe('normalizeSymbols', () => {
+  const range = { start: { line: 1, character: 0 }, end: { line: 3, character: 1 } };
+  const sel = { start: { line: 1, character: 6 }, end: { line: 1, character: 9 } };
+
+  it('handles hierarchical DocumentSymbol[] with children', () => {
+    const out = normalizeSymbols([
+      {
+        name: 'Foo',
+        kind: 5,
+        range,
+        selectionRange: sel,
+        children: [{ name: 'bar', kind: 6, range, selectionRange: sel }],
+      },
+    ]);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ name: 'Foo', kind: 5 });
+    expect(out[0].children[0]).toMatchObject({ name: 'bar', kind: 6, children: [] });
+  });
+
+  it('handles flat SymbolInformation[] (location.range, no children)', () => {
+    const out = normalizeSymbols([{ name: 'main', kind: 12, location: { uri: 'file:///a', range } }]);
+    expect(out[0]).toMatchObject({ name: 'main', kind: 12, range, selectionRange: range, children: [] });
+  });
+
+  it('returns [] for non-arrays', () => {
+    expect(normalizeSymbols(null)).toEqual([]);
+    expect(normalizeSymbols({})).toEqual([]);
+  });
+});
 
 describe('normalizeCompletionItems', () => {
   it('handles an array, a CompletionList, and null', () => {

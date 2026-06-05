@@ -176,6 +176,12 @@ export class LspClient {
     });
   }
 
+  documentSymbols(): Promise<unknown> {
+    return this.sendRequest('textDocument/documentSymbol', {
+      textDocument: { uri: this.opts.uri },
+    });
+  }
+
   didChange(text: string): void {
     this.version += 1;
     this.notify('textDocument/didChange', {
@@ -279,6 +285,62 @@ export function normalizeLocations(result: unknown): LspLocation[] {
   }
   return out;
 }
+
+export interface LspRange {
+  start: { line: number; character: number };
+  end: { line: number; character: number };
+}
+
+export interface NormalizedSymbol {
+  name: string;
+  detail?: string;
+  kind: number;
+  range: LspRange;
+  selectionRange: LspRange;
+  children: NormalizedSymbol[];
+}
+
+// documentSymbol result: DocumentSymbol[] (hierarchical) | SymbolInformation[]
+// (flat). Normalized to a single hierarchical shape.
+export function normalizeSymbols(result: unknown): NormalizedSymbol[] {
+  if (!Array.isArray(result)) return [];
+  return result
+    .map((s): NormalizedSymbol | null => {
+      const o = s as Record<string, unknown>;
+      if (o.range && o.selectionRange) {
+        return {
+          name: String(o.name ?? ''),
+          detail: typeof o.detail === 'string' ? o.detail : undefined,
+          kind: typeof o.kind === 'number' ? o.kind : 13,
+          range: o.range as LspRange,
+          selectionRange: o.selectionRange as LspRange,
+          children: normalizeSymbols(o.children),
+        };
+      }
+      const loc = o.location as { range?: LspRange } | undefined;
+      if (loc?.range) {
+        return {
+          name: String(o.name ?? ''),
+          kind: typeof o.kind === 'number' ? o.kind : 13,
+          range: loc.range,
+          selectionRange: loc.range,
+          children: [],
+        };
+      }
+      return null;
+    })
+    .filter((s): s is NormalizedSymbol => s !== null);
+}
+
+// LSP SymbolKind (number) → name. Monaco's SymbolKind enum uses the same names.
+export const LSP_SYMBOL_KIND: Record<number, string> = {
+  1: 'File', 2: 'Module', 3: 'Namespace', 4: 'Package', 5: 'Class',
+  6: 'Method', 7: 'Property', 8: 'Field', 9: 'Constructor', 10: 'Enum',
+  11: 'Interface', 12: 'Function', 13: 'Variable', 14: 'Constant', 15: 'String',
+  16: 'Number', 17: 'Boolean', 18: 'Array', 19: 'Object', 20: 'Key',
+  21: 'Null', 22: 'EnumMember', 23: 'Struct', 24: 'Event', 25: 'Operator',
+  26: 'TypeParameter',
+};
 
 // LSP CompletionItemKind (number) → name. Monaco's CompletionItemKind enum uses
 // the same names, so a provider does monaco.languages.CompletionItemKind[name].
