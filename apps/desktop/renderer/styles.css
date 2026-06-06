@@ -2701,6 +2701,15 @@ kbd {
   font-weight: 600;
 }
 
+/* Stop button shown while a reply is streaming. */
+.ai-stop-btn {
+  background: var(--danger);
+  color: #fff;
+}
+.ai-stop-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
 .ai-file-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

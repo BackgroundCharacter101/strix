@@ -18,6 +18,8 @@ export interface RunTaskCallbacks {
 export interface RunTaskSettings {
   /** Override the model; defaults to the task's preference ('auto'). */
   model?: string;
+  /** Abort the in-flight request (e.g. a Stop button). */
+  signal?: AbortSignal;
 }
 
 export async function runTask(
@@ -36,7 +38,10 @@ export async function runTask(
     params.max_tokens = AUTOCOMPLETE_MAX_TOKENS;
   }
 
-  const stream = await ai.chat.completions.create(params);
+  const stream = await ai.chat.completions.create(
+    params,
+    settings.signal ? { signal: settings.signal } : undefined,
+  );
   await streamToPanel(stream, callbacks.onToken, callbacks.onDone);
 }
 

@@ -80,7 +80,7 @@ describe('AiPanel', () => {
       'chat',
       expect.objectContaining({ filePath: '/ws/a.ts', userMessage: 'what is this?' }),
       expect.any(Object),
-      { model: 'groq/llama-3.3-70b' },
+      expect.objectContaining({ model: 'groq/llama-3.3-70b' }),
     );
     // user message persisted to the thread + localStorage
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('what is this?');
@@ -105,6 +105,24 @@ describe('AiPanel', () => {
     await waitFor(() => expect(runTask).toHaveBeenCalledWith('chat', expect.any(Object), expect.any(Object), expect.any(Object)));
   });
 
+  it('shows a Stop button while generating and aborts on click', async () => {
+    runTask.mockImplementation(
+      (_t, _o, _cb, settings) =>
+        new Promise<void>((resolve) => {
+          settings.signal?.addEventListener('abort', () => resolve());
+        }),
+    );
+    render(<AiPanel filePath={null} fileContent="" />);
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'hi' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    const stopBtn = await screen.findByRole('button', { name: 'Stop generating' });
+    fireEvent.click(stopBtn);
+
+    // Aborting ends the run → the Send button returns.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument());
+  });
+
   it('runs explain against the live editor content', async () => {
     render(<AiPanel filePath="/ws/a.ts" fileContent="const unsaved = 2;" />);
     fireEvent.click(screen.getByRole('button', { name: 'Explain' }));
@@ -113,7 +131,7 @@ describe('AiPanel', () => {
         'explain',
         expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const unsaved = 2;' }),
         expect.any(Object),
-        { model: 'auto' },
+        expect.objectContaining({ model: 'auto' }),
       ),
     );
   });

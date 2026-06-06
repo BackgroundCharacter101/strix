@@ -188,6 +188,10 @@ export function AiPanel({
 
   const fileReady = filePath !== null;
 
+  // Aborts the current streaming request (the Stop button).
+  const abortRef = useRef<AbortController | null>(null);
+  const stop = () => abortRef.current?.abort();
+
   const run = async (task: TaskType) => {
     setBusy(true);
     setStreaming('');
@@ -199,6 +203,8 @@ export function AiPanel({
       setInput('');
     }
 
+    const controller = new AbortController();
+    abortRef.current = controller;
     let acc = '';
     try {
       await runTask(
@@ -211,10 +217,13 @@ export function AiPanel({
           },
           onDone: (via) => setRoutedVia(via),
         },
-        { model },
+        { model, signal: controller.signal },
       );
+    } catch {
+      // Stopped or network error — keep whatever streamed so far.
     } finally {
       setBusy(false);
+      abortRef.current = null;
     }
 
     // Chat turns are part of the shared thread; one-off actions just display.
@@ -234,6 +243,8 @@ export function AiPanel({
       ...h,
       { role: 'user', content: `${kind === 'explain' ? 'Explain' : 'Fix'} this selection:\n${selection}` },
     ]);
+    const controller = new AbortController();
+    abortRef.current = controller;
     let acc = '';
     try {
       await runTask(
@@ -246,10 +257,13 @@ export function AiPanel({
           },
           onDone: (via) => setRoutedVia(via),
         },
-        { model },
+        { model, signal: controller.signal },
       );
+    } catch {
+      // Stopped or network error — keep whatever streamed so far.
     } finally {
       setBusy(false);
+      abortRef.current = null;
     }
     setHistory((h) => [...h, { role: 'assistant', content: acc }]);
     setStreaming('');
@@ -436,14 +450,25 @@ export function AiPanel({
           }}
         />
         <div className="ai-actions">
-          <button
-            type="button"
-            className="ai-primary-btn"
-            onClick={() => run('chat')}
-            disabled={busy || input.length === 0}
-          >
-            {busy ? 'Working…' : 'Send'}
-          </button>
+          {busy ? (
+            <button
+              type="button"
+              className="ai-primary-btn ai-stop-btn"
+              onClick={stop}
+              aria-label="Stop generating"
+            >
+              ■ Stop
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="ai-primary-btn"
+              onClick={() => run('chat')}
+              disabled={input.length === 0}
+            >
+              Send
+            </button>
+          )}
         </div>
         <div className="ai-actions ai-file-actions">
           <button type="button" onClick={() => run('explain')} disabled={busy || !fileReady}>
