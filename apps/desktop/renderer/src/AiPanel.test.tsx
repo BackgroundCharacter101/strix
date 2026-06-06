@@ -149,7 +149,7 @@ describe('AiPanel', () => {
     expect(complete).toHaveBeenCalledWith(
       'refactor',
       expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const old = 1;' }),
-      { model: 'auto' },
+      expect.objectContaining({ model: 'auto' }),
     );
     expect(within(proposal).getByLabelText('diff')).toHaveAttribute(
       'data-modified',

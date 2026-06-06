@@ -10,6 +10,7 @@ import {
 import { CodeProposal } from './CodeProposal';
 import { SparkleIcon } from './icons';
 import { renderMarkdown } from './markdown';
+import { showToast } from './toast';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -220,7 +221,10 @@ export function AiPanel({
         { model, signal: controller.signal },
       );
     } catch {
-      // Stopped or network error — keep whatever streamed so far.
+      // Keep whatever streamed so far. Surface real failures (not a manual Stop).
+      if (!controller.signal.aborted) {
+        showToast('AI request failed — check the AI server / your key.', 'error', 6000);
+      }
     } finally {
       setBusy(false);
       abortRef.current = null;
@@ -260,7 +264,9 @@ export function AiPanel({
         { model, signal: controller.signal },
       );
     } catch {
-      // Stopped or network error — keep whatever streamed so far.
+      if (!controller.signal.aborted) {
+        showToast('AI request failed — check the AI server / your key.', 'error', 6000);
+      }
     } finally {
       setBusy(false);
       abortRef.current = null;
@@ -282,6 +288,8 @@ export function AiPanel({
   const propose = async (task: TaskType) => {
     setBusy(true);
     setProposal(null);
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const suggested = await complete(
         task,
@@ -293,11 +301,16 @@ export function AiPanel({
           securityStance,
           securityPersonaText,
         },
-        { model },
+        { model, signal: controller.signal },
       );
       if (suggested.trim()) setProposal({ original: fileContent, suggested });
+    } catch {
+      if (!controller.signal.aborted) {
+        showToast('AI request failed — check the AI server / your key.', 'error', 6000);
+      }
     } finally {
       setBusy(false);
+      abortRef.current = null;
     }
   };
 
