@@ -60,30 +60,31 @@ function defineStrixThemes(accent: string) {
       { token: 'number', foreground: 'd19a66' },
     ],
     colors: {
-      'editor.background': '#1e1e1e',
+      // Deep near-black to match the UI surfaces.
+      'editor.background': '#0e0e10',
       'editor.foreground': '#d4d4d4',
-      'editorLineNumber.foreground': '#5a5a5a',
+      'editorLineNumber.foreground': '#4a4a4e',
       'editorLineNumber.activeForeground': accent,
       'editorCursor.foreground': accent,
       'editor.selectionBackground': withAlpha(accent, '3a'),
       'editor.inactiveSelectionBackground': withAlpha(accent, '20'),
       'editor.selectionHighlightBackground': withAlpha(accent, '22'),
       'editor.wordHighlightBackground': withAlpha(accent, '1f'),
-      'editor.lineHighlightBackground': '#ffffff08',
+      'editor.lineHighlightBackground': '#ffffff0a',
       'editor.lineHighlightBorder': '#00000000',
-      'editorIndentGuide.background': '#2b2b2b',
+      'editorIndentGuide.background': '#232327',
       'editorIndentGuide.activeBackground': withAlpha(accent, '55'),
       'editorBracketMatch.border': accent,
       'editorBracketMatch.background': withAlpha(accent, '22'),
-      'editorGutter.background': '#1e1e1e',
-      'editorWidget.background': '#252526',
-      'editorWidget.border': '#3c3c3c',
-      'editorSuggestWidget.background': '#252526',
+      'editorGutter.background': '#0e0e10',
+      'editorWidget.background': '#161618',
+      'editorWidget.border': '#2a2a2e',
+      'editorSuggestWidget.background': '#161618',
       'editorSuggestWidget.selectedBackground': withAlpha(accent, '33'),
       'editorOverviewRuler.border': '#00000000',
       'scrollbarSlider.background': '#5a5a5a55',
       'scrollbarSlider.hoverBackground': '#5a5a5a88',
-      'minimap.background': '#1e1e1e',
+      'minimap.background': '#0e0e10',
     },
   });
 
@@ -153,7 +154,7 @@ function defineStrixThemes(accent: string) {
   });
 }
 
-defineStrixThemes('#e3b341');
+defineStrixThemes('#e8bd3a');
 
 // Re-define the Strix themes with a new accent and refresh the active editor.
 export function applyAccent(accentHex: string, activeTheme: string) {
