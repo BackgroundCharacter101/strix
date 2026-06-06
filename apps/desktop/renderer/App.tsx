@@ -174,6 +174,40 @@ export default function App() {
     return () => window.clearInterval(id);
   }, [settings.autoSave, settings.autoSaveSeconds]);
 
+  // --- Per-project session: remember each workspace's open tabs ---
+  const { replaceAll: replaceTabsA } = tabs;
+  // The root the group-A tabs currently belong to (so we save under the right key).
+  const tabsRootRef = useRef<string | null>(null);
+  // Restore the saved tab session when the workspace changes. Flush unsaved
+  // edits of the previous project first (no data loss), then reset to one group.
+  useEffect(() => {
+    if (!root) return;
+    autoSaveRef.current();
+    let saved: { tabs: string[]; active: string | null } = { tabs: [], active: null };
+    try {
+      const raw = localStorage.getItem(`strix.openTabs:${root}`);
+      if (raw) saved = JSON.parse(raw) as typeof saved;
+    } catch {
+      /* ignore corrupt session */
+    }
+    setSplitCount(1);
+    setActiveGroup('a');
+    replaceTabsA(saved.tabs ?? [], saved.active ?? null);
+    tabsRootRef.current = root;
+  }, [root, replaceTabsA]);
+  // Persist the group-A session whenever it changes (for its own root).
+  useEffect(() => {
+    if (!root || tabsRootRef.current !== root) return;
+    try {
+      localStorage.setItem(
+        `strix.openTabs:${root}`,
+        JSON.stringify({ tabs: tabs.tabs, active: tabs.activePath }),
+      );
+    } catch {
+      /* ignore quota/availability */
+    }
+  }, [root, tabs.tabs, tabs.activePath]);
+
   const chordRef = useRef(false);
   const formatRef = useRef<(() => Promise<string | null>) | null>(null);
   const zenRef = useRef(false);

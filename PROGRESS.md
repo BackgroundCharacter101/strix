@@ -422,6 +422,13 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **Troubleshooting batch (audit + 4 enhancements):** full audit (0 vulns, clean
+  scan, IPC/Electron hardening verified). Fixes: AI Stop now cancels Fix/Refactor
+  + real AI failures show a toast. Additions: (1) Copy button on code blocks +
+  Regenerate last reply; (2) unsaved-changes guard on tab close / window quit;
+  (3) terminal font follows Settings + Format-on-save; (4) persisted panel sizes
+  and per-project open-tab sessions (`strix.openTabs:<root>`, restored on launch;
+  switching folders flushes unsaved edits first, then resets to one group).
 - **Add provider keys from the IDE:** Settings → AI now has a "Provider API keys"
   manager (add/list/remove) that POSTs to FreeLLMAPI's `/api/keys` on the
   configured host (local by default) — users no longer need to open

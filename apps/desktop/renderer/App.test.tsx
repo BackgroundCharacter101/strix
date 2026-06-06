@@ -129,6 +129,27 @@ describe('App', () => {
     );
   });
 
+  it('persists the open-tab session per workspace', async () => {
+    root.mockResolvedValue('/ws');
+    tree.mockResolvedValue({
+      name: 'ws',
+      path: '/ws',
+      type: 'directory',
+      children: [{ name: 'a.ts', path: '/ws/a.ts', type: 'file' }],
+    });
+    read.mockResolvedValue('export const a = 1;');
+
+    render(<App />);
+    fireEvent.click(await screen.findByText('a.ts'));
+    await screen.findByDisplayValue('export const a = 1;');
+
+    await waitFor(() => {
+      const raw = localStorage.getItem('strix.openTabs:/ws');
+      expect(raw).toBeTruthy();
+      expect(raw).toContain('/ws/a.ts');
+    });
+  });
+
   it('toggles the sidebar with the Ctrl+B shortcut', async () => {
     root.mockResolvedValue('/ws');
     tree.mockResolvedValue({ name: 'ws', path: '/ws', type: 'directory', children: [] });

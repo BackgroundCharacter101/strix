@@ -17,6 +17,8 @@ export interface EditorTabsApi {
   activate(path: string): void;
   close(path: string): void;
   saveAll(): Promise<void>;
+  /** Replace the whole open set (used to restore a project's saved session). */
+  replaceAll(paths: string[], active: string | null): void;
 }
 
 // Manages the set of open files, the active tab, and a per-path buffer
@@ -128,6 +130,42 @@ export function useEditorTabs(): EditorTabsApi {
     }
   }, [bufs]);
 
+  // Replace the entire open set (restore a saved session). Clears existing
+  // buffers, then opens each path (which loads its content) and activates one.
+  const replaceAll = useCallback(
+    (paths: string[], active: string | null) => {
+      loaded.current = new Set();
+      setBufs({});
+      setTabs(paths);
+      setActivePath(active ?? paths[paths.length - 1] ?? null);
+      for (const p of paths) {
+        if (loaded.current.has(p)) continue;
+        loaded.current.add(p);
+        setBufs((prev) => ({ ...prev, [p]: { draft: '', saved: '', loading: true, error: null } }));
+        window.strix.fs
+          .read(p)
+          .then((text) =>
+            setBufs((prev) => ({
+              ...prev,
+              [p]: { draft: text, saved: text, loading: false, error: null },
+            })),
+          )
+          .catch((e: unknown) =>
+            setBufs((prev) => ({
+              ...prev,
+              [p]: {
+                draft: '',
+                saved: '',
+                loading: false,
+                error: e instanceof Error ? e.message : String(e),
+              },
+            })),
+          );
+      }
+    },
+    [],
+  );
+
   const isDirty = useCallback(
     (path: string) => {
       const buf = bufs[path];
@@ -150,5 +188,5 @@ export function useEditorTabs(): EditorTabsApi {
       }
     : null;
 
-  return { tabs, activePath, active, isDirty, open, activate, close, saveAll };
+  return { tabs, activePath, active, isDirty, open, activate, close, saveAll, replaceAll };
 }
