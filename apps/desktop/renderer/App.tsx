@@ -297,9 +297,9 @@ export default function App() {
     setPalette('files');
   }, [root]);
 
-  const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500 });
-  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 240, max: 760 });
-  const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600 });
+  const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500, persistKey: 'strix.size.sidebar' });
+  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 240, max: 760, persistKey: 'strix.size.ai' });
+  const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600, persistKey: 'strix.size.terminal' });
 
   useEffect(() => {
     window.strix.workspace.root().then(setRoot);

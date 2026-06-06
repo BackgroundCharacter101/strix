@@ -8,6 +8,18 @@ export interface ResizableOptions {
   direction?: 1 | -1;
   min?: number;
   max?: number;
+  /** localStorage key to persist the size across restarts. */
+  persistKey?: string;
+}
+
+function readStored(key: string | undefined, fallback: number): number {
+  if (!key) return fallback;
+  try {
+    const n = Number(localStorage.getItem(key));
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 export interface Resizable {
@@ -19,17 +31,25 @@ export interface Resizable {
 // divider element. While dragging, it tracks pointer movement on the window
 // and clamps the size to [min, max].
 export function useResizable(initial: number, opts: ResizableOptions): Resizable {
-  const { axis, direction = 1, min = 0, max = Number.POSITIVE_INFINITY } = opts;
-  const [size, setSize] = useState(initial);
-  const sizeRef = useRef(initial);
+  const { axis, direction = 1, min = 0, max = Number.POSITIVE_INFINITY, persistKey } = opts;
+  const start = readStored(persistKey, initial);
+  const [size, setSize] = useState(start);
+  const sizeRef = useRef(start);
 
   const apply = useCallback(
     (next: number) => {
       const clamped = Math.min(max, Math.max(min, next));
       sizeRef.current = clamped;
       setSize(clamped);
+      if (persistKey) {
+        try {
+          localStorage.setItem(persistKey, String(clamped));
+        } catch {
+          /* ignore quota/availability */
+        }
+      }
     },
-    [min, max],
+    [min, max, persistKey],
   );
 
   const onPointerDown = useCallback(
