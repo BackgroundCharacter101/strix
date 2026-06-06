@@ -1069,7 +1069,7 @@ body {
 }
 
 .ai-pane {
-  width: 340px;
+  width: 400px;
   flex: 0 0 auto;
   background: var(--bg-elevated);
   border-left: 1px solid var(--border);

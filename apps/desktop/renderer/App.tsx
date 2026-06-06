@@ -281,7 +281,7 @@ export default function App() {
   }, [root]);
 
   const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500 });
-  const aiPanel = useResizable(340, { axis: 'x', direction: -1, min: 220, max: 600 });
+  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 240, max: 760 });
   const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600 });
 
   useEffect(() => {
