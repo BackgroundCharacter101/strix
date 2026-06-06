@@ -422,6 +422,13 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **Settings: full-screen + fixed exit + more options:** Settings opens as a
+  full-window overlay below the 34px title bar (window controls stay reachable);
+  a prominent "Done" button + Esc both close it. Left section-nav (Appearance /
+  Editor / AI / Security). Added real, wired options: cursor blinking, line
+  height, font ligatures, sticky scroll, bracket-pair colorization, smooth
+  scrolling, scroll-beyond-last-line (all flow to Monaco via editorOptions), plus
+  Reduce motion (root `data-reduce-motion`). Editor split now cycles 1/2/3 groups.
 - **Settings apply live + Save button:** `CodeEditor` now pushes option changes to
   the live Monaco instance via `editor.updateOptions` in an effect (font / size /
   family / etc. update immediately instead of only on remount — `@monaco-editor/

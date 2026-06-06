@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gateway';
 import type { Settings } from './useSettings';
 import { THEMES, ACCENTS } from './themes';
-import { SaveIcon } from './icons';
+import { SaveIcon, CloseIcon } from './icons';
 import { showToast } from './toast';
 
 type SectionId = 'appearance' | 'editor' | 'ai' | 'security';
@@ -93,8 +93,15 @@ export function SettingsPage({
         <button type="button" className="ai-ghost-btn" onClick={onReset}>
           Reset
         </button>
-        <button type="button" className="ai-ghost-btn" onClick={onClose}>
-          Close
+        <button
+          type="button"
+          className="set-close-btn"
+          onClick={onClose}
+          title="Close settings (Esc)"
+          aria-label="Close settings"
+        >
+          <CloseIcon size={14} />
+          Done
         </button>
       </div>
 
@@ -170,6 +177,14 @@ export function SettingsPage({
               <option value="material">Material Icons (colorful)</option>
               <option value="strix">Strix (minimal)</option>
             </select>
+          </Row>
+          <Row query={query} label="Reduce motion" desc="Minimize non-essential UI animations.">
+            <input
+              type="checkbox"
+              aria-label="Reduce motion"
+              checked={settings.reduceMotion}
+              onChange={(e) => onChange({ reduceMotion: e.target.checked })}
+            />
           </Row>
         </section>
         )}
@@ -249,6 +264,82 @@ export function SettingsPage({
               <option value="selection">Selection</option>
               <option value="all">All</option>
             </select>
+          </Row>
+          <Row query={query} label="Cursor blinking" desc="How the text cursor animates.">
+            <select
+              aria-label="Cursor blinking"
+              value={settings.cursorBlinking}
+              onChange={(e) =>
+                onChange({ cursorBlinking: e.target.value as Settings['cursorBlinking'] })
+              }
+            >
+              <option value="blink">Blink</option>
+              <option value="smooth">Smooth</option>
+              <option value="phase">Phase</option>
+              <option value="expand">Expand</option>
+              <option value="solid">Solid</option>
+            </select>
+          </Row>
+          <Row query={query} label="Line height" desc="Line spacing as a multiple of the font size.">
+            <input
+              type="number"
+              aria-label="Line height"
+              min={1}
+              max={2.5}
+              step={0.05}
+              value={settings.lineHeight}
+              onChange={(e) =>
+                onChange({ lineHeight: Math.min(2.5, Math.max(1, Number(e.target.value) || 1.55)) })
+              }
+            />
+          </Row>
+          <Row query={query} label="Font ligatures" desc="Render programming ligatures (e.g. =>, !==).">
+            <input
+              type="checkbox"
+              aria-label="Font ligatures"
+              checked={settings.fontLigatures}
+              onChange={(e) => onChange({ fontLigatures: e.target.checked })}
+            />
+          </Row>
+          <Row query={query} label="Sticky scroll" desc="Pin the enclosing scope (function/class) to the top.">
+            <input
+              type="checkbox"
+              aria-label="Sticky scroll"
+              checked={settings.stickyScroll}
+              onChange={(e) => onChange({ stickyScroll: e.target.checked })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Bracket pair colorization"
+            desc="Colour matching brackets so nesting is easy to follow."
+          >
+            <input
+              type="checkbox"
+              aria-label="Bracket pair colorization"
+              checked={settings.bracketColorization}
+              onChange={(e) => onChange({ bracketColorization: e.target.checked })}
+            />
+          </Row>
+          <Row query={query} label="Smooth scrolling" desc="Animate scrolling instead of jumping.">
+            <input
+              type="checkbox"
+              aria-label="Smooth scrolling"
+              checked={settings.smoothScrolling}
+              onChange={(e) => onChange({ smoothScrolling: e.target.checked })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Scroll beyond last line"
+            desc="Allow scrolling past the final line of the file."
+          >
+            <input
+              type="checkbox"
+              aria-label="Scroll beyond last line"
+              checked={settings.scrollBeyondLastLine}
+              onChange={(e) => onChange({ scrollBeyondLastLine: e.target.checked })}
+            />
           </Row>
           <Row query={query} label="Minimap" desc="Show the code minimap on the right.">
             <input

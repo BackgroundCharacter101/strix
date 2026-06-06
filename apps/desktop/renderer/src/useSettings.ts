@@ -15,9 +15,19 @@ export interface Settings {
   fontFamily: string;
   lineNumbers: 'on' | 'off' | 'relative';
   cursorStyle: 'line' | 'block' | 'underline';
+  cursorBlinking: 'blink' | 'smooth' | 'phase' | 'expand' | 'solid';
   renderWhitespace: 'none' | 'boundary' | 'selection' | 'all';
+  // Line height as a multiplier of the font size (1.0–2.5).
+  lineHeight: number;
+  fontLigatures: boolean;
+  smoothScrolling: boolean;
+  stickyScroll: boolean;
+  bracketColorization: boolean;
+  scrollBeyondLastLine: boolean;
   // UI density: 'comfortable' (default) or 'compact' (tighter list rows/tabs).
   density: 'comfortable' | 'compact';
+  // Disable non-essential UI animations (accessibility / low-power).
+  reduceMotion: boolean;
   // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
   autoSave: boolean;
   autoSaveSeconds: number;
@@ -44,8 +54,16 @@ export const DEFAULT_SETTINGS: Settings = {
   fontFamily: '',
   lineNumbers: 'on',
   cursorStyle: 'line',
+  cursorBlinking: 'blink',
   renderWhitespace: 'selection',
+  lineHeight: 1.55,
+  fontLigatures: true,
+  smoothScrolling: false,
+  stickyScroll: true,
+  bracketColorization: true,
+  scrollBeyondLastLine: false,
   density: 'comfortable',
+  reduceMotion: false,
   autoSave: true,
   autoSaveSeconds: 60,
   aiServerUrl: '',
@@ -77,6 +95,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     document.documentElement.dataset.accent = settings.accent;
     document.documentElement.dataset.mode = settings.mode;
     document.documentElement.dataset.density = settings.density;
+    document.documentElement.dataset.reduceMotion = String(settings.reduceMotion);
     setIconTheme(settings.iconTheme);
   }, [settings]);
 

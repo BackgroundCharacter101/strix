@@ -134,6 +134,14 @@ export function PlayIcon({ size = 14 }: IconProps) {
   );
 }
 
+export function CloseIcon({ size = 16 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M5 5l14 14M19 5L5 19" />
+    </svg>
+  );
+}
+
 export function SaveIcon({ size = 16 }: IconProps) {
   return (
     <svg {...base(size)}>

@@ -56,7 +56,7 @@ describe('SettingsPage', () => {
     const { onReset, onClose } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(onReset).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close settings' }));
     expect(onClose).toHaveBeenCalled();
   });
 });

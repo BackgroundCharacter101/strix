@@ -15,7 +15,14 @@ export interface EditorOptions {
   fontFamily?: string;
   lineNumbers?: 'on' | 'off' | 'relative';
   cursorStyle?: 'line' | 'block' | 'underline';
+  cursorBlinking?: 'blink' | 'smooth' | 'phase' | 'expand' | 'solid';
   renderWhitespace?: 'none' | 'boundary' | 'selection' | 'all';
+  lineHeight?: number;
+  fontLigatures?: boolean;
+  smoothScrolling?: boolean;
+  stickyScroll?: boolean;
+  bracketColorization?: boolean;
+  scrollBeyondLastLine?: boolean;
 }
 
 export interface CodeEditorProps {
@@ -93,7 +100,14 @@ export function CodeEditor({
       fontFamily: editorOptions?.fontFamily || MODERN_OPTIONS.fontFamily,
       lineNumbers: editorOptions?.lineNumbers ?? 'on',
       cursorStyle: editorOptions?.cursorStyle ?? 'line',
+      cursorBlinking: editorOptions?.cursorBlinking ?? MODERN_OPTIONS.cursorBlinking,
       renderWhitespace: editorOptions?.renderWhitespace ?? 'selection',
+      lineHeight: editorOptions?.lineHeight ?? MODERN_OPTIONS.lineHeight,
+      fontLigatures: editorOptions?.fontLigatures ?? MODERN_OPTIONS.fontLigatures,
+      smoothScrolling: editorOptions?.smoothScrolling ?? MODERN_OPTIONS.smoothScrolling,
+      stickyScroll: { enabled: editorOptions?.stickyScroll ?? true },
+      bracketPairColorization: { enabled: editorOptions?.bracketColorization ?? true },
+      scrollBeyondLastLine: editorOptions?.scrollBeyondLastLine ?? false,
     }),
     [
       readOnly,
@@ -104,7 +118,14 @@ export function CodeEditor({
       editorOptions?.fontFamily,
       editorOptions?.lineNumbers,
       editorOptions?.cursorStyle,
+      editorOptions?.cursorBlinking,
       editorOptions?.renderWhitespace,
+      editorOptions?.lineHeight,
+      editorOptions?.fontLigatures,
+      editorOptions?.smoothScrolling,
+      editorOptions?.stickyScroll,
+      editorOptions?.bracketColorization,
+      editorOptions?.scrollBeyondLastLine,
     ],
   );
 

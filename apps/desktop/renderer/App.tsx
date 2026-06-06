@@ -592,7 +592,14 @@ export default function App() {
     fontFamily: settings.fontFamily || undefined,
     lineNumbers: settings.lineNumbers,
     cursorStyle: settings.cursorStyle,
+    cursorBlinking: settings.cursorBlinking,
     renderWhitespace: settings.renderWhitespace,
+    lineHeight: settings.lineHeight,
+    fontLigatures: settings.fontLigatures,
+    smoothScrolling: settings.smoothScrolling,
+    stickyScroll: settings.stickyScroll,
+    bracketColorization: settings.bracketColorization,
+    scrollBeyondLastLine: settings.scrollBeyondLastLine,
   };
 
   // One editor group (tabs + breadcrumbs + editor). With split active there are

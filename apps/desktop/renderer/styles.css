@@ -282,16 +282,35 @@ body {
   border-radius: 8px;
 }
 
+/* Reduce-motion: kill non-essential animations/transitions when opted in. */
+:root[data-reduce-motion='true'] *,
+:root[data-reduce-motion='true'] *::before,
+:root[data-reduce-motion='true'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
 /* ---- Settings page ------------------------------------------------------ */
 /* Full-window overlay so Settings takes over the whole app (above sidebar /
    editor / panels), like a dedicated screen. */
 .settings-overlay {
   position: fixed;
-  inset: 0;
+  /* Sit below the 34px title bar so the window controls (min/max/close) stay
+     reachable — Settings still fills the rest of the window. */
+  top: 34px;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 60;
   display: flex;
   background: var(--bg);
   animation: settings-fade 0.14s var(--ease, ease);
+}
+
+/* In zen mode there is no title bar, so cover the whole window. */
+.app[data-zen='true'] .settings-overlay {
+  top: 0;
 }
 
 @keyframes settings-fade {
@@ -390,6 +409,25 @@ body {
   height: 15px;
 }
 
+/* Prominent Done/Close so you can always exit Settings. */
+.set-close-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--ease, 0.12s), border-color var(--ease, 0.12s);
+}
+
+.set-close-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
 .settings-search {
   flex: 1 1 auto;
   max-width: 360px;
@@ -404,9 +442,25 @@ body {
 }
 
 .settings-body > .set-section {
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
+  /* Left-aligned next to the nav (wider column) so the page doesn't read as a
+     narrow strip floating in empty space. */
+  max-width: 920px;
+  margin: 0;
+}
+
+/* Roomier rows on the full-screen page. */
+.settings-body .set-row {
+  padding: var(--space-4) 0;
+}
+.settings-body .set-control {
+  min-width: 230px;
+  display: flex;
+  justify-content: flex-end;
+}
+.settings-body .set-control select,
+.settings-body .set-control input[type='text'],
+.settings-body .set-control input[type='number'] {
+  min-width: 180px;
 }
 
 .set-section {
