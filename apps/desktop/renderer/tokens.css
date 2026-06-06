@@ -262,29 +262,31 @@
    document.documentElement[data-mode='cybersec'] toggles it.
    ========================================================================= */
 :root[data-mode='cybersec'] {
-  --accent: #21d07a;
-  --accent-hover: #3df29a;
+  /* Calmer phosphor green (not neon) for a comfortable, dark hacker vibe. */
+  --accent: #2ea871;
+  --accent-hover: #43c489;
   --accent-ink: #04210f;
-  --selection: rgba(33, 208, 122, 0.22);
-  --statusbar: #0c7a3f;
-  --statusbar-hover: #18a257;
+  --selection: rgba(46, 168, 113, 0.2);
+  --statusbar: #146b3c;
+  --statusbar-hover: #1d8b50;
   --statusbar-ink: #eafff3;
-  --link: #3df29a;
+  --link: #5fce98;
 
-  /* Pentester vibe: monospace UI + green-on-near-black surfaces. Overrides the
-     active theme's surface/text tokens (later in the file = wins on tie). */
+  /* Pentester vibe: monospace UI + green-tinted near-black surfaces. Slightly
+     lifted off pure black and with softer phosphor text so it's easy on the eyes.
+     Overrides the active theme's surface/text tokens (later in file = wins). */
   --font-ui: var(--font-mono);
-  --bg: #050807;
-  --bg-elevated: #0a0f0c;
-  --bg-titlebar: #07100b;
-  --bg-activity: #060b08;
-  --bg-input: #0b130e;
-  --bg-hover: #102a1d;
-  --border: #1c3a2b;
-  --text: #c7f5db;
-  --text-muted: #5f9c7e;
-  --icon-muted: #5f9c7e;
-  --scrollbar: #1f4533;
-  --scrollbar-hover: #2c6149;
-  --dirty: #3df29a;
+  --bg: #0a0e0c;
+  --bg-elevated: #0f1512;
+  --bg-titlebar: #0c120e;
+  --bg-activity: #0b110d;
+  --bg-input: #111814;
+  --bg-hover: #17241d;
+  --border: #213a2d;
+  --text: #b8d8c4;
+  --text-muted: #6f9683;
+  --icon-muted: #6f9683;
+  --scrollbar: #244a37;
+  --scrollbar-hover: #31634b;
+  --dirty: #43c489;
 }

@@ -624,7 +624,7 @@ export default function App() {
   // accent so it matches the pentester chrome (instead of the user's theme).
   const cybersec = settings.mode === 'cybersec';
   const editorTheme = cybersec ? 'strix-cybersec' : monacoThemeFor(settings.theme);
-  const editorAccent = cybersec ? '#21d07a' : accentHex(settings.accent);
+  const editorAccent = cybersec ? '#2ea871' : accentHex(settings.accent);
 
   // Keep the Monaco editor theme + accent in sync with the chosen accent/mode.
   useEffect(() => {

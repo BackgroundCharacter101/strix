@@ -1523,7 +1523,8 @@ kbd {
 :root[data-mode='cybersec'] .welcome-logo,
 :root[data-mode='cybersec'] .activity-item.active,
 :root[data-mode='cybersec'] .statusbar-mode.is-cybersec {
-  text-shadow: 0 0 9px rgba(33, 208, 122, 0.45);
+  /* Gentler phosphor glow — present but not harsh on the eyes. */
+  text-shadow: 0 0 7px rgba(46, 168, 113, 0.3);
 }
 :root[data-mode='cybersec'] .statusbar {
   border-top: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
