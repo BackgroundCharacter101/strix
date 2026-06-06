@@ -424,9 +424,16 @@ export function AiPanel({
       <div className="ai-composer">
         <textarea
           aria-label="Ask AI"
-          placeholder="Ask about this file…"
+          placeholder="Ask about this file…  (Enter to send, Shift+Enter for a new line)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter sends; Shift+Enter inserts a newline.
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (!busy && input.trim()) void run('chat');
+            }
+          }}
         />
         <div className="ai-actions">
           <button

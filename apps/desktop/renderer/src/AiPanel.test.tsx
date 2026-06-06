@@ -87,6 +87,24 @@ describe('AiPanel', () => {
     expect(localStorage.getItem('strix.ai.history:global')).toContain('what is this?');
   });
 
+  it('sends on Enter and inserts a newline on Shift+Enter', async () => {
+    runTask.mockImplementation(async (_t, _o, cb) => {
+      cb.onToken('Hi');
+      cb.onDone('groq');
+    });
+    render(<AiPanel filePath="/ws/a.ts" fileContent="x" />);
+    const box = screen.getByLabelText('Ask AI');
+
+    // Shift+Enter must NOT send.
+    fireEvent.change(box, { target: { value: 'line one' } });
+    fireEvent.keyDown(box, { key: 'Enter', shiftKey: true });
+    expect(runTask).not.toHaveBeenCalled();
+
+    // Enter sends a chat turn.
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(runTask).toHaveBeenCalledWith('chat', expect.any(Object), expect.any(Object), expect.any(Object)));
+  });
+
   it('runs explain against the live editor content', async () => {
     render(<AiPanel filePath="/ws/a.ts" fileContent="const unsaved = 2;" />);
     fireEvent.click(screen.getByRole('button', { name: 'Explain' }));
