@@ -145,23 +145,25 @@
    Brand, status, and file-type accents stay the same.
    ========================================================================= */
 :root[data-theme='light'] {
-  --bg: #ffffff;
-  --bg-elevated: #f3f3f3;
-  --bg-titlebar: #e7e7e7;
-  --bg-activity: #e0e0e0;
-  --bg-input: #ffffff;
-  --bg-hover: #e8e8e8;
+  /* Warm, soft, low-glare: a paper-like cream base instead of stark white, with
+     warm-gray text (not pure black) and gentle warm borders — easy on the eyes. */
+  --bg: #faf7f1;
+  --bg-elevated: #f2ede3;
+  --bg-titlebar: #ece5d8;
+  --bg-activity: #ebe4d6;
+  --bg-input: #fffdf8;
+  --bg-hover: #ece4d5;
 
-  --border: #d4d4d4;
-  --text: #1f1f1f;
-  --text-muted: #6a6a6a;
-  --icon-muted: #6a6a6a;
+  --border: #e1d8c8;
+  --text: #3b352d;
+  --text-muted: #8c8273;
+  --icon-muted: #8c8273;
 
-  --scrollbar: #c4c4c4;
-  --scrollbar-hover: #b0b0b0;
-  --overlay-subtle: rgba(0, 0, 0, 0.06);
-  --scrim: rgba(0, 0, 0, 0.25);
-  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --scrollbar: #ddd3c1;
+  --scrollbar-hover: #ccc1ac;
+  --overlay-subtle: rgba(120, 95, 45, 0.07);
+  --scrim: rgba(60, 50, 35, 0.22);
+  --shadow-modal: 0 10px 34px rgba(85, 68, 40, 0.18);
 }
 
 /* Midnight — deep blue-black surfaces. */

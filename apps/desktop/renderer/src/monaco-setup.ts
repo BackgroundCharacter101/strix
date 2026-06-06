@@ -92,16 +92,23 @@ function defineStrixThemes(accent: string) {
     inherit: true,
     rules: [{ token: 'comment', foreground: '6a8759', fontStyle: 'italic' }],
     colors: {
-      'editor.background': '#ffffff',
-      'editor.foreground': '#1f1f1f',
-      'editorLineNumber.foreground': '#b0b0b0',
+      // Warm, soft light: paper-cream background + warm-gray text (matches the
+      // light theme tokens), so the editor isn't a glaring white island.
+      'editor.background': '#faf7f1',
+      'editor.foreground': '#3b352d',
+      'editorLineNumber.foreground': '#bdb4a2',
       'editorLineNumber.activeForeground': accent,
       'editorCursor.foreground': accent,
       'editor.selectionBackground': withAlpha(accent, '44'),
-      'editor.lineHighlightBackground': '#00000007',
+      'editor.lineHighlightBackground': '#7a5a2010',
       'editor.lineHighlightBorder': '#00000000',
+      'editorIndentGuide.background': '#e6ddcd',
       'editorIndentGuide.activeBackground': withAlpha(accent, '66'),
       'editorBracketMatch.border': accent,
+      'editorGutter.background': '#faf7f1',
+      'editorWidget.background': '#f2ede3',
+      'editorSuggestWidget.background': '#f2ede3',
+      'minimap.background': '#faf7f1',
       'editorOverviewRuler.border': '#00000000',
     },
   });
