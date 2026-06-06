@@ -363,7 +363,11 @@ export default function App() {
         case 'w':
           if (activeTabs.activePath) {
             e.preventDefault();
-            activeTabs.close(activeTabs.activePath);
+            const p = activeTabs.activePath;
+            const name = p.split(/[\\/]/).pop();
+            if (!activeTabs.isDirty(p) || window.confirm(`Discard unsaved changes to ${name}?`)) {
+              activeTabs.close(p);
+            }
           }
           break;
         case '\\':
@@ -527,6 +531,21 @@ export default function App() {
 
   zenRef.current = zen;
   settingsRef.current = settingsOpen;
+
+  // Warn before quitting with unsaved edits in any editor group.
+  const anyDirtyRef = useRef<() => boolean>(() => false);
+  anyDirtyRef.current = () =>
+    [tabs, tabsB, tabsC].some((t) => t.tabs.some((p) => t.isDirty(p)));
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (anyDirtyRef.current() && !window.confirm('You have unsaved changes. Close Strix anyway?')) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   // Zen mode goes truly full-screen (hides the OS taskbar), and restores the
   // normal window on exit. Driven by the zen state so every entry/exit path

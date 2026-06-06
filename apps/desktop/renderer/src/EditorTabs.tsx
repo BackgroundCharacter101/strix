@@ -22,6 +22,14 @@ export function EditorTabs({
     return null;
   }
 
+  // Confirm before discarding unsaved edits when closing a tab.
+  const closeTab = (path: string) => {
+    if (tabs.isDirty(path) && !window.confirm(`Discard unsaved changes to ${basename(path)}?`)) {
+      return;
+    }
+    tabs.close(path);
+  };
+
   return (
     <div className="editor-tabs" role="tablist">
       {tabs.tabs.map((path) => {
@@ -39,7 +47,7 @@ export function EditorTabs({
             }}
             // Middle-click closes the tab (common IDE shortcut).
             onAuxClick={(e) => {
-              if (e.button === 1) tabs.close(path);
+              if (e.button === 1) closeTab(path);
             }}
           >
             <button
@@ -56,7 +64,7 @@ export function EditorTabs({
               type="button"
               className="tab-close"
               aria-label={`close ${name}`}
-              onClick={() => tabs.close(path)}
+              onClick={() => closeTab(path)}
             >
               ×
             </button>
