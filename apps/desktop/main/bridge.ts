@@ -68,10 +68,24 @@ export interface StrixLspApi {
   uninstallServer(id: string): Promise<{ ok: boolean; output: string }>;
 }
 
+export interface AiProviderKey {
+  id: number;
+  platform: string;
+  label: string;
+  maskedKey: string;
+  status: string;
+  enabled: boolean;
+}
+
 export interface StrixAiApi {
   // Optional url points at a shared FreeLLMAPI host (else the local default).
   config(url?: string): Promise<{ baseURL: string; apiKey: string }>;
   models(url?: string): Promise<string[]>;
+  // Manage the FreeLLMAPI provider keys (so users add keys from the IDE rather
+  // than the server's web UI). All target the configured host (or local).
+  listKeys(url?: string): Promise<AiProviderKey[]>;
+  addKey(platform: string, key: string, url?: string): Promise<{ ok: boolean; error?: string }>;
+  deleteKey(id: number, url?: string): Promise<{ ok: boolean }>;
 }
 
 export interface StrixCollabApi {

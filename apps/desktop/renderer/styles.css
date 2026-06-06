@@ -282,6 +282,84 @@ body {
   border-radius: 8px;
 }
 
+/* Provider-key manager in the AI settings section. */
+.set-row-block {
+  display: block;
+}
+.set-keys {
+  max-width: 920px;
+  margin-top: var(--space-2);
+}
+.set-keys-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+.set-keys-add select {
+  flex: 0 0 170px;
+}
+.set-keys-add input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.set-keys-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.set-keys-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.set-key-platform {
+  font-weight: var(--weight-medium);
+  flex: 0 0 140px;
+}
+.set-key-mask {
+  flex: 1 1 auto;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.set-key-status {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--overlay-subtle);
+  color: var(--text-muted);
+}
+.set-key-status.set-key-valid {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+.set-key-remove {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 4px;
+}
+.set-key-remove:hover {
+  color: var(--danger, #e5534b);
+}
+.set-keys-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 /* Reduce-motion: kill non-essential animations/transitions when opted in. */
 :root[data-reduce-motion='true'] *,
 :root[data-reduce-motion='true'] *::before,

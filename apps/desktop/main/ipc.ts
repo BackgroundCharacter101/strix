@@ -166,4 +166,39 @@ export function registerIpcHandlers(): void {
       return ['auto'];
     }
   });
+
+  // --- AI provider keys: add/list/delete FreeLLMAPI keys from the IDE ---
+  ipcMain.handle('ai:listKeys', async (_event, url?: string) => {
+    try {
+      const res = await fetch(`${baseFrom(url)}/api/keys`);
+      if (!res.ok) return [];
+      return await res.json();
+    } catch {
+      return [];
+    }
+  });
+
+  ipcMain.handle('ai:addKey', async (_event, platform: string, key: string, url?: string) => {
+    try {
+      const res = await fetch(`${baseFrom(url)}/api/keys`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform, key }),
+      });
+      if (res.ok) return { ok: true };
+      const body = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+      return { ok: false, error: body.error?.message ?? `HTTP ${res.status}` };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Could not reach the AI server' };
+    }
+  });
+
+  ipcMain.handle('ai:deleteKey', async (_event, id: number, url?: string) => {
+    try {
+      const res = await fetch(`${baseFrom(url)}/api/keys/${id}`, { method: 'DELETE' });
+      return { ok: res.ok };
+    } catch {
+      return { ok: false };
+    }
+  });
 }

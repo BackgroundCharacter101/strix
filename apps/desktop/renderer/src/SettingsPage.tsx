@@ -1,9 +1,124 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gateway';
 import type { Settings } from './useSettings';
+import type { AiProviderKey } from '../../main/bridge';
 import { THEMES, ACCENTS } from './themes';
 import { SaveIcon, CloseIcon } from './icons';
 import { showToast } from './toast';
+
+// FreeLLMAPI providers the user can add a key for (ids match the server).
+const KEY_PLATFORMS: { id: string; label: string }[] = [
+  { id: 'groq', label: 'Groq' },
+  { id: 'google', label: 'Google (Gemini)' },
+  { id: 'cerebras', label: 'Cerebras' },
+  { id: 'mistral', label: 'Mistral' },
+  { id: 'openrouter', label: 'OpenRouter' },
+  { id: 'cohere', label: 'Cohere' },
+  { id: 'nvidia', label: 'NVIDIA' },
+  { id: 'sambanova', label: 'SambaNova' },
+  { id: 'github', label: 'GitHub Models' },
+  { id: 'cloudflare', label: 'Cloudflare' },
+  { id: 'zhipu', label: 'Zhipu' },
+  { id: 'huggingface', label: 'HuggingFace' },
+];
+
+const platformLabel = (id: string) => KEY_PLATFORMS.find((p) => p.id === id)?.label ?? id;
+
+// Add / list / remove FreeLLMAPI provider keys without leaving the IDE. Targets
+// the configured AI host (or the local server when blank).
+function ProviderKeys({ serverUrl }: { serverUrl?: string }) {
+  const [keys, setKeys] = useState<AiProviderKey[]>([]);
+  const [platform, setPlatform] = useState('groq');
+  const [value, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
+  const url = serverUrl || undefined;
+
+  const refresh = useCallback(() => {
+    window.strix.ai
+      .listKeys(url)
+      .then(setKeys)
+      .catch(() => setKeys([]));
+  }, [url]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const add = async () => {
+    const key = value.trim();
+    if (!key) return;
+    setBusy(true);
+    const res = await window.strix.ai.addKey(platform, key, url);
+    setBusy(false);
+    if (res.ok) {
+      setValue('');
+      showToast(`${platformLabel(platform)} key added`, 'success');
+      refresh();
+    } else {
+      showToast(res.error || 'Could not add key', 'error', 6000);
+    }
+  };
+
+  const remove = async (id: number) => {
+    await window.strix.ai.deleteKey(id, url);
+    showToast('API key removed', 'info');
+    refresh();
+  };
+
+  return (
+    <div className="set-keys">
+      <div className="set-keys-add">
+        <select
+          aria-label="Provider"
+          value={platform}
+          onChange={(e) => setPlatform(e.target.value)}
+        >
+          {KEY_PLATFORMS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+        <input
+          type="password"
+          aria-label="API key"
+          placeholder="Paste API key…"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') void add();
+          }}
+        />
+        <button type="button" className="set-save-btn" disabled={busy || !value.trim()} onClick={add}>
+          {busy ? 'Adding…' : 'Add key'}
+        </button>
+      </div>
+      {keys.length > 0 ? (
+        <ul className="set-keys-list" aria-label="Provider keys">
+          {keys.map((k) => (
+            <li key={k.id}>
+              <span className="set-key-platform">{platformLabel(k.platform)}</span>
+              <code className="set-key-mask">{k.maskedKey}</code>
+              <span className={`set-key-status set-key-${k.status}`}>{k.status}</span>
+              <button
+                type="button"
+                className="set-key-remove"
+                aria-label={`remove ${platformLabel(k.platform)} key`}
+                title="Remove key"
+                onClick={() => remove(k.id)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="set-keys-empty">
+          No provider keys yet. Add one above (Groq, Gemini, OpenRouter… are free) to power the AI.
+        </p>
+      )}
+    </div>
+  );
+}
 
 type SectionId = 'appearance' | 'editor' | 'ai' | 'security';
 
@@ -391,6 +506,17 @@ export function SettingsPage({
               onChange={(e) => onChange({ aiServerUrl: e.target.value })}
             />
           </Row>
+
+          <div className="set-row set-row-block">
+            <div className="set-info">
+              <div className="set-label">Provider API keys</div>
+              <div className="set-desc">
+                Add keys for the free LLM providers right here — no need to open the server&apos;s
+                web page. Keys are stored encrypted on the AI host above (local by default).
+              </div>
+            </div>
+          </div>
+          <ProviderKeys serverUrl={settings.aiServerUrl} />
         </section>
         )}
 

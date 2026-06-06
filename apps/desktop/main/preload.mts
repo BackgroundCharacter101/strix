@@ -60,6 +60,9 @@ const api: StrixApi = {
   ai: {
     config: (url) => ipcRenderer.invoke('ai:config', url),
     models: (url) => ipcRenderer.invoke('ai:models', url),
+    listKeys: (url) => ipcRenderer.invoke('ai:listKeys', url),
+    addKey: (platform, key, url) => ipcRenderer.invoke('ai:addKey', platform, key, url),
+    deleteKey: (id, url) => ipcRenderer.invoke('ai:deleteKey', id, url),
   },
   collab: {
     url: () => ipcRenderer.invoke('collab:url'),

@@ -70,6 +70,9 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     ai: {
       config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'test-key' })),
       models: vi.fn(async (): Promise<string[]> => ['auto']),
+      listKeys: vi.fn(async () => []),
+      addKey: vi.fn(async () => ({ ok: true })),
+      deleteKey: vi.fn(async () => ({ ok: true })),
     },
     collab: {
       url: vi.fn(async (): Promise<string | null> => null),

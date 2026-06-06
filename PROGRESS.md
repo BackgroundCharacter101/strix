@@ -422,6 +422,12 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **Add provider keys from the IDE:** Settings → AI now has a "Provider API keys"
+  manager (add/list/remove) that POSTs to FreeLLMAPI's `/api/keys` on the
+  configured host (local by default) — users no longer need to open
+  `localhost:3001`. Bridge: `ai.listKeys/addKey/deleteKey`. NOTE: the "AI server
+  URL" field is the *client* connection target only; the local server's port is
+  `FREELLMAPI_PORT` (default 3001) set at launch, not changed by this field.
 - **Settings: full-screen + fixed exit + more options:** Settings opens as a
   full-window overlay below the 34px title bar (window controls stay reachable);
   a prominent "Done" button + Esc both close it. Left section-nav (Appearance /

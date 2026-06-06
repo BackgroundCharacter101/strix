@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SettingsPage } from './SettingsPage';
 import { DEFAULT_SETTINGS } from './useSettings';
+import { makeStrixApi } from '../test-utils';
+
+beforeEach(() => {
+  window.strix = makeStrixApi();
+});
 
 function setup(overrides = {}) {
   const onChange = vi.fn();
@@ -44,6 +49,18 @@ describe('SettingsPage', () => {
     fireEvent.change(screen.getByLabelText('Search settings'), { target: { value: 'minimap' } });
     expect(screen.queryByLabelText('Tab size')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Minimap')).toBeInTheDocument();
+  });
+
+  it('adds a FreeLLMAPI provider key from the AI section', async () => {
+    const addKey = vi.fn(async () => ({ ok: true }));
+    window.strix = makeStrixApi({ ai: { addKey } });
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'AI' }));
+    fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'sk-test-123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add key' }));
+    await waitFor(() =>
+      expect(addKey).toHaveBeenCalledWith('groq', 'sk-test-123', undefined),
+    );
   });
 
   it('Save fires its handler', () => {
