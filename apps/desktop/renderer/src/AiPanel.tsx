@@ -3,9 +3,11 @@ import {
   runTask,
   complete,
   configureAi,
+  parseScaffold,
   type TaskType,
   type ChatMessage,
   type SecurityStance,
+  type ScaffoldPlan,
 } from '@strix/ai-gateway';
 import { CodeProposal } from './CodeProposal';
 import { SparkleIcon } from './icons';
@@ -76,6 +78,7 @@ export function AiPanel({
   securityPersonaText,
   workspaceKey,
   onConfigure,
+  onOpenPath,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -84,6 +87,8 @@ export function AiPanel({
   workspaceKey?: string | null;
   // Open Settings at the AI section (to add a provider key) when none exist.
   onConfigure?: () => void;
+  // Open a file by absolute path (used after the AI scaffolds a project).
+  onOpenPath?: (absPath: string) => void;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -360,6 +365,67 @@ export function AiPanel({
 
   const canRegenerate = !busy && history.some((m) => m.role === 'assistant');
 
+  // --- AI project scaffolder ------------------------------------------------
+  const [scaffold, setScaffold] = useState<ScaffoldPlan | null>(null);
+  const [applying, setApplying] = useState(false);
+
+  // Ask the AI for a whole-project file plan from the prompt in the composer.
+  const buildProject = async () => {
+    const desc = input.trim();
+    if (!desc || busy) return;
+    if (!workspaceKey) {
+      showToast('Open or create a project first, then describe what to build.', 'info', 6000);
+      return;
+    }
+    setBusy(true);
+    setStreaming('');
+    const controller = new AbortController();
+    abortRef.current = controller;
+    let raw = '';
+    try {
+      raw = await complete(
+        'scaffold',
+        { filePath: '', fileContent: '', userMessage: desc, projectContext, securityMode, securityStance, securityPersonaText },
+        { model, signal: controller.signal },
+      );
+    } catch {
+      if (!controller.signal.aborted) {
+        showToast('Build request failed — check the AI server / your key.', 'error', 6000);
+      }
+      setBusy(false);
+      abortRef.current = null;
+      return;
+    }
+    setBusy(false);
+    abortRef.current = null;
+    const plan = parseScaffold(raw);
+    if ('error' in plan) {
+      showToast(`Could not read the build plan: ${plan.error}`, 'error', 7000);
+      return;
+    }
+    setScaffold(plan);
+  };
+
+  // Write the approved plan to disk (paths are pre-validated as safe relatives).
+  const applyScaffold = async () => {
+    if (!scaffold || !workspaceKey) return;
+    setApplying(true);
+    try {
+      for (const f of scaffold.files) {
+        await window.strix.fs.write(`${workspaceKey}/${f.path}`, f.content);
+      }
+      showToast(`Created ${scaffold.files.length} file(s).`, 'success');
+      const first = scaffold.files[0];
+      if (first) onOpenPath?.(`${workspaceKey}/${first.path}`);
+      setInput('');
+      setScaffold(null);
+    } catch (e) {
+      showToast(`Write failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 7000);
+    } finally {
+      setApplying(false);
+    }
+  };
+
   const clearHistory = () => {
     setHistory([]);
     setStreaming('');
@@ -552,6 +618,15 @@ export function AiPanel({
             Refactor
           </button>
         </div>
+        <button
+          type="button"
+          className="ai-build-btn"
+          title="Describe an app above, then let the AI scaffold the whole project into this workspace"
+          disabled={busy || input.trim().length === 0}
+          onClick={() => void buildProject()}
+        >
+          <SparkleIcon size={13} /> Build project from prompt
+        </button>
         {onAskClaude && (
           <button
             type="button"
@@ -564,6 +639,43 @@ export function AiPanel({
           </button>
         )}
       </div>
+
+      {scaffold && (
+        <div className="palette-overlay" onMouseDown={() => !applying && setScaffold(null)}>
+          <div
+            className="dialog scaffold-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirm project build"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <h2 className="dialog-title">Build project — {scaffold.files.length} file(s)</h2>
+            {scaffold.notes && <p className="scaffold-notes">{scaffold.notes}</p>}
+            <ul className="scaffold-list">
+              {scaffold.files.map((f) => (
+                <li key={f.path}>{f.path}</li>
+              ))}
+            </ul>
+            <p className="scaffold-warn">
+              Files are written into the current project (existing files with the same path are
+              overwritten).
+            </p>
+            <div className="dialog-actions">
+              <button
+                type="button"
+                className="ai-ghost-btn"
+                onClick={() => setScaffold(null)}
+                disabled={applying}
+              >
+                Cancel
+              </button>
+              <button type="button" onClick={() => void applyScaffold()} disabled={applying}>
+                {applying ? 'Creating…' : 'Create files'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

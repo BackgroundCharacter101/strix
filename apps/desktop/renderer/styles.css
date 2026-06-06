@@ -2757,6 +2757,53 @@ kbd {
   border-color: var(--accent);
 }
 
+/* "Build project from prompt" — the AI scaffolder action. */
+.ai-build-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: var(--accent-gradient);
+  color: var(--accent-ink);
+  border: none;
+  font-weight: var(--weight-medium);
+}
+.ai-build-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+/* Scaffold confirmation dialog. */
+.scaffold-dialog {
+  width: min(520px, 92vw);
+  text-align: left;
+}
+.scaffold-notes {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.scaffold-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  max-height: 240px;
+  overflow: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.scaffold-list li {
+  padding: 1px 0;
+}
+.scaffold-warn {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .ai-claude-btn {
   display: inline-flex;
   align-items: center;

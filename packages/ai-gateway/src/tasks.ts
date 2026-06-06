@@ -8,6 +8,7 @@ export const TASK_MODEL_PREFERENCE: Record<TaskType, string> = {
   generate: 'auto',
   refactor: 'auto',
   vuln_check: 'auto',
+  scaffold: 'auto', // whole-project generation: best available
 };
 
 // Only autocomplete has a spec'd cap (§8.1: keep completions short and fast).

@@ -422,6 +422,14 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **New Project + AI project scaffolder:** Welcome / File menu / palette gain
+  New Project… / New File… / New Folder… (`workspace.newProject`). The AI panel
+  gains "Build project from prompt": `complete('scaffold')` returns a strict JSON
+  file plan, parsed/validated by `parseScaffold`/`isSafeRelPath` in ai-gateway
+  (rejects `..`/absolute/drive paths, caps file count+size), shown in a
+  confirmation modal, then written into the workspace via `fs.write` (mkdir -p),
+  opening the first file. Full agentic project builds still also available via
+  Claude Code.
 - **Troubleshooting batch (audit + 4 enhancements):** full audit (0 vulns, clean
   scan, IPC/Electron hardening verified). Fixes: AI Stop now cancels Fix/Refactor
   + real AI failures show a toast. Additions: (1) Copy button on code blocks +

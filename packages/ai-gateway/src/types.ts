@@ -5,7 +5,8 @@ export type TaskType =
   | 'fix'
   | 'generate'
   | 'refactor'
-  | 'vuln_check';
+  | 'vuln_check'
+  | 'scaffold';
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';

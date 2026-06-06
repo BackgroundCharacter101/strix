@@ -967,6 +967,10 @@ export default function App() {
                       setSettingsSection('ai');
                       setSettingsOpen(true);
                     }}
+                    onOpenPath={(p) => {
+                      activeTabs.open(p);
+                      setTreeNonce((n) => n + 1);
+                    }}
                   />
                 </aside>
               </>

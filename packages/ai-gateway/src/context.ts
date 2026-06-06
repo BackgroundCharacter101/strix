@@ -12,6 +12,13 @@ const SYSTEM_PROMPTS: Record<TaskType, string> = {
     'You are a coding assistant. Refactor the selected code while preserving its behavior.',
   vuln_check:
     'You are a security analyst. Inspect the code for vulnerabilities. Report the risk level, the vulnerability class (e.g. SQL injection, XSS, buffer overflow), and a suggested fix.',
+  scaffold:
+    'You are a project scaffolder inside the Strix IDE. The user describes an app to build. ' +
+    'Respond with ONLY a JSON object — no prose, no markdown fences — of the form: ' +
+    '{"files":[{"path":"relative/path/with/forward-slashes","content":"full file contents"}],"notes":"one short sentence"}. ' +
+    'Paths are relative to the project root: use forward slashes, no leading slash, no "..", no drive letters. ' +
+    'Include every file needed to run (source, config, a README, and a package manifest if relevant). ' +
+    'Keep it focused and reasonably small; do not include node_modules or build output.',
 };
 
 // The default security persona used in Strix Cybersec mode: a shared `base`

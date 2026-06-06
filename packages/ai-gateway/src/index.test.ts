@@ -9,7 +9,7 @@ import type { ChatMessage } from './types';
 describe('TASK_MODEL_PREFERENCE', () => {
   it('routes every task type to FreeLLMAPI auto', () => {
     const values = Object.values(TASK_MODEL_PREFERENCE);
-    expect(values).toHaveLength(7);
+    expect(values).toHaveLength(8);
     expect(values.every((v) => v === 'auto')).toBe(true);
   });
 });

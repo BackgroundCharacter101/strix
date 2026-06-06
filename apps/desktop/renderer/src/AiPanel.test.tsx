@@ -8,7 +8,11 @@ const { runTask, configureAi, complete } = vi.hoisted(() => ({
   configureAi: vi.fn(),
   complete: vi.fn(),
 }));
-vi.mock('@strix/ai-gateway', () => ({ runTask, configureAi, complete }));
+vi.mock('@strix/ai-gateway', async (importActual) => {
+  const actual = await importActual<typeof import('@strix/ai-gateway')>();
+  // Keep the real pure helpers (parseScaffold, etc.); stub the network calls.
+  return { ...actual, runTask, configureAi, complete };
+});
 vi.mock('@strix/editor', () => ({
   languageForPath: () => 'typescript',
   DiffViewer: ({ original, modified }: { original: string; modified: string }) => (
@@ -211,6 +215,30 @@ describe('AiPanel', () => {
     await waitFor(() =>
       expect(screen.queryByRole('button', { name: 'Add a key' })).not.toBeInTheDocument(),
     );
+  });
+
+  it('scaffolds a project from a prompt and writes files on confirm', async () => {
+    complete.mockResolvedValue(
+      '{"files":[{"path":"src/index.ts","content":"export const x = 1;"}],"notes":"demo"}',
+    );
+    const write = vi.fn(async () => {});
+    const onOpenPath = vi.fn();
+    window.strix = makeStrixApi({ fs: { write } });
+    render(
+      <AiPanel filePath={null} fileContent="" workspaceKey="/ws" onOpenPath={onOpenPath} />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'a todo app' } });
+    fireEvent.click(screen.getByRole('button', { name: /Build project/ }));
+
+    // Confirmation preview lists the planned file.
+    await screen.findByText('src/index.ts');
+    fireEvent.click(screen.getByRole('button', { name: 'Create files' }));
+
+    await waitFor(() =>
+      expect(write).toHaveBeenCalledWith('/ws/src/index.ts', 'export const x = 1;'),
+    );
+    await waitFor(() => expect(onOpenPath).toHaveBeenCalledWith('/ws/src/index.ts'));
   });
 
   it('hands the question off to Claude Code', async () => {
