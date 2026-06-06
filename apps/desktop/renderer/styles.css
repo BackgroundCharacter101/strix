@@ -471,15 +471,15 @@ body {
   padding: 4px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: var(--accent-ink);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background var(--ease, 0.15s);
+  transition: filter var(--ease, 0.15s);
 }
 
 .set-save-btn:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.08);
 }
 
 .set-save-btn svg {
@@ -1468,7 +1468,7 @@ kbd {
   justify-content: space-between;
   height: 22px;
   flex: 0 0 auto;
-  background: var(--statusbar);
+  background: var(--accent-gradient);
   color: var(--statusbar-ink);
   font-size: 12px;
 }
@@ -2395,7 +2395,7 @@ kbd {
 }
 .ai-config-btn {
   flex: 0 0 auto;
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: var(--accent-ink);
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
@@ -2404,7 +2404,7 @@ kbd {
   cursor: pointer;
 }
 .ai-config-btn:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.08);
 }
 
 .ai-thread {
@@ -2829,18 +2829,18 @@ kbd {
 
 /* ---- Controls ----------------------------------------------------------- */
 button {
-  background: var(--accent);
+  background: var(--accent-gradient);
   color: var(--accent-ink);
   border: none;
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+  transition: filter 0.12s ease, color 0.12s ease, opacity 0.12s ease;
 }
 
 button:hover:not(:disabled) {
-  background: var(--accent-hover);
+  filter: brightness(1.08);
 }
 
 button:disabled {
