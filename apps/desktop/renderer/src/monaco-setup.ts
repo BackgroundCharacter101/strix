@@ -153,7 +153,7 @@ function defineStrixThemes(accent: string) {
   });
 }
 
-defineStrixThemes('#e8a33d');
+defineStrixThemes('#e3b341');
 
 // Re-define the Strix themes with a new accent and refresh the active editor.
 export function applyAccent(accentHex: string, activeTheme: string) {

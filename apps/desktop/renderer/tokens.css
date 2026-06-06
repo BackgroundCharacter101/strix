@@ -31,11 +31,12 @@
   --blue-200: #4db5ff;
 
   /* Strix signature amber ("owl eyes in the dark") */
-  --amber-600: #c9802a;
-  --amber-500: #e8a33d;
-  --amber-400: #f4b860;
-  --amber-300: #e2c08d;
-  --amber-ink: #231a07; /* near-black text for legibility on amber fills */
+  /* Strix gold — richer/less-orange than the old amber (owl eyes in the dark). */
+  --amber-600: #c08a22;
+  --amber-500: #e3b341;
+  --amber-400: #f2cc60;
+  --amber-300: #e8d29a;
+  --amber-ink: #231a07; /* near-black text for legibility on gold fills */
 
   /* File-type accents (badges) */
   --c-ts: #4db5ff;
@@ -111,7 +112,7 @@
   --accent: var(--amber-500);
   --accent-hover: var(--amber-400);
   --accent-ink: var(--amber-ink); /* text/icon colour on top of accent fills */
-  --selection: rgba(232, 163, 61, 0.22); /* translucent amber wash for selected rows */
+  --selection: rgba(227, 179, 65, 0.22); /* translucent gold wash for selected rows */
   --link: var(--amber-400);
 
   /* Status bar — the signature amber stripe */
@@ -205,14 +206,14 @@
    surfaces/text). document.documentElement[data-accent] selects one.
    ========================================================================= */
 :root[data-accent='amber'] {
-  --accent: #e8a33d;
-  --accent-hover: #f4b860;
+  --accent: #e3b341;
+  --accent-hover: #f2cc60;
   --accent-ink: #231a07;
-  --selection: rgba(232, 163, 61, 0.22);
-  --statusbar: #e8a33d;
-  --statusbar-hover: #f4b860;
+  --selection: rgba(227, 179, 65, 0.22);
+  --statusbar: #e3b341;
+  --statusbar-hover: #f2cc60;
   --statusbar-ink: #231a07;
-  --link: #f4b860;
+  --link: #f2cc60;
 }
 :root[data-accent='violet'] {
   --accent: #7c5cff;

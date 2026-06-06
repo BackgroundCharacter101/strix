@@ -12,7 +12,7 @@ export const THEMES = [
 export type ThemeId = (typeof THEMES)[number]['id'];
 
 export const ACCENTS = [
-  { id: 'amber', label: 'Amber', hex: '#e8a33d' },
+  { id: 'amber', label: 'Gold', hex: '#e3b341' },
   { id: 'violet', label: 'Violet', hex: '#7c5cff' },
   { id: 'teal', label: 'Teal', hex: '#1fb6a6' },
   { id: 'emerald', label: 'Emerald', hex: '#2ea36b' },
@@ -22,7 +22,7 @@ export const ACCENTS = [
 export type AccentId = (typeof ACCENTS)[number]['id'];
 
 export function accentHex(id: string): string {
-  return ACCENTS.find((a) => a.id === id)?.hex ?? '#e8a33d';
+  return ACCENTS.find((a) => a.id === id)?.hex ?? '#e3b341';
 }
 
 // Light theme uses the 'vs'-based Monaco theme; every dark theme uses 'vs-dark'.
