@@ -9,7 +9,7 @@ export interface FileBuffer {
   dirty: boolean;
   saving: boolean;
   saveError: string | null;
-  save: () => Promise<void>;
+  save: (value?: string) => Promise<void>;
 }
 
 // Owns the editable buffer for a file: loads on-disk content, tracks the live
@@ -29,21 +29,26 @@ export function useFileBuffer(path: string | null): FileBuffer {
 
   const dirty = draft !== saved;
 
-  const save = useCallback(async () => {
-    if (!path) {
-      return;
-    }
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await window.strix.fs.write(path, draft);
-      setSaved(draft);
-    } catch (e: unknown) {
-      setSaveError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }, [path, draft]);
+  const save = useCallback(
+    async (valueOverride?: string) => {
+      if (!path) {
+        return;
+      }
+      const text = valueOverride ?? draft;
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await window.strix.fs.write(path, text);
+        setDraft(text);
+        setSaved(text);
+      } catch (e: unknown) {
+        setSaveError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [path, draft],
+  );
 
   return { draft, setDraft, loading, error, dirty, saving, saveError, save };
 }

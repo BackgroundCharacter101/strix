@@ -12,10 +12,15 @@ export interface TerminalProps {
   bootCommand?: string;
   // A local message written to the terminal on open (not sent to the PTY).
   notice?: string;
+  // Font, following the editor settings.
+  fontSize?: number;
+  fontFamily?: string;
 }
 
-export function Terminal({ cwd, bootCommand, notice }: TerminalProps) {
+export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const termRef = useRef<XTerm | null>(null);
+  const fitRef = useRef<FitAddon | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -23,8 +28,14 @@ export function Terminal({ cwd, bootCommand, notice }: TerminalProps) {
       return;
     }
 
-    const term = new XTerm({ convertEol: true, fontSize: 13 });
+    const term = new XTerm({
+      convertEol: true,
+      fontSize: fontSize ?? 13,
+      fontFamily: fontFamily || 'Cascadia Code, Consolas, monospace',
+    });
+    termRef.current = term;
     const fit = new FitAddon();
+    fitRef.current = fit;
     term.loadAddon(fit);
     term.open(el);
     fit.fit();
@@ -81,6 +92,15 @@ export function Terminal({ cwd, bootCommand, notice }: TerminalProps) {
       term.dispose();
     };
   }, []);
+
+  // Apply font changes from Settings to the live terminal (no PTY restart).
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    term.options.fontSize = fontSize ?? 13;
+    term.options.fontFamily = fontFamily || 'Cascadia Code, Consolas, monospace';
+    fitRef.current?.fit();
+  }, [fontSize, fontFamily]);
 
   return <div className="terminal-host" aria-label="terminal" ref={containerRef} />;
 }

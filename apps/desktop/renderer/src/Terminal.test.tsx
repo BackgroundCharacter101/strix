@@ -15,6 +15,7 @@ vi.mock('@xterm/xterm', () => ({
   Terminal: class {
     cols = 80;
     rows = 24;
+    options: Record<string, unknown> = {};
     loadAddon() {}
     open() {}
     write(data: string) {

@@ -28,6 +28,8 @@ export interface Settings {
   density: 'comfortable' | 'compact';
   // Disable non-essential UI animations (accessibility / low-power).
   reduceMotion: boolean;
+  // Format the document with the language formatter on every save.
+  formatOnSave: boolean;
   // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
   autoSave: boolean;
   autoSaveSeconds: number;
@@ -64,6 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   scrollBeyondLastLine: false,
   density: 'comfortable',
   reduceMotion: false,
+  formatOnSave: false,
   autoSave: true,
   autoSaveSeconds: 60,
   aiServerUrl: '',

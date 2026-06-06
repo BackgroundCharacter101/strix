@@ -159,8 +159,9 @@ export function FileViewer({
   rootPath?: string | null;
   editorOptions?: EditorOptions;
   theme?: string;
-  // Hands a "format the document" callback up to App (null on unmount).
-  registerFormat?: (run: (() => void) | null) => void;
+  // Hands a "format the document" callback up to App (null on unmount). The
+  // callback formats the buffer and resolves with the formatted text.
+  registerFormat?: (run: (() => Promise<string | null>) | null) => void;
   // Explain/Fix on the current editor selection (floating toolbar).
   onSelectionAction?: (kind: 'explain' | 'fix', selection: string) => void;
 }) {
@@ -259,7 +260,7 @@ export function FileViewer({
   return (
     <div className="file-viewer">
       <div className="toolbar">
-        <button type="button" onClick={buffer.save} disabled={!buffer.dirty || buffer.saving}>
+        <button type="button" onClick={() => void buffer.save()} disabled={!buffer.dirty || buffer.saving}>
           {buffer.saving ? 'Saving…' : 'Save'}
         </button>
         {buffer.dirty && (
@@ -392,9 +393,11 @@ export function FileViewer({
             }
 
             // Expose a Format Document action to App-level commands/shortcuts.
+            // Returns the formatted text so format-on-save can persist it.
             if (registerFormat) {
-              registerFormat(() => {
-                void editor.getAction('editor.action.formatDocument')?.run();
+              registerFormat(async () => {
+                await editor.getAction('editor.action.formatDocument')?.run();
+                return editor.getModel()?.getValue() ?? null;
               });
               disposers.push(() => registerFormat(null));
             }

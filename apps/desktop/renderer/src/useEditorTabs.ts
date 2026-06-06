@@ -82,21 +82,30 @@ export function useEditorTabs(): EditorTabsApi {
     [activePath],
   );
 
-  const save = useCallback(async () => {
-    if (!activePath) return;
-    const buf = bufs[activePath];
-    if (!buf) return;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await window.strix.fs.write(activePath, buf.draft);
-      setBufs((prev) => ({ ...prev, [activePath]: { ...prev[activePath], saved: buf.draft } }));
-    } catch (e: unknown) {
-      setSaveError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }, [activePath, bufs]);
+  const save = useCallback(
+    async (valueOverride?: string) => {
+      if (!activePath) return;
+      const buf = bufs[activePath];
+      if (!buf) return;
+      // An override (e.g. format-on-save) writes that exact text and syncs the
+      // buffer to it, avoiding any stale-draft race.
+      const text = valueOverride ?? buf.draft;
+      setSaving(true);
+      setSaveError(null);
+      try {
+        await window.strix.fs.write(activePath, text);
+        setBufs((prev) => ({
+          ...prev,
+          [activePath]: { ...prev[activePath], draft: text, saved: text },
+        }));
+      } catch (e: unknown) {
+        setSaveError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setSaving(false);
+      }
+    },
+    [activePath, bufs],
+  );
 
   const saveAll = useCallback(async () => {
     const dirtyEntries = Object.entries(bufs).filter(([, b]) => b.draft !== b.saved);

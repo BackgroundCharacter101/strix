@@ -39,12 +39,17 @@ function claudeCommand(prompt?: string): string {
 export function TerminalTabs({
   cwd,
   launch = { nonce: 0 },
+  fontSize,
+  fontFamily,
 }: {
   cwd?: string;
   // Bumping nonce (from a command / menu / AI hand-off) opens a session. With no
   // command it's a Claude Code session (optionally seeded with a prompt); with a
   // command it's a generic run target (e.g. "npm run dev") in a titled tab.
   launch?: { nonce: number; prompt?: string; command?: string; title?: string };
+  // Terminal font, following the editor settings.
+  fontSize?: number;
+  fontFamily?: string;
 }) {
   const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0 }]);
   const [active, setActive] = useState(0);
@@ -144,7 +149,13 @@ export function TerminalTabs({
             className="terminal-slot"
             style={{ display: tab.id === active ? 'block' : 'none' }}
           >
-            <Terminal cwd={cwd} bootCommand={tab.bootCommand} notice={tab.notice} />
+            <Terminal
+              cwd={cwd}
+              bootCommand={tab.bootCommand}
+              notice={tab.notice}
+              fontSize={fontSize}
+              fontFamily={fontFamily}
+            />
           </div>
         ))}
       </div>

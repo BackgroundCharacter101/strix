@@ -467,6 +467,14 @@ export function SettingsPage({
               onChange={(e) => onChange({ minimap: e.target.checked })}
             />
           </Row>
+          <Row query={query} label="Format on save" desc="Run the language formatter when you save a file.">
+            <input
+              type="checkbox"
+              aria-label="Format on save"
+              checked={settings.formatOnSave}
+              onChange={(e) => onChange({ formatOnSave: e.target.checked })}
+            />
+          </Row>
           <Row query={query} label="Auto save" desc="Periodically write unsaved changes to disk.">
             <input
               type="checkbox"

@@ -175,10 +175,10 @@ export default function App() {
   }, [settings.autoSave, settings.autoSaveSeconds]);
 
   const chordRef = useRef(false);
-  const formatRef = useRef<(() => void) | null>(null);
+  const formatRef = useRef<(() => Promise<string | null>) | null>(null);
   const zenRef = useRef(false);
   const settingsRef = useRef(false);
-  const registerFormat = useCallback((fn: (() => void) | null) => {
+  const registerFormat = useCallback((fn: (() => Promise<string | null>) | null) => {
     formatRef.current = fn;
   }, []);
 
@@ -192,6 +192,23 @@ export default function App() {
     const filePath = await window.strix.workspace.openFile();
     if (filePath) activeTabs.open(filePath);
   }, [activeTabs]);
+
+  // Save the active file; with format-on-save, format first and persist the
+  // formatted text directly (so no stale-draft race).
+  const saveActive = async () => {
+    const t = activeTabs.active;
+    if (!t) return;
+    if (settings.formatOnSave && formatRef.current) {
+      try {
+        const formatted = await formatRef.current();
+        await t.save(formatted ?? undefined);
+        return;
+      } catch {
+        /* fall back to a plain save below */
+      }
+    }
+    await t.save();
+  };
 
   // Cycle the editor layout 1 → 2 → 3 → 1 group(s). Each step opens the active
   // file in the newly added group and focuses it; wrapping back to 1 collapses.
@@ -320,7 +337,7 @@ export default function App() {
       // Shift+Alt+F — Format Document (no Ctrl, so handle before the guard).
       if (e.altKey && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
-        formatRef.current?.();
+        void formatRef.current?.();
         return;
       }
       // Ctrl+K then S / Z chords.
@@ -350,7 +367,7 @@ export default function App() {
       switch (e.key.toLowerCase()) {
         case 's':
           e.preventDefault();
-          void activeTabs.active?.save();
+          void saveActive();
           break;
         case 'b':
           e.preventDefault();
@@ -501,7 +518,7 @@ export default function App() {
       run: () => setShortcutsOpen(true),
     },
     { id: 'lang.manage', label: 'Languages & Extensions…', detail: '', run: () => selectView('extensions') },
-    { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void activeTabs.active?.save() },
+    { id: 'file.save', label: 'File: Save', detail: 'Ctrl+S', run: () => void saveActive() },
     {
       id: 'file.saveAll',
       label: 'File: Save All',
@@ -513,7 +530,7 @@ export default function App() {
     },
     { id: 'view.split', label: 'View: Split Editor (cycle 1/2/3)', detail: 'Ctrl+\\', run: cycleSplit },
     { id: 'view.unsplit', label: 'View: Unsplit Editor', detail: '', run: unsplit },
-    { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => formatRef.current?.() },
+    { id: 'editor.format', label: 'Format Document', detail: 'Shift+Alt+F', run: () => void formatRef.current?.() },
     {
       id: 'view.closeEditor',
       label: 'View: Close Editor',
@@ -864,7 +881,12 @@ export default function App() {
             <>
               <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
               <section className="panel" style={{ height: terminal.size }}>
-                <TerminalTabs cwd={root ?? undefined} launch={claudeLaunch} />
+                <TerminalTabs
+                  cwd={root ?? undefined}
+                  launch={claudeLaunch}
+                  fontSize={settings.fontSize}
+                  fontFamily={settings.fontFamily || undefined}
+                />
               </section>
             </>
           )}
