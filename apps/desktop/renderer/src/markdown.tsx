@@ -84,6 +84,25 @@ function cellAlign(sep: string): Align {
   return undefined;
 }
 
+// A fenced code block with a Copy button (overlaid top-right).
+function CodeBlock({ code }: { code: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const copy = () => {
+    void navigator.clipboard?.writeText(code).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    });
+  };
+  return (
+    <pre className="md-pre">
+      <button type="button" className="md-copy" onClick={copy} aria-label="Copy code">
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+      <code>{code}</code>
+    </pre>
+  );
+}
+
 export function renderMarkdown(src: string): React.ReactNode[] {
   const lines = src.replace(/\r\n/g, '\n').split('\n');
   const blocks: React.ReactNode[] = [];
@@ -106,11 +125,7 @@ export function renderMarkdown(src: string): React.ReactNode[] {
       const code: string[] = [];
       li++;
       while (li < lines.length && !/^```/.test(lines[li])) code.push(lines[li++]);
-      blocks.push(
-        <pre key={`pre${key++}`}>
-          <code>{code.join('\n')}</code>
-        </pre>,
-      );
+      blocks.push(<CodeBlock key={`pre${key++}`} code={code.join('\n')} />);
       continue;
     }
 

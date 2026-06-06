@@ -2608,6 +2608,32 @@ kbd {
   overflow-x: auto;
 }
 
+/* Copy button on fenced code blocks (AI replies + markdown preview). */
+.md-pre {
+  position: relative;
+}
+.md-copy {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.12s ease;
+}
+.md-pre:hover .md-copy,
+.md-copy:focus-visible {
+  opacity: 1;
+}
+.md-copy:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 .ai-md pre code {
   display: block;
   background: none;
@@ -2765,8 +2791,24 @@ kbd {
 
 .ai-routed {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   color: var(--text-muted);
   font-size: 11px;
+}
+.ai-regen-btn {
+  all: unset;
+  cursor: pointer;
+  color: var(--link);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+.ai-regen-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
 }
 
 /* ---- Terminal ----------------------------------------------------------- */

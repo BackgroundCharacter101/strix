@@ -314,6 +314,52 @@ export function AiPanel({
     }
   };
 
+  // Re-run the most recent user turn (drops the last assistant reply first).
+  const regenerate = async () => {
+    let lastUser = -1;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].role === 'user') {
+        lastUser = i;
+        break;
+      }
+    }
+    if (lastUser === -1 || busy) return;
+    const userMessage = history[lastUser].content;
+    const prior = history.slice(0, lastUser);
+    setHistory(history.slice(0, lastUser + 1));
+    setBusy(true);
+    setStreaming('');
+    setRoutedVia(null);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    let acc = '';
+    try {
+      await runTask(
+        'chat',
+        { filePath: filePath ?? '', fileContent, userMessage, history: prior, projectContext, securityMode, securityStance, securityPersonaText },
+        {
+          onToken: (token) => {
+            acc += token;
+            setStreaming(acc);
+          },
+          onDone: (via) => setRoutedVia(via),
+        },
+        { model, signal: controller.signal },
+      );
+    } catch {
+      if (!controller.signal.aborted) {
+        showToast('AI request failed — check the AI server / your key.', 'error', 6000);
+      }
+    } finally {
+      setBusy(false);
+      abortRef.current = null;
+    }
+    setHistory((h) => [...h, { role: 'assistant', content: acc }]);
+    setStreaming('');
+  };
+
+  const canRegenerate = !busy && history.some((m) => m.role === 'assistant');
+
   const clearHistory = () => {
     setHistory([]);
     setStreaming('');
@@ -446,7 +492,16 @@ export function AiPanel({
         </div>
       )}
 
-      {routedVia && <div className="ai-routed">Routed via: {routedVia}</div>}
+      {(routedVia || canRegenerate) && (
+        <div className="ai-routed">
+          {routedVia && <span>Routed via: {routedVia}</span>}
+          {canRegenerate && (
+            <button type="button" className="ai-regen-btn" onClick={regenerate}>
+              ↻ Regenerate
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="ai-composer">
         <textarea
