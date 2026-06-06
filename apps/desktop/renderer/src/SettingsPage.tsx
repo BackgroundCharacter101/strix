@@ -158,6 +158,7 @@ export function SettingsPage({
   onReset,
   onClose,
   onSave,
+  initialSection = 'appearance',
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
@@ -165,9 +166,11 @@ export function SettingsPage({
   onClose: () => void;
   // Explicitly persist the current settings (they already apply live).
   onSave?: () => void;
+  // Section to open at (deep-link, e.g. "ai" from the AI panel's config prompt).
+  initialSection?: SectionId;
 }) {
   const [query, setQuery] = useState('');
-  const [activeSection, setActiveSection] = useState<SectionId>('appearance');
+  const [activeSection, setActiveSection] = useState<SectionId>(initialSection);
   const searching = query.trim() !== '';
   // While searching, show every section so matches surface; otherwise show only
   // the selected one (a clean, tabbed full-screen layout).

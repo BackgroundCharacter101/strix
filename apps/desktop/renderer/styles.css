@@ -2371,6 +2371,42 @@ kbd {
   border-color: var(--accent);
 }
 
+/* "AI not configured" prompt — shown when no provider key exists. */
+.ai-config-banner {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--selection);
+  border-radius: var(--radius-md);
+}
+.ai-config-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.ai-config-text span {
+  color: var(--text-muted);
+}
+.ai-config-btn {
+  flex: 0 0 auto;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 5px 11px;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+.ai-config-btn:hover {
+  background: var(--accent-hover);
+}
+
 .ai-thread {
   flex: 1 1 auto;
   min-height: 80px;

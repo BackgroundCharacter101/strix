@@ -152,6 +152,31 @@ describe('AiPanel', () => {
     );
   });
 
+  it('prompts to add a key when the AI has no provider key configured', async () => {
+    const onConfigure = vi.fn();
+    // makeStrixApi's listKeys returns [] by default → not configured.
+    render(<AiPanel filePath={null} fileContent="" onConfigure={onConfigure} />);
+    const btn = await screen.findByRole('button', { name: 'Add a key' });
+    fireEvent.click(btn);
+    expect(onConfigure).toHaveBeenCalled();
+  });
+
+  it('hides the config prompt once a provider key exists', async () => {
+    window.strix = makeStrixApi({
+      ai: {
+        config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'k' })),
+        models: vi.fn(async () => ['auto']),
+        listKeys: vi.fn(async () => [
+          { id: 1, platform: 'groq', label: '', maskedKey: 'gsk_…abcd', status: 'valid', enabled: true },
+        ]),
+      },
+    });
+    render(<AiPanel filePath={null} fileContent="" onConfigure={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Add a key' })).not.toBeInTheDocument(),
+    );
+  });
+
   it('hands the question off to Claude Code', async () => {
     const onAskClaude = vi.fn();
     render(<AiPanel filePath="/ws/a.ts" fileContent="x" onAskClaude={onAskClaude} />);

@@ -56,6 +56,10 @@ export default function App() {
   const [cloneOpen, setCloneOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Which Settings section to open at (deep-link, e.g. from the AI panel).
+  const [settingsSection, setSettingsSection] = useState<
+    'appearance' | 'editor' | 'ai' | 'security'
+  >('appearance');
   const [aboutOpen, setAboutOpen] = useState(false);
   const [claudeLaunch, setClaudeLaunch] = useState<{
     nonce: number;
@@ -828,6 +832,10 @@ export default function App() {
                     onSecurityStanceChange={(s) => updateSettings({ securityStance: s })}
                     securityPersonaText={`${settings.securityPersona.base} ${settings.securityPersona[settings.securityStance]}`}
                     workspaceKey={root}
+                    onConfigure={() => {
+                      setSettingsSection('ai');
+                      setSettingsOpen(true);
+                    }}
                   />
                 </aside>
               </>
@@ -864,6 +872,7 @@ export default function App() {
             onReset={() => updateSettings(DEFAULT_SETTINGS)}
             onClose={() => setSettingsOpen(false)}
             onSave={() => updateSettings({})}
+            initialSection={settingsSection}
           />
         </div>
       )}

@@ -74,12 +74,15 @@ export function AiPanel({
   onSecurityStanceChange,
   securityPersonaText,
   workspaceKey,
+  onConfigure,
 }: {
   filePath: string | null;
   fileContent: string;
   onApplyEdit?: (content: string) => void;
   // Workspace root — AI chat history is saved/loaded per project.
   workspaceKey?: string | null;
+  // Open Settings at the AI section (to add a provider key) when none exist.
+  onConfigure?: () => void;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -106,6 +109,8 @@ export function AiPanel({
   const [routedVia, setRoutedVia] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [proposal, setProposal] = useState<{ original: string; suggested: string } | null>(null);
+  // null = unknown/checking; true/false = whether any provider key is configured.
+  const [hasKeys, setHasKeys] = useState<boolean | null>(null);
   // Compact whole-project context (name + file tree) so the AI can answer
   // questions about the project even with no file open. Loaded per workspace.
   const [projectContext, setProjectContext] = useState('');
@@ -120,6 +125,30 @@ export function AiPanel({
     const url = aiServerUrl || undefined;
     window.strix.ai.config(url).then(configureAi);
     window.strix.ai.models(url).then(setModels);
+  }, [aiServerUrl]);
+
+  // Detect whether any provider key is configured, so we can prompt the user to
+  // add one. Re-checks when the server changes and when the window regains focus
+  // (e.g. right after adding a key in Settings).
+  useEffect(() => {
+    const url = aiServerUrl || undefined;
+    let cancelled = false;
+    const check = () => {
+      window.strix.ai
+        .listKeys(url)
+        .then((keys) => {
+          if (!cancelled) setHasKeys(keys.length > 0);
+        })
+        .catch(() => {
+          if (!cancelled) setHasKeys(null);
+        });
+    };
+    check();
+    window.addEventListener('focus', check);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', check);
+    };
   }, [aiServerUrl]);
 
   // Reload the conversation when the workspace changes (per-project chat).
@@ -290,6 +319,20 @@ export function AiPanel({
           ))}
         </select>
       </div>
+
+      {hasKeys === false && (
+        <div className="ai-config-banner" role="status">
+          <div className="ai-config-text">
+            <strong>AI not configured</strong>
+            <span>Add a provider key (Groq, Gemini, OpenRouter… are free) to start chatting.</span>
+          </div>
+          {onConfigure && (
+            <button type="button" className="ai-config-btn" onClick={onConfigure}>
+              Add a key
+            </button>
+          )}
+        </div>
+      )}
 
       {securityMode && (
         <div className="ai-stance" role="group" aria-label="security AI stance">
