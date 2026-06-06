@@ -22,6 +22,7 @@ import {
   openFolderDialog,
   openFileDialog,
   cloneRepo,
+  newProjectDialog,
 } from './workspace.js';
 import { BrowserWindow } from 'electron';
 import { searchInFiles } from './search.js';
@@ -53,6 +54,9 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle('workspace:clone', (event, url: string) =>
     cloneRepo(BrowserWindow.fromWebContents(event.sender), url),
+  );
+  ipcMain.handle('workspace:newProject', (event, name: string) =>
+    newProjectDialog(BrowserWindow.fromWebContents(event.sender), name),
   );
   ipcMain.handle('search:find', (_event, query: string) => searchInFiles(getRoot(), query));
 

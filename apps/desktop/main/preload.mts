@@ -15,6 +15,7 @@ const api: StrixApi = {
     open: () => ipcRenderer.invoke('workspace:open'),
     openFile: () => ipcRenderer.invoke('workspace:openFile'),
     clone: (url) => ipcRenderer.invoke('workspace:clone', url),
+    newProject: (name) => ipcRenderer.invoke('workspace:newProject', name),
   },
   git: {
     status: (rootPath) => ipcRenderer.invoke('git:status', rootPath),

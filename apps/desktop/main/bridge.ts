@@ -24,6 +24,8 @@ export interface StrixWorkspaceApi {
   openFile(): Promise<string | null>;
   // Clones a git repo into a chosen parent dir; returns the new repo root, or null.
   clone(url: string): Promise<string | null>;
+  // Creates a named project folder under a chosen parent; returns its path, or null.
+  newProject(name: string): Promise<string | null>;
 }
 
 export interface StrixGitApi {

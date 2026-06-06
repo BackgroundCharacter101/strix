@@ -136,6 +136,9 @@ export function FileViewer({
   onOpenFile,
   onCloneRepo,
   onLanguages,
+  onNewProject,
+  onNewFile,
+  onNewFolder,
   recents,
   onOpenRecent,
   rootPath,
@@ -152,6 +155,9 @@ export function FileViewer({
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
   onLanguages?: () => void;
+  onNewProject?: () => void;
+  onNewFile?: () => void;
+  onNewFolder?: () => void;
   // Recently opened folders (most-recent first) + open-one callback.
   recents?: string[];
   onOpenRecent?: (path: string) => void;
@@ -178,8 +184,13 @@ export function FileViewer({
         </div>
         <div className="welcome-logo">Strix</div>
         <p className="welcome-tagline">AI-native code editor</p>
-        {(onOpenFolder || onOpenFile || onCloneRepo) && (
+        {(onOpenFolder || onOpenFile || onCloneRepo || onNewProject) && (
           <div className="welcome-actions">
+            {onNewProject && (
+              <button type="button" onClick={onNewProject}>
+                New Project…
+              </button>
+            )}
             {onOpenFolder && (
               <button type="button" onClick={onOpenFolder}>
                 Open Folder
@@ -188,6 +199,16 @@ export function FileViewer({
             {onCloneRepo && (
               <button type="button" onClick={onCloneRepo}>
                 Clone Repository…
+              </button>
+            )}
+            {onNewFile && (
+              <button type="button" className="ai-ghost-btn" onClick={onNewFile}>
+                New File…
+              </button>
+            )}
+            {onNewFolder && (
+              <button type="button" className="ai-ghost-btn" onClick={onNewFolder}>
+                New Folder…
               </button>
             )}
             {onOpenFile && (

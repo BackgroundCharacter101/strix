@@ -54,6 +54,14 @@ export default function App() {
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [cloneOpen, setCloneOpen] = useState(false);
+  // A generic single-input prompt (new file / folder / project naming).
+  const [namePrompt, setNamePrompt] = useState<{
+    title: string;
+    initial?: string;
+    onSubmit: (value: string) => void;
+  } | null>(null);
+  // Bumped after creating a file/folder to force the Explorer tree to reload.
+  const [treeNonce, setTreeNonce] = useState(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Which Settings section to open at (deep-link, e.g. from the AI panel).
@@ -226,6 +234,53 @@ export default function App() {
     const filePath = await window.strix.workspace.openFile();
     if (filePath) activeTabs.open(filePath);
   }, [activeTabs]);
+
+  // --- New project / file / folder ---
+  const newProject = () =>
+    setNamePrompt({
+      title: 'New project name',
+      onSubmit: (name) => {
+        void window.strix.workspace.newProject(name).then((dir) => {
+          if (dir) {
+            setRoot(dir);
+            showToast('Project created', 'success');
+          }
+        });
+      },
+    });
+
+  const newFileAtRoot = () => {
+    if (!root) {
+      showToast('Open or create a project first.', 'info');
+      return;
+    }
+    setNamePrompt({
+      title: 'New file (e.g. src/index.ts)',
+      onSubmit: (name) => {
+        const target = `${root}/${name}`;
+        void window.strix.fs.create(target, 'file').then(() => {
+          activeTabs.open(target);
+          setTreeNonce((n) => n + 1);
+        });
+      },
+    });
+  };
+
+  const newFolderAtRoot = () => {
+    if (!root) {
+      showToast('Open or create a project first.', 'info');
+      return;
+    }
+    setNamePrompt({
+      title: 'New folder name',
+      onSubmit: (name) => {
+        void window.strix.fs.create(`${root}/${name}`, 'directory').then(() => {
+          showToast('Folder created', 'success');
+          setTreeNonce((n) => n + 1);
+        });
+      },
+    });
+  };
 
   // Save the active file; with format-on-save, format first and persist the
   // formatted text directly (so no stale-draft race).
@@ -522,6 +577,9 @@ export default function App() {
     { id: 'workspace.openFile', label: 'File: Open File…', detail: 'Ctrl+O', run: () => void openFile() },
     { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
     { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
+    { id: 'file.newProject', label: 'File: New Project…', detail: '', run: newProject },
+    { id: 'file.newFile', label: 'File: New File…', detail: '', run: newFileAtRoot },
+    { id: 'file.newFolder', label: 'File: New Folder…', detail: '', run: newFolderAtRoot },
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
@@ -701,6 +759,9 @@ export default function App() {
         onOpenFile={openFile}
         onCloneRepo={() => setCloneOpen(true)}
         onLanguages={() => selectView('extensions')}
+        onNewProject={newProject}
+        onNewFile={root ? newFileAtRoot : undefined}
+        onNewFolder={root ? newFolderAtRoot : undefined}
         recents={root ? [] : recents}
         onOpenRecent={(p) => setRoot(p)}
         rootPath={root}
@@ -828,7 +889,7 @@ export default function App() {
                     <ExtensionsView />
                   ) : root ? (
                     <FileTree
-                      key={root}
+                      key={`${root}:${treeNonce}`}
                       rootPath={root}
                       activePath={activeTabs.activePath}
                       onSelectFile={(node) => activeTabs.open(node.path)}
@@ -981,6 +1042,18 @@ export default function App() {
           confirmLabel="Clone"
           onSubmit={(url) => void cloneRepo(url)}
           onCancel={() => setCloneOpen(false)}
+        />
+      )}
+      {namePrompt && (
+        <PromptDialog
+          title={namePrompt.title}
+          initialValue={namePrompt.initial}
+          confirmLabel="Create"
+          onSubmit={(value) => {
+            namePrompt.onSubmit(value);
+            setNamePrompt(null);
+          }}
+          onCancel={() => setNamePrompt(null)}
         />
       )}
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}

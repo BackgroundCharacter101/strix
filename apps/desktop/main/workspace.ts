@@ -31,6 +31,21 @@ export async function openFolderDialog(win: BrowserWindow | null): Promise<strin
   return dir;
 }
 
+// Create a new project: pick a parent folder, make a named subfolder there,
+// and open it as the workspace.
+export async function newProjectDialog(
+  win: BrowserWindow | null,
+  name: string,
+): Promise<string | null> {
+  const parent = await pickDirectory(win, 'Choose where to create the project');
+  if (!parent) return null;
+  const safe = name.replace(/[\\/:*?"<>|]+/g, '').trim() || 'new-project';
+  const dir = path.join(parent, safe);
+  await fs.promises.mkdir(dir, { recursive: true });
+  currentRoot = dir;
+  return dir;
+}
+
 export async function openFileDialog(win: BrowserWindow | null): Promise<string | null> {
   const opts = { title: 'Open File', properties: ['openFile' as const] };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);

@@ -45,6 +45,10 @@ export function buildAppMenu(win: BrowserWindow): void {
     {
       label: 'File',
       submenu: [
+        cmd('New Project…', 'file.newProject'),
+        cmd('New File…', 'file.newFile'),
+        cmd('New Folder…', 'file.newFolder'),
+        { type: 'separator' },
         cmd('Open File…', 'workspace.openFile', 'CmdOrCtrl+O'),
         cmd('Open Folder…', 'workspace.openFolder'),
         cmd('Clone Repository…', 'workspace.clone'),
