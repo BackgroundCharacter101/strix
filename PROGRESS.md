@@ -422,6 +422,12 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **Cross-platform packaging:** runtime was already portable (terminal uses
+  `$SHELL`/bash off-Windows, LSP `shell:true` only on Windows, menu adapts for
+  macOS, AI server is sql.js/WASM). Added electron-builder **Linux** (AppImage +
+  deb) and **macOS** (dmg + zip) targets + `package:linux`/`package:mac` scripts;
+  docs in `docs/PACKAGING.md` (build each OS on that OS — node-pty is the only
+  native module).
 - **New Project + AI project scaffolder:** Welcome / File menu / palette gain
   New Project… / New File… / New Folder… (`workspace.newProject`). The AI panel
   gains "Build project from prompt": `complete('scaffold')` returns a strict JSON

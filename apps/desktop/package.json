@@ -15,6 +15,8 @@
         "dev:renderer": "cd renderer && vite",
         "dev": "npm run dev:renderer",
         "package": "npm run build:app && electron-builder --win",
+        "package:linux": "npm run build:app && electron-builder --linux",
+        "package:mac": "npm run build:app && electron-builder --mac",
         "package:dir": "npm run build:app && electron-builder --dir"
     },
     "build": {
@@ -62,6 +64,22 @@
             "oneClick": false,
             "allowToChangeInstallationDirectory": true,
             "perMachine": false
+        },
+        "linux": {
+            "target": [
+                "AppImage",
+                "deb"
+            ],
+            "category": "Development",
+            "synopsis": "An AI-native desktop IDE.",
+            "maintainer": "Strix <strix@example.com>"
+        },
+        "mac": {
+            "target": [
+                "dmg",
+                "zip"
+            ],
+            "category": "public.app-category.developer-tools"
         }
     },
     "dependencies": {

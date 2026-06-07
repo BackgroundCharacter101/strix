@@ -1,7 +1,7 @@
 # Packaging Strix (Phase 8)
 
-Turns Strix into an installable Windows app via **electron-builder** (NSIS
-installer + a portable `.exe`).
+Turns Strix into an installable app via **electron-builder** — Windows (NSIS +
+portable `.exe`), **Linux (AppImage + `.deb`)**, and macOS (dmg + zip).
 
 > **Status: first pass — needs a real build + test run on a Windows machine.**
 > The build config and the packaged-app AI-server launch are in place and
@@ -29,6 +29,38 @@ npm --workspace @strix/desktop run package
 npm --workspace @strix/desktop run package:dir
 #   → apps/desktop/release/win-unpacked/Strix.exe
 ```
+
+## Linux & macOS builds
+
+Strix's runtime is already cross-platform: the terminal uses `$SHELL` (falls back
+to `bash`) on non-Windows, the LSP only passes `shell:true` on Windows, the app
+menu adapts for macOS, and the bundled AI server is pure-JS (sql.js/WASM). So the
+only platform-specific piece is the installer target.
+
+```bash
+# On a Linux machine (builds Linux-native node-pty automatically):
+cd tabea
+npm install
+npm run ai:setup
+npm --workspace @strix/desktop run package:linux
+#   → apps/desktop/release/
+#     Strix-<version>.AppImage   (portable, runs anywhere)
+#     strix_<version>_amd64.deb  (Debian/Ubuntu install)
+
+# macOS:
+npm --workspace @strix/desktop run package:mac   # → dmg + zip
+```
+
+> **Build each OS on that OS.** electron-builder rebuilds the one native module
+> (`node-pty`) for the host platform, so produce the Linux build on Linux and the
+> macOS build on macOS (or via CI runners). Cross-compiling native modules from
+> Windows is not supported here.
+>
+> AppImage needs FUSE on the target to run (`./Strix-*.AppImage`); most distros
+> have it, or run with `--appimage-extract-and-run`.
+
+Config lives in `apps/desktop/package.json` → `build.linux` (AppImage + deb,
+category `Development`) and `build.mac` (dmg + zip).
 
 ## How it's wired (`apps/desktop/package.json` → `build`)
 
@@ -59,8 +91,9 @@ The packaged exe bundles and auto-starts FreeLLMAPI **on each machine**:
 
 ## Known limitations / TODO before shipping
 
-1. **App icon.** No `.ico` yet — electron-builder uses a default icon. Add
-   `build.win.icon` pointing at a 256×256 `.ico` (derive from the owl mark).
+1. **App icon.** No icon yet — electron-builder uses a default. Add a 256×256
+   `.ico` (`build.win.icon`), a `build/icon.png` (Linux, ≥512×512), and an
+   `.icns` (`build.mac.icon`) — all derivable from the owl mark.
 3. **Code signing.** Unsigned builds trigger SmartScreen warnings on Windows.
    Add a code-signing certificate (`build.win.certificateFile` / env) for
    distribution.
