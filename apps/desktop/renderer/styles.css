@@ -2767,22 +2767,6 @@ kbd {
   border-color: var(--accent);
 }
 
-/* "Build project from prompt" — the AI scaffolder action. */
-.ai-build-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  background: var(--accent-gradient);
-  color: var(--accent-ink);
-  border: none;
-  font-weight: var(--weight-medium);
-}
-.ai-build-btn:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-
 /* Scaffold confirmation dialog. */
 .scaffold-dialog {
   width: min(520px, 92vw);

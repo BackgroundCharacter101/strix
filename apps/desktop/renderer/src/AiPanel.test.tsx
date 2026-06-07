@@ -228,8 +228,9 @@ describe('AiPanel', () => {
       <AiPanel filePath={null} fileContent="" workspaceKey="/ws" onOpenPath={onOpenPath} />,
     );
 
-    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'a todo app' } });
-    fireEvent.click(screen.getByRole('button', { name: /Build project/ }));
+    // A build request via the normal Send routes to the scaffolder.
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'build a todo app' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     // Confirmation preview lists the planned file.
     await screen.findByText('src/index.ts');

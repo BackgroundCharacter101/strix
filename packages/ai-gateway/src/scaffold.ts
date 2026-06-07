@@ -26,6 +26,17 @@ export function isSafeRelPath(p: string): boolean {
   return true;
 }
 
+// Heuristic: does this chat message ask the assistant to build/create something
+// that should produce files (vs. a question, explanation, or single-line edit)?
+export function looksLikeBuildRequest(text: string): boolean {
+  const t = ` ${text.toLowerCase()} `;
+  const verb =
+    /\b(make|build|create|generate|scaffold|set ?up|develop|implement|write me|write a|write an|code me|code a|give me|bootstrap|start)\b/;
+  const noun =
+    /\b(program|app|application|project|script|tool|website|web ?app|web ?site|web ?page|game|server|api|bot|cli|dashboard|clone|crud|backend|frontend|landing page)\b/;
+  return verb.test(t) && noun.test(t);
+}
+
 // Extract the JSON object from a model reply that may be wrapped in prose or a
 // ```json fence. Returns the parsed plan or an { error } describing the failure.
 export function parseScaffold(

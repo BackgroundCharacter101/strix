@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { parseScaffold, isSafeRelPath } from './scaffold';
+import { parseScaffold, isSafeRelPath, looksLikeBuildRequest } from './scaffold';
+
+describe('looksLikeBuildRequest', () => {
+  it('detects build/create requests', () => {
+    expect(looksLikeBuildRequest('make a program that scans my network')).toBe(true);
+    expect(looksLikeBuildRequest('build a react todo app')).toBe(true);
+    expect(looksLikeBuildRequest('create a CLI tool in python')).toBe(true);
+  });
+  it('ignores questions and edits', () => {
+    expect(looksLikeBuildRequest('what does this function do?')).toBe(false);
+    expect(looksLikeBuildRequest('explain this code')).toBe(false);
+    expect(looksLikeBuildRequest('fix this bug')).toBe(false);
+  });
+});
 
 describe('isSafeRelPath', () => {
   it('accepts simple relative paths', () => {

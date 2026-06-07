@@ -14,7 +14,7 @@ import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
 import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
-import { isSafeRelPath } from '@strix/ai-gateway';
+import { isSafeRelPath, looksLikeBuildRequest } from '@strix/ai-gateway';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -402,9 +402,12 @@ export function AiPanel({
     const desc = input.trim();
     if (!desc || busy) return;
     if (!workspaceKey) {
-      showToast('Open or create a project first, then describe what to build.', 'info', 6000);
+      showToast('Open or create a project first, then ask me to build it.', 'info', 6000);
       return;
     }
+    // Record the request in the thread (like a chat turn) and clear the box.
+    setHistory((h) => [...h, { role: 'user', content: desc }]);
+    setInput('');
     setBusy(true);
     setStreaming('');
     const controller = new AbortController();
@@ -443,6 +446,16 @@ export function AiPanel({
         await window.strix.fs.write(`${workspaceKey}/${f.path}`, f.content);
       }
       showToast(`Created ${scaffold.files.length} file(s).`, 'success');
+      setHistory((h) => [
+        ...h,
+        {
+          role: 'assistant',
+          content:
+            `Built it — created ${scaffold.files.length} file(s):\n` +
+            scaffold.files.map((f) => `- ${f.path}`).join('\n') +
+            (scaffold.notes ? `\n\n${scaffold.notes}` : ''),
+        },
+      ]);
       const first = scaffold.files[0];
       if (first) onOpenPath?.(`${workspaceKey}/${first.path}`);
       setInput('');
@@ -458,6 +471,18 @@ export function AiPanel({
     setHistory([]);
     setStreaming('');
     setRoutedVia(null);
+  };
+
+  // Send: if the message asks to build/create something (and a project is open),
+  // scaffold it into the workspace; otherwise it's a normal chat turn.
+  const send = () => {
+    const text = input.trim();
+    if (!text || busy) return;
+    if (workspaceKey && looksLikeBuildRequest(text)) {
+      void buildProject();
+    } else {
+      void run('chat');
+    }
   };
 
   return (
@@ -600,14 +625,14 @@ export function AiPanel({
       <div className="ai-composer">
         <textarea
           aria-label="Ask AI"
-          placeholder="Ask about this file…  (Enter to send, Shift+Enter for a new line)"
+          placeholder="Ask, or say what to build…  (Enter to send, Shift+Enter for a new line)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
             // Enter sends; Shift+Enter inserts a newline.
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              if (!busy && input.trim()) void run('chat');
+              send();
             }
           }}
         />
@@ -625,7 +650,7 @@ export function AiPanel({
             <button
               type="button"
               className="ai-primary-btn"
-              onClick={() => run('chat')}
+              onClick={send}
               disabled={input.length === 0}
             >
               Send
@@ -646,15 +671,6 @@ export function AiPanel({
             Refactor
           </button>
         </div>
-        <button
-          type="button"
-          className="ai-build-btn"
-          title="Describe an app above, then let the AI scaffold the whole project into this workspace"
-          disabled={busy || input.trim().length === 0}
-          onClick={() => void buildProject()}
-        >
-          <SparkleIcon size={13} /> Build project from prompt
-        </button>
         {onAskClaude && (
           <button
             type="button"

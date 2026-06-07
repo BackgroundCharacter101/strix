@@ -428,14 +428,16 @@ strix/ (folder: tabea)
   deb) and **macOS** (dmg + zip) targets + `package:linux`/`package:mac` scripts;
   docs in `docs/PACKAGING.md` (build each OS on that OS — node-pty is the only
   native module).
-- **New Project + AI project scaffolder:** Welcome / File menu / palette gain
+- **New Project + AI builds from chat:** Welcome / File menu / palette gain
   New Project… / New File… / New Folder… (`workspace.newProject`). The AI panel
-  gains "Build project from prompt": `complete('scaffold')` returns a strict JSON
-  file plan, parsed/validated by `parseScaffold`/`isSafeRelPath` in ai-gateway
-  (rejects `..`/absolute/drive paths, caps file count+size), shown in a
-  confirmation modal, then written into the workspace via `fs.write` (mkdir -p),
-  opening the first file. Full agentic project builds still also available via
-  Claude Code.
+  has NO separate build button — **Send itself builds**: `looksLikeBuildRequest`
+  routes "make/build/create a program/app/…" to the scaffolder
+  (`complete('scaffold')` → strict JSON plan parsed/validated by `parseScaffold`/
+  `isSafeRelPath`, rejects `..`/absolute/drive paths, caps count+size) → a
+  confirmation modal → `fs.write` (mkdir -p) → opens the first file + posts a
+  "Built it — created N files" turn. Otherwise it's a normal chat. Every code
+  block also has a "Save to file" button. Iterative agent builds still via Claude
+  Code.
 - **Troubleshooting batch (audit + 4 enhancements):** full audit (0 vulns, clean
   scan, IPC/Electron hardening verified). Fixes: AI Stop now cancels Fix/Refactor
   + real AI failures show a toast. Additions: (1) Copy button on code blocks +

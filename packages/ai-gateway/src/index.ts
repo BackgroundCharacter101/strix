@@ -8,5 +8,5 @@ export { runTask, complete } from './request';
 export type { RunTaskCallbacks, RunTaskSettings } from './request';
 export { StatusTracker } from './status';
 export type { StatusUpdate } from './status';
-export { parseScaffold, isSafeRelPath } from './scaffold';
+export { parseScaffold, isSafeRelPath, looksLikeBuildRequest } from './scaffold';
 export type { ScaffoldFile, ScaffoldPlan } from './scaffold';
