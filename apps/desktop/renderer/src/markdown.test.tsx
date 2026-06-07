@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { renderMarkdown } from './markdown';
 
 function show(src: string) {
@@ -14,6 +14,20 @@ describe('renderMarkdown', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Title' })).toBeInTheDocument();
     expect(screen.getByText('bold').tagName).toBe('STRONG');
     expect(screen.getByText('code').tagName).toBe('CODE');
+  });
+
+  it('offers Save to file on code blocks and detects a filename hint', () => {
+    const onSaveCode = vi.fn();
+    render(
+      <div>
+        {renderMarkdown('```python\n# network_scanner.py\nprint(1)\n```', { onSaveCode })}
+      </div>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save code to a file' }));
+    expect(onSaveCode).toHaveBeenCalledWith(
+      '# network_scanner.py\nprint(1)',
+      'network_scanner.py',
+    );
   });
 
   it('renders lists and fenced code blocks', () => {

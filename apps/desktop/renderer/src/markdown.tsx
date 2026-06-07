@@ -84,8 +84,30 @@ function cellAlign(sep: string): Align {
   return undefined;
 }
 
-// A fenced code block with a Copy button (overlaid top-right).
-function CodeBlock({ code }: { code: string }) {
+export interface MarkdownOptions {
+  // When provided, code blocks show a "Save to file" button that hands the code
+  // (and any detected filename hint) to the host (e.g. the AI panel writes it).
+  onSaveCode?: (code: string, suggestedName?: string) => void;
+}
+
+// Detect a filename hint from the first line, e.g. "# filename: app.py",
+// "// app.ts", or "<!-- index.html -->".
+function detectFilename(code: string): string | undefined {
+  const first = code.split('\n', 1)[0]?.trim() ?? '';
+  const m = /(?:filename:?\s*)?([\w./-]+\.[A-Za-z0-9]{1,8})\s*(?:-->)?$/.exec(
+    first.replace(/^(#|\/\/|<!--|\/\*|\*)\s*/, ''),
+  );
+  return m ? m[1] : undefined;
+}
+
+// A fenced code block with Copy (and optionally Save-to-file) overlaid top-right.
+function CodeBlock({
+  code,
+  onSaveCode,
+}: {
+  code: string;
+  onSaveCode?: (code: string, suggestedName?: string) => void;
+}) {
   const [copied, setCopied] = React.useState(false);
   const copy = () => {
     void navigator.clipboard?.writeText(code).then(() => {
@@ -95,15 +117,27 @@ function CodeBlock({ code }: { code: string }) {
   };
   return (
     <pre className="md-pre">
-      <button type="button" className="md-copy" onClick={copy} aria-label="Copy code">
-        {copied ? 'Copied' : 'Copy'}
-      </button>
+      <span className="md-pre-actions">
+        {onSaveCode && (
+          <button
+            type="button"
+            className="md-copy"
+            onClick={() => onSaveCode(code, detectFilename(code))}
+            aria-label="Save code to a file"
+          >
+            Save to file
+          </button>
+        )}
+        <button type="button" className="md-copy" onClick={copy} aria-label="Copy code">
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </span>
       <code>{code}</code>
     </pre>
   );
 }
 
-export function renderMarkdown(src: string): React.ReactNode[] {
+export function renderMarkdown(src: string, opts: MarkdownOptions = {}): React.ReactNode[] {
   const lines = src.replace(/\r\n/g, '\n').split('\n');
   const blocks: React.ReactNode[] = [];
   let para: string[] = [];
@@ -125,7 +159,9 @@ export function renderMarkdown(src: string): React.ReactNode[] {
       const code: string[] = [];
       li++;
       while (li < lines.length && !/^```/.test(lines[li])) code.push(lines[li++]);
-      blocks.push(<CodeBlock key={`pre${key++}`} code={code.join('\n')} />);
+      blocks.push(
+        <CodeBlock key={`pre${key++}`} code={code.join('\n')} onSaveCode={opts.onSaveCode} />,
+      );
       continue;
     }
 

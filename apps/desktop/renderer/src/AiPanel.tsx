@@ -10,9 +10,11 @@ import {
   type ScaffoldPlan,
 } from '@strix/ai-gateway';
 import { CodeProposal } from './CodeProposal';
+import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
 import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
+import { isSafeRelPath } from '@strix/ai-gateway';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -365,6 +367,32 @@ export function AiPanel({
 
   const canRegenerate = !busy && history.some((m) => m.role === 'assistant');
 
+  // Save a single code block from a reply into the project (filename prompt).
+  const [saveReq, setSaveReq] = useState<{ code: string; name: string } | null>(null);
+  const onSaveCode = (code: string, suggestedName?: string) => {
+    if (!workspaceKey) {
+      showToast('Open or create a project first, then save the code.', 'info', 6000);
+      return;
+    }
+    setSaveReq({ code, name: suggestedName ?? '' });
+  };
+  const writeSavedCode = (relPath: string) => {
+    if (!saveReq || !workspaceKey) return;
+    if (!isSafeRelPath(relPath)) {
+      showToast('That path is not allowed (stay inside the project).', 'error', 5000);
+      return;
+    }
+    const abs = `${workspaceKey}/${relPath}`;
+    void window.strix.fs
+      .write(abs, saveReq.code)
+      .then(() => {
+        showToast(`Saved ${relPath}`, 'success');
+        onOpenPath?.(abs);
+      })
+      .catch((e) => showToast(`Save failed: ${e instanceof Error ? e.message : String(e)}`, 'error'))
+      .finally(() => setSaveReq(null));
+  };
+
   // --- AI project scaffolder ------------------------------------------------
   const [scaffold, setScaffold] = useState<ScaffoldPlan | null>(null);
   const [applying, setApplying] = useState(false);
@@ -524,7 +552,7 @@ export function AiPanel({
                   )}
                   <div className={`ai-msg ai-${m.role}`}>
                     {m.role === 'assistant' ? (
-                      <div className="ai-md">{renderMarkdown(m.content)}</div>
+                      <div className="ai-md">{renderMarkdown(m.content, { onSaveCode })}</div>
                     ) : (
                       m.content
                     )}
@@ -537,7 +565,7 @@ export function AiPanel({
                     <SparkleIcon size={13} />
                   </span>
                   <div className="ai-msg ai-assistant">
-                    <div className="ai-md">{renderMarkdown(streaming)}</div>
+                    <div className="ai-md">{renderMarkdown(streaming, { onSaveCode })}</div>
                   </div>
                 </div>
               )}
@@ -639,6 +667,16 @@ export function AiPanel({
           </button>
         )}
       </div>
+
+      {saveReq && (
+        <PromptDialog
+          title="Save code as (path in project)"
+          initialValue={saveReq.name}
+          confirmLabel="Save"
+          onSubmit={writeSavedCode}
+          onCancel={() => setSaveReq(null)}
+        />
+      )}
 
       {scaffold && (
         <div className="palette-overlay" onMouseDown={() => !applying && setScaffold(null)}>
