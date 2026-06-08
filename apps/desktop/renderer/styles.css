@@ -2818,11 +2818,31 @@ kbd {
   box-sizing: border-box;
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 7px 10px;
   cursor: pointer;
+}
+.scaffold-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.scaffold-main .scaffold-path {
   font-family: var(--font-mono);
+}
+.scaffold-summary {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  white-space: normal;
+}
+.scaffold-badge,
+.scaffold-caret,
+.scaffold-diff-btn {
+  margin-top: 1px;
 }
 .scaffold-row:hover {
   background: var(--bg-hover);

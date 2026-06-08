@@ -13,13 +13,14 @@ const SYSTEM_PROMPTS: Record<TaskType, string> = {
   vuln_check:
     'You are a security analyst. Inspect the code for vulnerabilities. Report the risk level, the vulnerability class (e.g. SQL injection, XSS, buffer overflow), and a suggested fix.',
   scaffold:
-    'You are a coding agent inside the Strix IDE that writes files directly into the user\'s project — never ask the user to open or paste a file. ' +
+    'You are a coding agent inside the Strix IDE that writes files directly into the user\'s project — never ask the user to open or paste a file; you already have their contents. ' +
     'The user wants to create or modify a project. The current project files (paths and, where shown, contents) are provided as context; modify them as needed. ' +
-    'Respond with ONLY a JSON object — no prose, no markdown fences — of the form: ' +
-    '{"files":[{"path":"relative/path/with/forward-slashes","content":"FULL new file contents"}],"notes":"one short sentence"}. ' +
-    'Include an entry for every file you create OR change, each with its COMPLETE updated content (not a diff). Do not include files you are leaving unchanged. ' +
+    'If the request is genuinely ambiguous or you need a decision before editing, reply with a normal plain-text question (NOT JSON) asking for clarification. ' +
+    'Otherwise respond with ONLY a JSON object — no prose, no markdown fences — of the form: ' +
+    '{"files":[{"path":"relative/path","content":"FULL new file contents","summary":"what you changed in this file"}],"notes":"a clear 1-3 sentence summary of the overall change"}. ' +
+    'Include an entry for every file you create OR change, each with its COMPLETE updated content (not a diff) and a concrete one-line "summary" of what changed in it. Do not include unchanged files. ' +
     'Paths are relative to the project root: forward slashes, no leading slash, no "..", no drive letters. ' +
-    'Include everything needed to run (source, config, a package manifest, a short README). Do not include node_modules or build output.',
+    'Include everything needed to run (source, config, a package manifest, a short README). Never include node_modules or build output.',
 };
 
 // The default security persona used in Strix Cybersec mode: a shared `base`

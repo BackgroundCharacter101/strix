@@ -467,7 +467,7 @@ export function AiPanel({
   // --- AI project scaffolder ------------------------------------------------
   // Each pending file carries its previous on-disk content (null = new file) so
   // the review modal can show New/Modified and a real diff.
-  type ReviewFile = { path: string; content: string; old: string | null };
+  type ReviewFile = { path: string; content: string; old: string | null; summary?: string };
   const [scaffold, setScaffold] = useState<{ files: ReviewFile[]; notes?: string } | null>(null);
   const [applying, setApplying] = useState(false);
   // Which file's inline diff is expanded in the review panel.
@@ -528,7 +528,7 @@ export function AiPanel({
         } catch {
           old = null;
         }
-        return { path: f.path, content: f.content, old };
+        return { path: f.path, content: f.content, old, summary: f.summary };
       }),
     );
     // Drop files the model returned unchanged.
@@ -568,9 +568,15 @@ export function AiPanel({
         {
           role: 'assistant',
           content:
+            (notes ? `${notes}\n\n` : '') +
             `Done — ${summary}:\n` +
-            files.map((f) => `- ${f.old === null ? '🆕' : '✏️'} ${f.path}`).join('\n') +
-            (notes ? `\n\n${notes}` : ''),
+            files
+              .map(
+                (f) =>
+                  `- ${f.old === null ? '🆕' : '✏️'} **${f.path}**` +
+                  (f.summary ? ` — ${f.summary}` : ''),
+              )
+              .join('\n'),
         },
       ]);
       // Reopen the changed files (capped) so edits show live; reversed so the
@@ -710,7 +716,10 @@ export function AiPanel({
                     <span className={`scaffold-badge ${f.old === null ? 'is-new' : 'is-mod'}`}>
                       {f.old === null ? 'NEW' : 'MOD'}
                     </span>
-                    <span className="scaffold-path">{f.path}</span>
+                    <span className="scaffold-main">
+                      <span className="scaffold-path">{f.path}</span>
+                      {f.summary && <span className="scaffold-summary">{f.summary}</span>}
+                    </span>
                     {onShowDiff && (
                       <span
                         className="scaffold-diff-btn"

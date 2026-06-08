@@ -46,6 +46,12 @@ describe('parseScaffold', () => {
   it('errors when there is no JSON', () => {
     expect('error' in parseScaffold('no json here')).toBe(true);
   });
+  it('captures a per-file summary when present', () => {
+    const out = parseScaffold(
+      '{"files":[{"path":"a.ts","content":"x","summary":"added retry logic"}]}',
+    );
+    expect('files' in out && out.files[0].summary).toBe('added retry logic');
+  });
   it('enforces the file cap', () => {
     const files = Array.from({ length: 5 }, (_, i) => ({ path: `f${i}.ts`, content: '' }));
     const out = parseScaffold(JSON.stringify({ files }), { maxFiles: 3 });

@@ -4,6 +4,8 @@
 export interface ScaffoldFile {
   path: string;
   content: string;
+  // A short description of what changed in this file (for the review/summary).
+  summary?: string;
 }
 
 export interface ScaffoldPlan {
@@ -81,7 +83,12 @@ export function parseScaffold(
     }
     total += f.content.length;
     if (total > maxBytes) return { error: 'Plan exceeds the size limit.' };
-    files.push({ path: f.path.trim().replace(/\\/g, '/'), content: f.content });
+    const summary = (raw as { summary?: unknown }).summary;
+    files.push({
+      path: f.path.trim().replace(/\\/g, '/'),
+      content: f.content,
+      summary: typeof summary === 'string' ? summary : undefined,
+    });
   }
 
   return { files, notes: typeof obj.notes === 'string' ? obj.notes : undefined };
