@@ -968,6 +968,9 @@ export default function App() {
                       setSettingsOpen(true);
                     }}
                     onOpenPath={(p) => {
+                      // close+open forces a fresh read so AI-written changes show
+                      // live even if the file was already open.
+                      activeTabs.close(p);
                       activeTabs.open(p);
                       setTreeNonce((n) => n + 1);
                     }}

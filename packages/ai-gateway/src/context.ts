@@ -13,12 +13,13 @@ const SYSTEM_PROMPTS: Record<TaskType, string> = {
   vuln_check:
     'You are a security analyst. Inspect the code for vulnerabilities. Report the risk level, the vulnerability class (e.g. SQL injection, XSS, buffer overflow), and a suggested fix.',
   scaffold:
-    'You are a project scaffolder inside the Strix IDE. The user describes an app to build. ' +
+    'You are a coding agent inside the Strix IDE that writes files directly into the user\'s project — never ask the user to open or paste a file. ' +
+    'The user wants to create or modify a project. The current project files (paths and, where shown, contents) are provided as context; modify them as needed. ' +
     'Respond with ONLY a JSON object — no prose, no markdown fences — of the form: ' +
-    '{"files":[{"path":"relative/path/with/forward-slashes","content":"full file contents"}],"notes":"one short sentence"}. ' +
-    'Paths are relative to the project root: use forward slashes, no leading slash, no "..", no drive letters. ' +
-    'Include every file needed to run (source, config, a README, and a package manifest if relevant). ' +
-    'Keep it focused and reasonably small; do not include node_modules or build output.',
+    '{"files":[{"path":"relative/path/with/forward-slashes","content":"FULL new file contents"}],"notes":"one short sentence"}. ' +
+    'Include an entry for every file you create OR change, each with its COMPLETE updated content (not a diff). Do not include files you are leaving unchanged. ' +
+    'Paths are relative to the project root: forward slashes, no leading slash, no "..", no drive letters. ' +
+    'Include everything needed to run (source, config, a package manifest, a short README). Do not include node_modules or build output.',
 };
 
 // The default security persona used in Strix Cybersec mode: a shared `base`
@@ -81,8 +82,9 @@ export function buildPrompt(task: TaskType, opts: BuildPromptOptions): ChatMessa
     : SYSTEM_PROMPTS[task];
   const messages: ChatMessage[] = [{ role: 'system', content: system }];
 
-  // Chat is multi-turn: prior conversation is replayed before the new turn (§8.2).
-  if (task === 'chat' && opts.history) {
+  // Chat + the agent scaffolder are multi-turn: prior conversation is replayed
+  // before the new turn so follow-ups ("add those", "make it advanced") work.
+  if ((task === 'chat' || task === 'scaffold') && opts.history) {
     messages.push(...opts.history);
   }
 

@@ -428,6 +428,14 @@ strix/ (folder: tabea)
   deb) and **macOS** (dmg + zip) targets + `package:linux`/`package:mac` scripts;
   docs in `docs/PACKAGING.md` (build each OS on that OS — node-pty is the only
   native module).
+- **Agentic build/edit from chat (Copilot-style):** the scaffolder now MODIFIES
+  existing files, not just creates. `buildProject` feeds the model the file tree
+  **plus the contents of existing text files** (`gatherProjectFiles`, capped) and
+  the chat history, and the `scaffold` prompt is a "coding agent" that returns the
+  full updated content of every file it changes/creates. Send routes build AND
+  edit/modify requests + short confirmations ("add those", "do it", "make it more
+  advanced") to this flow (questions stay chat). After applying, changed files are
+  reloaded live in the editor (App `onOpenPath` close+open forces a fresh read).
 - **New Project + AI builds from chat:** Welcome / File menu / palette gain
   New Project… / New File… / New Folder… (`workspace.newProject`). The AI panel
   has NO separate build button — **Send itself builds**: `looksLikeBuildRequest`

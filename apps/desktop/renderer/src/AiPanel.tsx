@@ -67,6 +67,58 @@ async function loadProjectContext(workspaceKey: string | null | undefined): Prom
   }
 }
 
+// Text file extensions worth sending to the agent so it can MODIFY them.
+const TEXT_EXT =
+  /\.(ts|tsx|js|jsx|mjs|cjs|json|md|txt|css|scss|less|html|htm|py|rb|php|go|rs|java|kt|c|h|cpp|hpp|cs|sh|bash|yml|yaml|toml|ini|env|sql|xml|svg|vue|svelte|astro|gitignore|dockerfile)$/i;
+
+// Read the project's small text files (capped) so the agent can edit existing
+// files instead of asking the user to open them. Returns fenced blocks.
+async function gatherProjectFiles(
+  workspaceKey: string,
+  opts: { maxFiles?: number; maxBytes?: number; maxFileBytes?: number } = {},
+): Promise<string> {
+  const maxFiles = opts.maxFiles ?? 24;
+  const maxBytes = opts.maxBytes ?? 60_000;
+  const maxFileBytes = opts.maxFileBytes ?? 24_000;
+  let tree: TreeNode;
+  try {
+    tree = (await window.strix.fs.tree(workspaceKey)) as TreeNode;
+  } catch {
+    return '';
+  }
+
+  // Collect candidate file paths (absolute) from the tree.
+  const paths: string[] = [];
+  const walk = (nodes: TreeNode[]) => {
+    for (const n of nodes) {
+      if (paths.length >= maxFiles * 3) return;
+      if (n.type === 'directory') walk(n.children ?? []);
+      else if (TEXT_EXT.test(n.name) || !n.name.includes('.'))
+        paths.push((n as TreeNode & { path: string }).path);
+    }
+  };
+  walk(tree.children ?? []);
+
+  const parts: string[] = [];
+  let total = 0;
+  let count = 0;
+  for (const abs of paths) {
+    if (count >= maxFiles || total >= maxBytes) break;
+    let content = '';
+    try {
+      content = await window.strix.fs.read(abs);
+    } catch {
+      continue;
+    }
+    if (content.length > maxFileBytes) continue;
+    const rel = abs.slice(workspaceKey.length).replace(/^[\\/]/, '').replace(/\\/g, '/');
+    parts.push(`File: ${rel}\n\`\`\`\n${content}\n\`\`\``);
+    total += content.length;
+    count += 1;
+  }
+  return parts.join('\n\n');
+}
+
 export function AiPanel({
   filePath,
   fileContent,
@@ -406,6 +458,7 @@ export function AiPanel({
       return;
     }
     // Record the request in the thread (like a chat turn) and clear the box.
+    const priorHistory = history;
     setHistory((h) => [...h, { role: 'user', content: desc }]);
     setInput('');
     setBusy(true);
@@ -414,9 +467,15 @@ export function AiPanel({
     abortRef.current = controller;
     let raw = '';
     try {
+      // Give the agent the current file tree AND the contents of existing text
+      // files, so it can MODIFY them live instead of asking you to open them.
+      const existing = await gatherProjectFiles(workspaceKey);
+      const ctx = existing
+        ? `${projectContext}\n\nExisting files (modify as needed — return full updated content):\n${existing}`
+        : projectContext;
       raw = await complete(
         'scaffold',
-        { filePath: '', fileContent: '', userMessage: desc, projectContext, securityMode, securityStance, securityPersonaText },
+        { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText },
         { model, signal: controller.signal },
       );
     } catch {
@@ -456,8 +515,10 @@ export function AiPanel({
             (scaffold.notes ? `\n\n${scaffold.notes}` : ''),
         },
       ]);
-      const first = scaffold.files[0];
-      if (first) onOpenPath?.(`${workspaceKey}/${first.path}`);
+      // Reload/open the changed files (capped) so edits show live; reversed so
+      // the first file ends up active.
+      const toOpen = scaffold.files.slice(0, 6).map((f) => `${workspaceKey}/${f.path}`);
+      toOpen.reverse().forEach((p) => onOpenPath?.(p));
       setInput('');
       setScaffold(null);
     } catch (e) {
@@ -473,12 +534,46 @@ export function AiPanel({
     setRoutedVia(null);
   };
 
-  // Send: if the message asks to build/create something (and a project is open),
-  // scaffold it into the workspace; otherwise it's a normal chat turn.
+  // Decide whether a message is an instruction to create/modify files (apply
+  // live) vs. a question/explanation (chat). Questions always stay chat.
+  const wantsFileChanges = (text: string): boolean => {
+    if (!workspaceKey) return false;
+    const t = text.trim();
+    if (
+      /\?\s*$/.test(t) ||
+      /^(how|what|why|where|when|which|who|can|could|do|does|did|is|are|should|would|will|explain|show|tell|describe|list)\b/i.test(
+        t,
+      )
+    ) {
+      return false;
+    }
+    if (looksLikeBuildRequest(t)) return true;
+    const hadAssistant = history.some((m) => m.role === 'assistant');
+    // Short confirmations after the assistant proposed changes ("do it", "add those").
+    if (
+      hadAssistant &&
+      /^(do it|go ahead|yes|yep|yeah|sure|ok(ay)?|please do|add (those|that|them|it)|proceed|continue|build it|make it\b.*)/i.test(
+        t,
+      )
+    ) {
+      return true;
+    }
+    // Imperative edit verbs → modify the project's files.
+    if (
+      /\b(add|implement|update|modify|change|refactor|improve|enhance|integrate|extend|rewrite|remove|delete|rename)\b/i.test(
+        t,
+      )
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  // Send: build/modify the project's files when asked; otherwise normal chat.
   const send = () => {
     const text = input.trim();
     if (!text || busy) return;
-    if (workspaceKey && looksLikeBuildRequest(text)) {
+    if (wantsFileChanges(text)) {
       void buildProject();
     } else {
       void run('chat');
