@@ -232,9 +232,9 @@ describe('AiPanel', () => {
     fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'build a todo app' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
-    // Confirmation preview lists the planned file.
+    // Review modal lists the planned file.
     await screen.findByText('src/index.ts');
-    fireEvent.click(screen.getByRole('button', { name: 'Create files' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
 
     await waitFor(() =>
       expect(write).toHaveBeenCalledWith('/ws/src/index.ts', 'export const x = 1;'),

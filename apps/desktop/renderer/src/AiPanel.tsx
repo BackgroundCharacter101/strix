@@ -7,7 +7,6 @@ import {
   type TaskType,
   type ChatMessage,
   type SecurityStance,
-  type ScaffoldPlan,
 } from '@strix/ai-gateway';
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
@@ -65,6 +64,16 @@ async function loadProjectContext(workspaceKey: string | null | undefined): Prom
   } catch {
     return '';
   }
+}
+
+// Join a workspace-relative path onto the root using the root's own separator,
+// so the absolute path matches what the Explorer/tree produced (no duplicate
+// tabs from mixing "/" and "\" on Windows).
+function joinUnder(root: string, rel: string): string {
+  const sep = root.includes('\\') ? '\\' : '/';
+  const base = root.replace(/[\\/]+$/, '');
+  const tail = rel.replace(/[\\/]+/g, sep).replace(new RegExp(`^\\${sep}+`), '');
+  return base + sep + tail;
 }
 
 // Text file extensions worth sending to the agent so it can MODIFY them.
@@ -133,6 +142,7 @@ export function AiPanel({
   workspaceKey,
   onConfigure,
   onOpenPath,
+  onShowDiff,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -143,6 +153,8 @@ export function AiPanel({
   onConfigure?: () => void;
   // Open a file by absolute path (used after the AI scaffolds a project).
   onOpenPath?: (absPath: string) => void;
+  // Show a read-only diff (old vs new) for a pending agent change.
+  onShowDiff?: (path: string, original: string, modified: string) => void;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -446,7 +458,10 @@ export function AiPanel({
   };
 
   // --- AI project scaffolder ------------------------------------------------
-  const [scaffold, setScaffold] = useState<ScaffoldPlan | null>(null);
+  // Each pending file carries its previous on-disk content (null = new file) so
+  // the review modal can show New/Modified and a real diff.
+  type ReviewFile = { path: string; content: string; old: string | null };
+  const [scaffold, setScaffold] = useState<{ files: ReviewFile[]; notes?: string } | null>(null);
   const [applying, setApplying] = useState(false);
 
   // Ask the AI for a whole-project file plan from the prompt in the composer.
@@ -495,7 +510,28 @@ export function AiPanel({
       setHistory((h) => [...h, { role: 'assistant', content: raw }]);
       return;
     }
-    setScaffold(plan);
+    // Enrich each file with its current on-disk content (for New/Modified + diff).
+    const files: ReviewFile[] = await Promise.all(
+      plan.files.map(async (f) => {
+        let old: string | null = null;
+        try {
+          old = await window.strix.fs.read(joinUnder(workspaceKey, f.path));
+        } catch {
+          old = null;
+        }
+        return { path: f.path, content: f.content, old };
+      }),
+    );
+    // Drop files the model returned unchanged.
+    const changed = files.filter((f) => f.old !== f.content);
+    if (changed.length === 0) {
+      setHistory((h) => [
+        ...h,
+        { role: 'assistant', content: plan.notes || 'No changes were needed.' },
+      ]);
+      return;
+    }
+    setScaffold({ files: changed, notes: plan.notes });
   };
 
   // Write the approved plan to disk (paths are pre-validated as safe relatives).
@@ -504,22 +540,30 @@ export function AiPanel({
     setApplying(true);
     try {
       for (const f of scaffold.files) {
-        await window.strix.fs.write(`${workspaceKey}/${f.path}`, f.content);
+        await window.strix.fs.write(joinUnder(workspaceKey, f.path), f.content);
       }
-      showToast(`Created ${scaffold.files.length} file(s).`, 'success');
+      const created = scaffold.files.filter((f) => f.old === null).length;
+      const updated = scaffold.files.length - created;
+      const summary =
+        [created ? `${created} new` : '', updated ? `${updated} updated` : '']
+          .filter(Boolean)
+          .join(', ') || `${scaffold.files.length} file(s)`;
+      showToast(`Applied — ${summary}.`, 'success');
       setHistory((h) => [
         ...h,
         {
           role: 'assistant',
           content:
-            `Built it — created ${scaffold.files.length} file(s):\n` +
-            scaffold.files.map((f) => `- ${f.path}`).join('\n') +
+            `Done — ${summary}:\n` +
+            scaffold.files
+              .map((f) => `- ${f.old === null ? '🆕' : '✏️'} ${f.path}`)
+              .join('\n') +
             (scaffold.notes ? `\n\n${scaffold.notes}` : ''),
         },
       ]);
-      // Reload/open the changed files (capped) so edits show live; reversed so
-      // the first file ends up active.
-      const toOpen = scaffold.files.slice(0, 6).map((f) => `${workspaceKey}/${f.path}`);
+      // Reopen the changed files (capped) so edits show live; reversed so the
+      // first ends up active. Paths use the workspace separator (no dup tabs).
+      const toOpen = scaffold.files.slice(0, 8).map((f) => joinUnder(workspaceKey, f.path));
       toOpen.reverse().forEach((p) => onOpenPath?.(p));
       setInput('');
       setScaffold(null);
@@ -778,16 +822,29 @@ export function AiPanel({
             aria-label="Confirm project build"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <h2 className="dialog-title">Build project — {scaffold.files.length} file(s)</h2>
+            <h2 className="dialog-title">Review changes — {scaffold.files.length} file(s)</h2>
             {scaffold.notes && <p className="scaffold-notes">{scaffold.notes}</p>}
             <ul className="scaffold-list">
               {scaffold.files.map((f) => (
-                <li key={f.path}>{f.path}</li>
+                <li key={f.path}>
+                  <span className={`scaffold-badge ${f.old === null ? 'is-new' : 'is-mod'}`}>
+                    {f.old === null ? 'NEW' : 'MOD'}
+                  </span>
+                  <span className="scaffold-path">{f.path}</span>
+                  {onShowDiff && (
+                    <button
+                      type="button"
+                      className="scaffold-diff-btn"
+                      onClick={() => onShowDiff(f.path, f.old ?? '', f.content)}
+                    >
+                      Diff
+                    </button>
+                  )}
+                </li>
               ))}
             </ul>
             <p className="scaffold-warn">
-              Files are written into the current project (existing files with the same path are
-              overwritten).
+              Applying writes these into the project (modified files are overwritten).
             </p>
             <div className="dialog-actions">
               <button
@@ -799,7 +856,7 @@ export function AiPanel({
                 Cancel
               </button>
               <button type="button" onClick={() => void applyScaffold()} disabled={applying}>
-                {applying ? 'Creating…' : 'Create files'}
+                {applying ? 'Applying…' : 'Apply changes'}
               </button>
             </div>
           </div>

@@ -2790,7 +2790,45 @@ kbd {
   font-size: 12px;
 }
 .scaffold-list li {
-  padding: 1px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+.scaffold-badge {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.scaffold-badge.is-new {
+  color: #06210f;
+  background: #43c489;
+}
+.scaffold-badge.is-mod {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+.scaffold-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scaffold-diff-btn {
+  all: unset;
+  cursor: pointer;
+  color: var(--link);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+.scaffold-diff-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
 }
 .scaffold-warn {
   margin: 0 0 10px;

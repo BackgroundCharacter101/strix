@@ -974,6 +974,9 @@ export default function App() {
                       activeTabs.open(p);
                       setTreeNonce((n) => n + 1);
                     }}
+                    onShowDiff={(p, original, modified) =>
+                      setDiff({ path: p, original, modified })
+                    }
                   />
                 </aside>
               </>
