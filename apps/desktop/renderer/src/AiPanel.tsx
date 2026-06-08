@@ -619,11 +619,15 @@ export function AiPanel({
       const ctx = existing
         ? `${projectContext}\n\nExisting files (use "edits" with exact snippets to change these):\n${existing}`
         : projectContext;
-      raw = await complete(
-        'scaffold',
-        { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: atts },
-        { model: buildModel, signal: controller.signal },
-      );
+      const buildOpts = { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: atts };
+      try {
+        raw = await complete('scaffold', buildOpts, { model: buildModel, signal: controller.signal });
+      } catch (e1) {
+        if (controller.signal.aborted) throw e1;
+        // The preferred model may have failed — fall back to the router (auto),
+        // which has its own provider failover.
+        raw = await complete('scaffold', buildOpts, { model: 'auto', signal: controller.signal });
+      }
     } catch {
       if (!controller.signal.aborted) {
         showToast('Build request failed — check the AI server / your key.', 'error', 6000);
