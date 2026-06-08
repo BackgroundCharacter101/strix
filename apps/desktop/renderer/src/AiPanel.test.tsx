@@ -266,6 +266,19 @@ describe('AiPanel', () => {
     );
   });
 
+  it('auto-applies agent changes without the review modal when enabled', async () => {
+    complete.mockResolvedValue('{"files":[{"path":"a.ts","content":"x"}]}');
+    const write = vi.fn(async () => {});
+    window.strix = makeStrixApi({ fs: { write } });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" autoApply />);
+
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'build a tool' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(write).toHaveBeenCalledWith('/ws/a.ts', 'x'));
+    expect(screen.queryByRole('button', { name: 'Apply changes' })).not.toBeInTheDocument();
+  });
+
   it('hands the question off to Claude Code', async () => {
     const onAskClaude = vi.fn();
     render(<AiPanel filePath="/ws/a.ts" fileContent="x" onAskClaude={onAskClaude} />);

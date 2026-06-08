@@ -518,6 +518,19 @@ export function SettingsPage({
             />
           </Row>
 
+          <Row
+            query={query}
+            label="Apply AI changes without confirming"
+            desc="Hands-off agent: write file changes immediately, skipping the review/diff modal."
+          >
+            <input
+              type="checkbox"
+              aria-label="Apply AI changes without confirming"
+              checked={settings.agentAutoApply}
+              onChange={(e) => onChange({ agentAutoApply: e.target.checked })}
+            />
+          </Row>
+
           <div className="set-row set-row-block">
             <div className="set-info">
               <div className="set-label">Provider API keys</div>

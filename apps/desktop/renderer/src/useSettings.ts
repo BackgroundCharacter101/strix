@@ -35,6 +35,8 @@ export interface Settings {
   autoSaveSeconds: number;
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
+  // Agent: apply file changes immediately, skipping the review/confirm modal.
+  agentAutoApply: boolean;
   // Workbench mode: 'normal' (clean coding) or 'cybersec' (pentester vibe +
   // security-expert AI persona).
   mode: 'normal' | 'cybersec';
@@ -70,6 +72,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSave: true,
   autoSaveSeconds: 60,
   aiServerUrl: '',
+  agentAutoApply: false,
   mode: 'normal',
   securityStance: 'balanced',
   securityPersona: { ...DEFAULT_SECURITY_PERSONA },

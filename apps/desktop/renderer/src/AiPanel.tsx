@@ -145,6 +145,7 @@ export function AiPanel({
   onOpenPath,
   onShowDiff,
   editorTheme,
+  autoApply,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -159,6 +160,8 @@ export function AiPanel({
   onShowDiff?: (path: string, original: string, modified: string) => void;
   // Monaco theme name for the inline diffs in the review panel.
   editorTheme?: string;
+  // When true, agent file changes are applied immediately (no review modal).
+  autoApply?: boolean;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -537,23 +540,28 @@ export function AiPanel({
       ]);
       return;
     }
-    setScaffold({ files: changed, notes: plan.notes });
+    // Hands-off mode applies immediately; otherwise open the review modal.
+    if (autoApply) {
+      await applyFiles(changed, plan.notes);
+    } else {
+      setScaffold({ files: changed, notes: plan.notes });
+    }
   };
 
-  // Write the approved plan to disk (paths are pre-validated as safe relatives).
-  const applyScaffold = async () => {
-    if (!scaffold || !workspaceKey) return;
+  // Write a set of pending files to disk, post a summary, and reopen them live.
+  const applyFiles = async (files: ReviewFile[], notes?: string) => {
+    if (!workspaceKey || files.length === 0) return;
     setApplying(true);
     try {
-      for (const f of scaffold.files) {
+      for (const f of files) {
         await window.strix.fs.write(joinUnder(workspaceKey, f.path), f.content);
       }
-      const created = scaffold.files.filter((f) => f.old === null).length;
-      const updated = scaffold.files.length - created;
+      const created = files.filter((f) => f.old === null).length;
+      const updated = files.length - created;
       const summary =
         [created ? `${created} new` : '', updated ? `${updated} updated` : '']
           .filter(Boolean)
-          .join(', ') || `${scaffold.files.length} file(s)`;
+          .join(', ') || `${files.length} file(s)`;
       showToast(`Applied — ${summary}.`, 'success');
       setHistory((h) => [
         ...h,
@@ -561,23 +569,25 @@ export function AiPanel({
           role: 'assistant',
           content:
             `Done — ${summary}:\n` +
-            scaffold.files
-              .map((f) => `- ${f.old === null ? '🆕' : '✏️'} ${f.path}`)
-              .join('\n') +
-            (scaffold.notes ? `\n\n${scaffold.notes}` : ''),
+            files.map((f) => `- ${f.old === null ? '🆕' : '✏️'} ${f.path}`).join('\n') +
+            (notes ? `\n\n${notes}` : ''),
         },
       ]);
       // Reopen the changed files (capped) so edits show live; reversed so the
       // first ends up active. Paths use the workspace separator (no dup tabs).
-      const toOpen = scaffold.files.slice(0, 8).map((f) => joinUnder(workspaceKey, f.path));
+      const toOpen = files.slice(0, 8).map((f) => joinUnder(workspaceKey, f.path));
       toOpen.reverse().forEach((p) => onOpenPath?.(p));
-      setInput('');
       setScaffold(null);
+      setExpandedFile(null);
     } catch (e) {
       showToast(`Write failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 7000);
     } finally {
       setApplying(false);
     }
+  };
+
+  const applyScaffold = () => {
+    if (scaffold) void applyFiles(scaffold.files, scaffold.notes);
   };
 
   const clearHistory = () => {

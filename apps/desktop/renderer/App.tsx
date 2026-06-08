@@ -978,6 +978,7 @@ export default function App() {
                       setDiff({ path: p, original, modified })
                     }
                     editorTheme={editorTheme}
+                    autoApply={settings.agentAutoApply}
                   />
                 </aside>
               </>
