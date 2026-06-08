@@ -422,6 +422,14 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **Agent reliability v2:** (1) diff/patch edits — the agent returns
+  `edits:[{path,search,replace}]` for existing files (applied by exact-match
+  search/replace) instead of rewriting whole files, so responses are short and
+  don't truncate; full `files` only for new/near-total rewrites. Failed snippet
+  matches are reported, not silently dropped. (2) builds pick a strong model
+  (`pickBuildModel`) when the picker is on Auto. (3) plan-first: a short streamed
+  "what I'll change" summary precedes the file plan. Plus scaffold max_tokens
+  8192 and PowerShell-safe `&&`→`;` for the interactive run.
 - **AI panel attachments (multimodal):** attach files to the chat via the 📎
   button, drag-drop, or paste. Images → base64 data URL (sent as OpenAI
   image_url parts for vision models like gpt-4o/gemini); PDFs → text extracted

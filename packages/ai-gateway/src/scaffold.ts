@@ -8,12 +8,46 @@ export interface ScaffoldFile {
   summary?: string;
 }
 
+// A small search/replace edit to an existing file (preferred over rewriting the
+// whole file — keeps responses short so they don't truncate).
+export interface ScaffoldEdit {
+  path: string;
+  search: string;
+  replace: string;
+  summary?: string;
+}
+
 export interface ScaffoldPlan {
   files: ScaffoldFile[];
+  edits: ScaffoldEdit[];
   notes?: string;
   // An optional shell command the agent suggests running (e.g. "npm install").
   // Surfaced to the user to run in the terminal — never executed automatically.
   run?: string;
+}
+
+// Prefer a strong, high-output model for whole-project builds when the user left
+// the picker on "auto". Falls back to auto if none of the preferred ones exist.
+const BUILD_MODEL_PREFS = [
+  'gpt-4o',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.0',
+  'claude-3-5-sonnet',
+  'claude-3.5',
+  'llama-3.3-70b',
+  'llama-3.1-70b',
+  'qwen2.5-72b',
+  'deepseek',
+];
+
+export function pickBuildModel(models: string[], selected: string): string {
+  if (selected && selected !== 'auto') return selected;
+  for (const pref of BUILD_MODEL_PREFS) {
+    const m = models.find((x) => x.toLowerCase().includes(pref));
+    if (m) return m;
+  }
+  return 'auto';
 }
 
 // A safe relative path: non-empty, forward-slashed, staying inside the project
@@ -66,7 +100,7 @@ export function parseScaffold(
     return { error: e instanceof Error ? e.message : 'Invalid JSON.' };
   }
 
-  const obj = parsed as { files?: unknown; notes?: unknown; run?: unknown };
+  const obj = parsed as { files?: unknown; edits?: unknown; notes?: unknown; run?: unknown };
   const fileArr = Array.isArray(obj.files) ? obj.files : [];
   if (fileArr.length > maxFiles) {
     return { error: `Too many files (${fileArr.length} > ${maxFiles}).` };
@@ -101,9 +135,28 @@ export function parseScaffold(
     if (typeof c === 'string') run = c.trim() || undefined;
   }
 
+  // Search/replace edits to existing files.
+  const edits: ScaffoldEdit[] = [];
+  for (const raw of Array.isArray(obj.edits) ? obj.edits : []) {
+    const e = raw as { path?: unknown; search?: unknown; replace?: unknown; summary?: unknown };
+    if (
+      typeof e.path === 'string' &&
+      typeof e.search === 'string' &&
+      typeof e.replace === 'string' &&
+      isSafeRelPath(e.path)
+    ) {
+      edits.push({
+        path: e.path.trim().replace(/\\/g, '/'),
+        search: e.search,
+        replace: e.replace,
+        summary: typeof e.summary === 'string' ? e.summary : undefined,
+      });
+    }
+  }
+
   const notes = typeof obj.notes === 'string' ? obj.notes : undefined;
-  if (files.length === 0 && !run && !notes) {
+  if (files.length === 0 && edits.length === 0 && !run && !notes) {
     return { error: 'The plan has no files.' };
   }
-  return { files, notes, run };
+  return { files, edits, notes, run };
 }

@@ -15,7 +15,7 @@ import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
 import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
-import { isSafeRelPath } from '@strix/ai-gateway';
+import { isSafeRelPath, pickBuildModel } from '@strix/ai-gateway';
 import { DiffViewer, languageForPath } from '@strix/editor';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
@@ -579,18 +579,50 @@ export function AiPanel({
     setStreaming('');
     const controller = new AbortController();
     abortRef.current = controller;
+    const buildModel = pickBuildModel(models, model);
     let raw = '';
     try {
-      // Give the agent the current file tree AND the contents of existing text
-      // files, so it can MODIFY them live instead of asking you to open them.
+      // Step 1 — stream a short plan so the long wait shows real progress.
+      let planText = '';
+      try {
+        await runTask(
+          'chat',
+          {
+            filePath: '',
+            fileContent: '',
+            userMessage: `In 2-4 short bullet points, say what you'll change to do this — no code:\n${desc}`,
+            history: priorHistory,
+            projectContext,
+            securityMode,
+            securityStance,
+            securityPersonaText,
+          },
+          {
+            onToken: (t) => {
+              planText += t;
+              setStreaming(planText);
+            },
+            onDone: () => {},
+          },
+          { model: buildModel, signal: controller.signal },
+        );
+      } catch {
+        /* planning is best-effort */
+      }
+      setStreaming('');
+      if (planText.trim()) {
+        setHistory((h) => [...h, { role: 'assistant', content: planText }]);
+      }
+
+      // Step 2 — generate the actual file plan with full project context.
       const existing = await gatherProjectFiles(workspaceKey);
       const ctx = existing
-        ? `${projectContext}\n\nExisting files (modify as needed — return full updated content):\n${existing}`
+        ? `${projectContext}\n\nExisting files (use "edits" with exact snippets to change these):\n${existing}`
         : projectContext;
       raw = await complete(
         'scaffold',
         { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: atts },
-        { model, signal: controller.signal },
+        { model: buildModel, signal: controller.signal },
       );
     } catch {
       if (!controller.signal.aborted) {
@@ -606,20 +638,20 @@ export function AiPanel({
     if ('error' in plan) {
       // If it looks like a file plan that failed to parse, it was almost
       // certainly truncated (too long) — show a clean message, not raw JSON.
-      const looksLikePlan = /^\s*\{[\s\S]*"files"\s*:/.test(raw);
+      const looksLikePlan = /^\s*\{[\s\S]*"(files|edits)"\s*:/.test(raw);
       setHistory((h) => [
         ...h,
         {
           role: 'assistant',
           content: looksLikePlan
-            ? `⚠ The AI's file plan came back incomplete (${plan.error}) — the response was likely too long and got cut off. Try again, or ask for a smaller / single-file change (e.g. "just add MAC detection to index.js").`
+            ? `⚠ The AI's plan came back incomplete (${plan.error}) — likely too long and cut off. Try again, or ask for a smaller / single-file change.`
             : raw,
         },
       ]);
       return;
     }
-    // Enrich each file with its current on-disk content (for New/Modified + diff).
-    const files: ReviewFile[] = await Promise.all(
+    // Enrich full-file entries with their on-disk content (for New/Modified + diff).
+    const fileChanges: ReviewFile[] = await Promise.all(
       plan.files.map(async (f) => {
         let old: string | null = null;
         try {
@@ -630,8 +662,43 @@ export function AiPanel({
         return { path: f.path, content: f.content, old, summary: f.summary };
       }),
     );
-    // Drop files the model returned unchanged.
-    const changed = files.filter((f) => f.old !== f.content);
+    // Apply search/replace edits against the current file contents.
+    const editChanges: ReviewFile[] = [];
+    const failedEdits: string[] = [];
+    for (const e of plan.edits) {
+      let old = '';
+      try {
+        old = await window.strix.fs.read(joinUnder(workspaceKey, e.path));
+      } catch {
+        failedEdits.push(`${e.path} (not found)`);
+        continue;
+      }
+      if (old.includes(e.search)) {
+        editChanges.push({
+          path: e.path,
+          content: old.replace(e.search, e.replace),
+          old,
+          summary: e.summary,
+        });
+      } else {
+        failedEdits.push(`${e.path} (snippet not found)`);
+      }
+    }
+    if (failedEdits.length) {
+      setHistory((h) => [
+        ...h,
+        {
+          role: 'assistant',
+          content: `⚠ Couldn't apply some edits (the snippet didn't match): ${failedEdits.join(', ')}. I'll proceed with the rest — re-ask if one is missing.`,
+        },
+      ]);
+    }
+    // Drop unchanged, de-dup by path (edits win over a stray full-file echo).
+    const byPath = new Map<string, ReviewFile>();
+    for (const f of [...fileChanges, ...editChanges]) {
+      if (f.old !== f.content) byPath.set(f.path, f);
+    }
+    const changed = [...byPath.values()];
     if (changed.length === 0) {
       // No file edits — post the explanation, and offer the run command if any.
       setHistory((h) => [

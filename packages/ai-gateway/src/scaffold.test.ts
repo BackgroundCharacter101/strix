@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { parseScaffold, isSafeRelPath, looksLikeBuildRequest } from './scaffold';
+import { parseScaffold, isSafeRelPath, looksLikeBuildRequest, pickBuildModel } from './scaffold';
+
+describe('pickBuildModel', () => {
+  it('keeps an explicit model selection', () => {
+    expect(pickBuildModel(['auto', 'gpt-4o'], 'gpt-4o')).toBe('gpt-4o');
+  });
+  it('upgrades "auto" to a preferred model when available', () => {
+    expect(pickBuildModel(['auto', 'groq/llama-3.3-70b-versatile'], 'auto')).toBe(
+      'groq/llama-3.3-70b-versatile',
+    );
+  });
+  it('falls back to auto when no preferred model exists', () => {
+    expect(pickBuildModel(['auto', 'tiny-model'], 'auto')).toBe('auto');
+  });
+});
 
 describe('looksLikeBuildRequest', () => {
   it('detects build/create requests', () => {
@@ -51,6 +65,17 @@ describe('parseScaffold', () => {
     expect('run' in out && out.run).toBe('npm start');
     const out2 = parseScaffold('{"run":{"command":"npm install"}}');
     expect('run' in out2 && out2.run).toBe('npm install');
+  });
+  it('parses search/replace edits', () => {
+    const out = parseScaffold(
+      '{"edits":[{"path":"a.ts","search":"old","replace":"new","summary":"x"}]}',
+    );
+    expect('edits' in out && out.edits[0]).toEqual({
+      path: 'a.ts',
+      search: 'old',
+      replace: 'new',
+      summary: 'x',
+    });
   });
   it('captures a per-file summary when present', () => {
     const out = parseScaffold(
