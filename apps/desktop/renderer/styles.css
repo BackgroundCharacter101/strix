@@ -2767,10 +2767,30 @@ kbd {
   border-color: var(--accent);
 }
 
-/* Scaffold / agent-changes review dialog. */
-.scaffold-dialog {
-  width: min(760px, 94vw);
-  text-align: left;
+/* Agent-changes review — shown IN the AI panel (non-blocking, editor stays
+   visible) rather than as a full-screen modal. */
+.ai-review {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 8px;
+}
+.ai-review-head {
+  flex: 0 0 auto;
+}
+.ai-review-head strong {
+  font-size: 13px;
+}
+.ai-review .scaffold-list {
+  flex: 1 1 auto;
+  max-height: none;
+}
+.ai-review-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
 }
 .scaffold-notes {
   margin: 0 0 8px;

@@ -689,6 +689,70 @@ export function AiPanel({
           }}
           onDismiss={() => setProposal(null)}
         />
+      ) : scaffold ? (
+        <div className="ai-review" aria-label="Review changes">
+          <div className="ai-review-head">
+            <strong>Review changes — {scaffold.files.length} file(s)</strong>
+            {scaffold.notes && <p className="scaffold-notes">{scaffold.notes}</p>}
+          </div>
+          <ul className="scaffold-list">
+            {scaffold.files.map((f) => {
+              const open = expandedFile === f.path;
+              return (
+                <li key={f.path} className="scaffold-file">
+                  <button
+                    type="button"
+                    className="scaffold-row"
+                    aria-expanded={open}
+                    onClick={() => setExpandedFile(open ? null : f.path)}
+                  >
+                    <span className="scaffold-caret">{open ? '▾' : '▸'}</span>
+                    <span className={`scaffold-badge ${f.old === null ? 'is-new' : 'is-mod'}`}>
+                      {f.old === null ? 'NEW' : 'MOD'}
+                    </span>
+                    <span className="scaffold-path">{f.path}</span>
+                    {onShowDiff && (
+                      <span
+                        className="scaffold-diff-btn"
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onShowDiff(f.path, f.old ?? '', f.content);
+                        }}
+                      >
+                        Open ↗
+                      </span>
+                    )}
+                  </button>
+                  {open && (
+                    <div className="scaffold-diff">
+                      <DiffViewer
+                        original={f.old ?? ''}
+                        modified={f.content}
+                        language={languageForPath(f.path)}
+                        theme={editorTheme}
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <div className="ai-review-actions">
+            <button
+              type="button"
+              className="ai-ghost-btn"
+              onClick={() => setScaffold(null)}
+              disabled={applying}
+            >
+              Cancel
+            </button>
+            <button type="button" onClick={() => void applyScaffold()} disabled={applying}>
+              {applying ? 'Applying…' : 'Apply changes'}
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="ai-thread" aria-label="AI conversation" ref={threadRef}>
           {history.length === 0 && !streaming ? (
@@ -829,80 +893,6 @@ export function AiPanel({
         />
       )}
 
-      {scaffold && (
-        <div className="palette-overlay" onMouseDown={() => !applying && setScaffold(null)}>
-          <div
-            className="dialog scaffold-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Confirm project build"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <h2 className="dialog-title">Review changes — {scaffold.files.length} file(s)</h2>
-            {scaffold.notes && <p className="scaffold-notes">{scaffold.notes}</p>}
-            <ul className="scaffold-list">
-              {scaffold.files.map((f) => {
-                const open = expandedFile === f.path;
-                return (
-                  <li key={f.path} className="scaffold-file">
-                    <button
-                      type="button"
-                      className="scaffold-row"
-                      aria-expanded={open}
-                      onClick={() => setExpandedFile(open ? null : f.path)}
-                    >
-                      <span className="scaffold-caret">{open ? '▾' : '▸'}</span>
-                      <span className={`scaffold-badge ${f.old === null ? 'is-new' : 'is-mod'}`}>
-                        {f.old === null ? 'NEW' : 'MOD'}
-                      </span>
-                      <span className="scaffold-path">{f.path}</span>
-                      {onShowDiff && (
-                        <span
-                          className="scaffold-diff-btn"
-                          role="button"
-                          tabIndex={0}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onShowDiff(f.path, f.old ?? '', f.content);
-                          }}
-                        >
-                          Open ↗
-                        </span>
-                      )}
-                    </button>
-                    {open && (
-                      <div className="scaffold-diff">
-                        <DiffViewer
-                          original={f.old ?? ''}
-                          modified={f.content}
-                          language={languageForPath(f.path)}
-                          theme={editorTheme}
-                        />
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-            <p className="scaffold-warn">
-              Applying writes these into the project (modified files are overwritten).
-            </p>
-            <div className="dialog-actions">
-              <button
-                type="button"
-                className="ai-ghost-btn"
-                onClick={() => setScaffold(null)}
-                disabled={applying}
-              >
-                Cancel
-              </button>
-              <button type="button" onClick={() => void applyScaffold()} disabled={applying}>
-                {applying ? 'Applying…' : 'Apply changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
