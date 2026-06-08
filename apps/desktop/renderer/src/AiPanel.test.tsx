@@ -242,6 +242,30 @@ describe('AiPanel', () => {
     await waitFor(() => expect(onOpenPath).toHaveBeenCalledWith('/ws/src/index.ts'));
   });
 
+  it('routes instructions to the file agent but keeps questions as chat (in a project)', async () => {
+    complete.mockResolvedValue('{"files":[{"path":"a.ts","content":"1"}]}');
+    runTask.mockImplementation(async (_t, _o, cb) => {
+      cb.onToken('hi');
+      cb.onDone('g');
+    });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" />);
+
+    // A question → normal chat (runTask), not the agent.
+    fireEvent.change(screen.getByLabelText('Ask AI'), {
+      target: { value: 'what does this project do?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() => expect(runTask).toHaveBeenCalled());
+    expect(complete).not.toHaveBeenCalled();
+
+    // A plain instruction → the file-editing agent (complete with 'scaffold').
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'add error handling' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await waitFor(() =>
+      expect(complete).toHaveBeenCalledWith('scaffold', expect.any(Object), expect.any(Object)),
+    );
+  });
+
   it('hands the question off to Claude Code', async () => {
     const onAskClaude = vi.fn();
     render(<AiPanel filePath="/ws/a.ts" fileContent="x" onAskClaude={onAskClaude} />);

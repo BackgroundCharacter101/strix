@@ -14,7 +14,7 @@ import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
 import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
-import { isSafeRelPath, looksLikeBuildRequest } from '@strix/ai-gateway';
+import { isSafeRelPath } from '@strix/ai-gateway';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -490,7 +490,9 @@ export function AiPanel({
     abortRef.current = null;
     const plan = parseScaffold(raw);
     if ('error' in plan) {
-      showToast(`Could not read the build plan: ${plan.error}`, 'error', 7000);
+      // The model answered in prose instead of a file plan — show it as a normal
+      // reply so the user still gets the answer (with Save-to-file on code blocks).
+      setHistory((h) => [...h, { role: 'assistant', content: raw }]);
       return;
     }
     setScaffold(plan);
@@ -534,46 +536,24 @@ export function AiPanel({
     setRoutedVia(null);
   };
 
-  // Decide whether a message is an instruction to create/modify files (apply
-  // live) vs. a question/explanation (chat). Questions always stay chat.
-  const wantsFileChanges = (text: string): boolean => {
-    if (!workspaceKey) return false;
+  // A pure question / explanation request — answered as chat (with streaming).
+  // Everything else, in an open project, goes to the file-editing agent.
+  const isQuestion = (text: string): boolean => {
     const t = text.trim();
-    if (
+    return (
       /\?\s*$/.test(t) ||
-      /^(how|what|why|where|when|which|who|can|could|do|does|did|is|are|should|would|will|explain|show|tell|describe|list)\b/i.test(
+      /^(how|what|why|where|when|which|who|whose|can|could|do|does|did|is|are|am|was|were|should|would|will|explain|show me|tell me|describe|list|summari|review|look at|why|help me understand)\b/i.test(
         t,
       )
-    ) {
-      return false;
-    }
-    if (looksLikeBuildRequest(t)) return true;
-    const hadAssistant = history.some((m) => m.role === 'assistant');
-    // Short confirmations after the assistant proposed changes ("do it", "add those").
-    if (
-      hadAssistant &&
-      /^(do it|go ahead|yes|yep|yeah|sure|ok(ay)?|please do|add (those|that|them|it)|proceed|continue|build it|make it\b.*)/i.test(
-        t,
-      )
-    ) {
-      return true;
-    }
-    // Imperative edit verbs → modify the project's files.
-    if (
-      /\b(add|implement|update|modify|change|refactor|improve|enhance|integrate|extend|rewrite|remove|delete|rename)\b/i.test(
-        t,
-      )
-    ) {
-      return true;
-    }
-    return false;
+    );
   };
 
-  // Send: build/modify the project's files when asked; otherwise normal chat.
+  // Send: in an open project, any instruction (not a question) goes to the agent,
+  // which edits/creates the project's files live; questions are normal chat.
   const send = () => {
     const text = input.trim();
     if (!text || busy) return;
-    if (wantsFileChanges(text)) {
+    if (workspaceKey && !isQuestion(text)) {
       void buildProject();
     } else {
       void run('chat');
