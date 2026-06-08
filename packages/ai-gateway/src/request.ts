@@ -36,6 +36,9 @@ export async function runTask(
 
   if (task === 'autocomplete') {
     params.max_tokens = AUTOCOMPLETE_MAX_TOKENS;
+  } else if (task === 'scaffold') {
+    // Whole-file plans are big; give the model room so the JSON isn't truncated.
+    params.max_tokens = 8192;
   }
 
   const stream = await ai.chat.completions.create(

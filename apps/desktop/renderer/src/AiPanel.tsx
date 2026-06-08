@@ -604,9 +604,18 @@ export function AiPanel({
     abortRef.current = null;
     const plan = parseScaffold(raw);
     if ('error' in plan) {
-      // The model answered in prose instead of a file plan — show it as a normal
-      // reply so the user still gets the answer (with Save-to-file on code blocks).
-      setHistory((h) => [...h, { role: 'assistant', content: raw }]);
+      // If it looks like a file plan that failed to parse, it was almost
+      // certainly truncated (too long) — show a clean message, not raw JSON.
+      const looksLikePlan = /^\s*\{[\s\S]*"files"\s*:/.test(raw);
+      setHistory((h) => [
+        ...h,
+        {
+          role: 'assistant',
+          content: looksLikePlan
+            ? `⚠ The AI's file plan came back incomplete (${plan.error}) — the response was likely too long and got cut off. Try again, or ask for a smaller / single-file change (e.g. "just add MAC detection to index.js").`
+            : raw,
+        },
+      ]);
       return;
     }
     // Enrich each file with its current on-disk content (for New/Modified + diff).
@@ -1041,7 +1050,11 @@ export function AiPanel({
                 title="Run in the integrated terminal (output not analysed)"
                 onClick={() => {
                   const { command, cwd } = pendingRun;
-                  onRunCommand(workspaceKey && cwd !== workspaceKey ? `cd "${cwd}"; ${command}` : command);
+                  // PowerShell (the default Windows shell) rejects `&&`; use `;`.
+                  const safe = command.replace(/\s*&&\s*/g, '; ');
+                  onRunCommand(
+                    workspaceKey && cwd !== workspaceKey ? `cd "${cwd}"; ${safe}` : safe,
+                  );
                   setPendingRun(null);
                 }}
               >
