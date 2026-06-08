@@ -21,6 +21,10 @@ export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: Ter
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const sessionRef = useRef<string | null>(null);
+  // The directory the PTY was spawned in / last cd'd to, so we only re-cd when
+  // the workspace actually changes (not on the initial mount).
+  const cwdRef = useRef<string | undefined>(cwd);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -44,28 +48,29 @@ export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: Ter
     }
 
     let disposed = false;
-    let sessionId: string | null = null;
 
     // PTY output → terminal.
     const offData = window.strix.terminal.onData(({ id, data }) => {
-      if (id === sessionId) {
+      if (id === sessionRef.current) {
         term.write(data);
       }
     });
 
     // Keystrokes → PTY.
     const keySub = term.onData((data) => {
-      if (sessionId) {
-        window.strix.terminal.input(sessionId, data);
+      if (sessionRef.current) {
+        window.strix.terminal.input(sessionRef.current, data);
       }
     });
 
-    window.strix.terminal.create({ cols: term.cols, rows: term.rows, cwd }).then((id) => {
+    // Spawn in the latest cwd (cwdRef may have advanced before the session was
+    // ready, e.g. a folder was opened during launch).
+    window.strix.terminal.create({ cols: term.cols, rows: term.rows, cwd: cwdRef.current }).then((id) => {
       if (disposed) {
         window.strix.terminal.kill(id);
         return;
       }
-      sessionId = id;
+      sessionRef.current = id;
       // Run the boot command once the shell has had a moment to initialise.
       if (bootCommand) {
         setTimeout(() => window.strix.terminal.input(id, `${bootCommand}\r`), 400);
@@ -75,8 +80,8 @@ export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: Ter
     // Keep the PTY's dimensions in sync with the rendered terminal.
     const onResize = () => {
       fit.fit();
-      if (sessionId) {
-        window.strix.terminal.resize(sessionId, term.cols, term.rows);
+      if (sessionRef.current) {
+        window.strix.terminal.resize(sessionRef.current, term.cols, term.rows);
       }
     };
     window.addEventListener('resize', onResize);
@@ -86,12 +91,23 @@ export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: Ter
       window.removeEventListener('resize', onResize);
       offData();
       keySub.dispose();
-      if (sessionId) {
-        window.strix.terminal.kill(sessionId);
+      if (sessionRef.current) {
+        window.strix.terminal.kill(sessionRef.current);
       }
       term.dispose();
     };
   }, []);
+
+  // Follow the workspace: when the opened folder changes, cd the live shell into
+  // it (instead of leaving it at the launch directory). Skips the first run.
+  useEffect(() => {
+    if (cwd === cwdRef.current) return;
+    cwdRef.current = cwd;
+    const id = sessionRef.current;
+    if (!id || !cwd) return;
+    // `cd "<path>"` works across PowerShell, cmd, and POSIX shells.
+    window.strix.terminal.input(id, `cd "${cwd}"\r`);
+  }, [cwd]);
 
   // Apply font changes from Settings to the live terminal (no PTY restart).
   useEffect(() => {
