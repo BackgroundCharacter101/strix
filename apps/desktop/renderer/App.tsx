@@ -387,7 +387,7 @@ export default function App() {
   }, [root]);
 
   const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500, persistKey: 'strix.size.sidebar' });
-  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 240, max: 760, persistKey: 'strix.size.ai' });
+  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 240, max: 1280, persistKey: 'strix.size.ai' });
   const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600, persistKey: 'strix.size.terminal' });
 
   useEffect(() => {
