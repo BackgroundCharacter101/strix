@@ -5,6 +5,7 @@ import type { AiProviderKey } from '../../main/bridge';
 import { THEMES, ACCENTS } from './themes';
 import { SaveIcon, CloseIcon } from './icons';
 import { showToast } from './toast';
+import { CYBERSEC_ENABLED } from './edition';
 
 // FreeLLMAPI providers the user can add a key for (ids match the server).
 const KEY_PLATFORMS: { id: string; label: string }[] = [
@@ -126,7 +127,8 @@ const SECTIONS: { id: SectionId; title: string }[] = [
   { id: 'appearance', title: 'Appearance' },
   { id: 'editor', title: 'Editor' },
   { id: 'ai', title: 'AI' },
-  { id: 'security', title: 'Security AI' },
+  // Security AI persona configures Cybersec mode — Competition edition only.
+  ...(CYBERSEC_ENABLED ? [{ id: 'security' as SectionId, title: 'Security AI' }] : []),
 ];
 
 function Row({
@@ -544,7 +546,7 @@ export function SettingsPage({
         </section>
         )}
 
-        {showSection('security') && (
+        {CYBERSEC_ENABLED && showSection('security') && (
         <section className="set-section">
           <h3>Security AI persona</h3>
           <p className="set-section-note">

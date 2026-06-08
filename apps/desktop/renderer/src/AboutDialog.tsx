@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { OwlIcon } from './icons';
+import { EDITION_LABEL } from './edition';
 
 export function AboutDialog({ onClose }: { onClose: () => void }) {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -32,6 +33,10 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
         <h2 className="about-name">Strix</h2>
         <p className="about-tagline">AI-native code editor</p>
         <dl className="about-meta">
+          <div>
+            <dt>Edition</dt>
+            <dd>{EDITION_LABEL}</dd>
+          </div>
           <div>
             <dt>Version</dt>
             <dd>0.1.0 (dev)</dd>

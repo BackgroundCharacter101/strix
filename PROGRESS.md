@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-06-05
+> Last updated: 2026-06-09
 
 ---
 
@@ -31,6 +31,55 @@ gratuitous complexity, but feature growth is now wanted.
 
 ---
 
+## 1b. Editions — M1 vs M1 Competition (build-time split)
+
+Strix ships in **two editions from one codebase**, selected by a build-time flag
+(`STRIX_EDITION`, baked into both bundles as the `__STRIX_EDITION__` define):
+
+| | **M1** (free public release) | **M1 Competition** (private) |
+|---|---|---|
+| FreeLLMAPI AI | ✅ | ✅ |
+| Claude Code hand-off | ❌ | ✅ |
+| Cybersec mode | ❌ | ✅ |
+| productName / appId | `Strix M1` / `com.strix.ide` | `Strix M1 Competition` / `com.strix.ide.competition` |
+
+Everything else is identical. The flag is a **compile-time constant**, so the
+public M1 build has no runtime path to enable the private features (and the
+Competition-only strings like the Security-AI section are tree-shaken out of the
+minified M1 bundle — verified).
+
+**Flag plumbing:**
+- `apps/desktop/renderer/src/edition.ts` — renderer flags: `EDITION`,
+  `IS_COMPETITION`, `CLAUDE_ENABLED`, `CYBERSEC_ENABLED`, `EDITION_LABEL`.
+- `apps/desktop/main/edition.ts` — main-process copy (for the menu item).
+- Defines: `renderer/vite.config.ts` + `esbuild.main.mjs` read `process.env.
+  STRIX_EDITION` → `__STRIX_EDITION__`. `vitest.config.ts` pins it to
+  `'competition'` so tests exercise the full feature set. **Safe default = `m1`**
+  if the define is ever missing (never leak the private build).
+
+**What the flag gates** (search `CLAUDE_ENABLED` / `CYBERSEC_ENABLED`):
+- Claude: "Ask Claude Code" (AiPanel `onAskClaude`), the Claude Code terminal
+  button (`TerminalTabs`), the `terminal.claude` command (App, filtered out), the
+  "Start Claude Code" menu item (`main/menu.ts`).
+- Cybersec: the green editor theme (`cybersec` is `CYBERSEC_ENABLED && …`), the
+  status-bar mode toggle + `view.mode` command, the AI panel `mode` prop (forced
+  `'normal'` in M1), and the "Security AI" Settings section.
+- About dialog shows the edition (`EDITION_LABEL`).
+
+**Build / run / package** (cross-platform wrapper `scripts/edition.mjs`, no new deps):
+```
+npm run start:competition     # run YOUR build locally (Claude + cybersec)
+npm run start:m1              # run the free build locally
+npm run package:m1           # → apps/desktop/release/m1/  (Strix M1 installer)
+npm run package:competition  # → apps/desktop/release/competition/
+```
+`package:*` runs `electron-builder --win` with `-c.productName/-c.appId/
+-c.directories.output` overrides so the two installers coexist. (Packaging itself
+runs on the user's machine — node-pty/electron download aren't available in the
+assistant sandbox; the `build:*` step IS verified here for both editions.)
+
+---
+
 ## 2. How to run (one command)
 
 ```powershell
@@ -54,7 +103,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 214 tests / 42 files.**
+  **`npm test`** (vitest) — **all green: 244 tests / 44 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.

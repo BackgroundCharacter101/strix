@@ -8,6 +8,12 @@
     ],
     "scripts": {
         "dev": "npm --workspace @strix/desktop run dev",
+        "start:m1": "node scripts/edition.mjs m1 start",
+        "start:competition": "node scripts/edition.mjs competition start",
+        "build:m1": "node scripts/edition.mjs m1 build",
+        "build:competition": "node scripts/edition.mjs competition build",
+        "package:m1": "node scripts/edition.mjs m1 win",
+        "package:competition": "node scripts/edition.mjs competition win",
         "build": "tsc --build",
         "typecheck": "tsc --build",
         "lint": "eslint .",

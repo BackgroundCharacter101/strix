@@ -4,6 +4,7 @@ import {
   type BrowserWindow,
   type MenuItemConstructorOptions,
 } from 'electron';
+import { CLAUDE_ENABLED } from './edition';
 
 // The built application menu, kept so the custom (frameless) title bar can pop
 // individual top-level submenus by label.
@@ -91,7 +92,8 @@ export function buildAppMenu(win: BrowserWindow): void {
         cmd('Toggle AI Assistant', 'view.ai'),
         cmd('Split Editor', 'view.split', 'CmdOrCtrl+\\'),
         cmd('Toggle Zen Mode', 'view.zen', 'CmdOrCtrl+K Z'),
-        cmd('Start Claude Code', 'terminal.claude'),
+        // Claude Code is a Competition-edition-only feature.
+        ...(CLAUDE_ENABLED ? [cmd('Start Claude Code', 'terminal.claude')] : []),
         { type: 'separator' },
         cmd('Languages & Extensions…', 'lang.manage'),
         { type: 'separator' },

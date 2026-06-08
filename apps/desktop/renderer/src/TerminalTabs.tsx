@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from './Terminal';
 import { SparkleIcon } from './icons';
+import { CLAUDE_ENABLED } from './edition';
 
 interface TabDesc {
   id: number;
@@ -130,15 +131,17 @@ export function TerminalTabs({
         <button type="button" aria-label="new terminal" onClick={addShell}>
           +
         </button>
-        <button
-          type="button"
-          className="term-claude-btn"
-          aria-label="Start Claude Code"
-          title="Start Claude Code in this workspace"
-          onClick={() => void launchClaude()}
-        >
-          <SparkleIcon size={13} /> Claude Code
-        </button>
+        {CLAUDE_ENABLED && (
+          <button
+            type="button"
+            className="term-claude-btn"
+            aria-label="Start Claude Code"
+            title="Start Claude Code in this workspace"
+            onClick={() => void launchClaude()}
+          >
+            <SparkleIcon size={13} /> Claude Code
+          </button>
+        )}
       </div>
       {/* Each tab keeps its own Terminal mounted (hidden, not unmounted) so its
           PTY session and scrollback survive tab switches. */}

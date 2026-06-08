@@ -13,12 +13,19 @@
 // (asar-unpacked) node_modules. node builtins are auto-external on platform=node.
 import esbuild from 'esbuild';
 
+// Product edition baked in at build time (STRIX_EDITION=competition → the
+// private build with the Claude Code menu item; anything else → the free M1).
+const edition = process.env.STRIX_EDITION === 'competition' ? 'competition' : 'm1';
+
 const common = {
   bundle: true,
   platform: 'node',
   target: 'node20',
   format: 'esm',
   external: ['electron', 'node-pty'],
+  define: {
+    __STRIX_EDITION__: JSON.stringify(edition),
+  },
   logLevel: 'info',
 };
 

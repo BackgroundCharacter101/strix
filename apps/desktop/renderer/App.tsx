@@ -37,6 +37,7 @@ import {
 } from './src/icons';
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
+import { CLAUDE_ENABLED, CYBERSEC_ENABLED } from './src/edition';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -573,7 +574,7 @@ export default function App() {
     setDiff({ path: absPath, original, modified });
   };
 
-  const commands: { id: string; label: string; detail: string; run: () => void }[] = [
+  const commandsAll: { id: string; label: string; detail: string; run: () => void }[] = [
     { id: 'workspace.openFile', label: 'File: Open File…', detail: 'Ctrl+O', run: () => void openFile() },
     { id: 'workspace.openFolder', label: 'File: Open Folder…', detail: '', run: () => void openFolder() },
     { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
@@ -635,6 +636,14 @@ export default function App() {
       .map((p) => ({ id: `recent:${p}`, label: `Open Recent: ${p}`, detail: '', run: () => setRoot(p) })),
   ];
 
+  // Drop edition-gated commands so they never appear in the palette/menu of the
+  // free M1 build (Claude Code hand-off; Cybersec-mode toggle).
+  const commands = commandsAll.filter(
+    (c) =>
+      (CLAUDE_ENABLED || c.id !== 'terminal.claude') &&
+      (CYBERSEC_ENABLED || c.id !== 'view.mode'),
+  );
+
   const gitStatus = useGitStatus(root);
   const changedCount = gitStatus?.isRepo ? gitStatus.files.length : 0;
 
@@ -680,7 +689,8 @@ export default function App() {
 
   // In Cybersec mode the editor uses a dedicated green-on-black theme + green
   // accent so it matches the pentester chrome (instead of the user's theme).
-  const cybersec = settings.mode === 'cybersec';
+  // Gated to the Competition edition — never active in the public M1 build.
+  const cybersec = CYBERSEC_ENABLED && settings.mode === 'cybersec';
   const editorTheme = cybersec ? 'strix-cybersec' : monacoThemeFor(settings.theme);
   const editorAccent = cybersec ? '#2ea871' : accentHex(settings.accent);
 
@@ -955,10 +965,10 @@ export default function App() {
                     filePath={activeTabs.activePath}
                     fileContent={activeTabs.active?.draft ?? ''}
                     onApplyEdit={(content) => activeTabs.active?.setDraft(content)}
-                    onAskClaude={askClaude}
+                    onAskClaude={CLAUDE_ENABLED ? askClaude : undefined}
                     selectionRequest={selectionReq}
                     aiServerUrl={settings.aiServerUrl}
-                    mode={settings.mode}
+                    mode={CYBERSEC_ENABLED ? settings.mode : 'normal'}
                     securityStance={settings.securityStance}
                     onSecurityStanceChange={(s) => updateSettings({ securityStance: s })}
                     securityPersonaText={`${settings.securityPersona.base} ${settings.securityPersona[settings.securityStance]}`}
@@ -1009,8 +1019,8 @@ export default function App() {
           content={activeTabs.active?.draft ?? ''}
           problems={activeTabs.activePath ? problems : { errors: 0, warnings: 0 }}
           onOpenScm={() => selectView('scm')}
-          mode={settings.mode}
-          onToggleMode={toggleMode}
+          mode={CYBERSEC_ENABLED ? settings.mode : 'normal'}
+          onToggleMode={CYBERSEC_ENABLED ? toggleMode : undefined}
         />
       )}
       {settingsOpen && (
