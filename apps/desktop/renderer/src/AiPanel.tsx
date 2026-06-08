@@ -14,6 +14,7 @@ import { SparkleIcon } from './icons';
 import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
 import { isSafeRelPath } from '@strix/ai-gateway';
+import { DiffViewer, languageForPath } from '@strix/editor';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -143,6 +144,7 @@ export function AiPanel({
   onConfigure,
   onOpenPath,
   onShowDiff,
+  editorTheme,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -155,6 +157,8 @@ export function AiPanel({
   onOpenPath?: (absPath: string) => void;
   // Show a read-only diff (old vs new) for a pending agent change.
   onShowDiff?: (path: string, original: string, modified: string) => void;
+  // Monaco theme name for the inline diffs in the review panel.
+  editorTheme?: string;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -463,6 +467,8 @@ export function AiPanel({
   type ReviewFile = { path: string; content: string; old: string | null };
   const [scaffold, setScaffold] = useState<{ files: ReviewFile[]; notes?: string } | null>(null);
   const [applying, setApplying] = useState(false);
+  // Which file's inline diff is expanded in the review panel.
+  const [expandedFile, setExpandedFile] = useState<string | null>(null);
 
   // Ask the AI for a whole-project file plan from the prompt in the composer.
   const buildProject = async () => {
@@ -825,23 +831,48 @@ export function AiPanel({
             <h2 className="dialog-title">Review changes — {scaffold.files.length} file(s)</h2>
             {scaffold.notes && <p className="scaffold-notes">{scaffold.notes}</p>}
             <ul className="scaffold-list">
-              {scaffold.files.map((f) => (
-                <li key={f.path}>
-                  <span className={`scaffold-badge ${f.old === null ? 'is-new' : 'is-mod'}`}>
-                    {f.old === null ? 'NEW' : 'MOD'}
-                  </span>
-                  <span className="scaffold-path">{f.path}</span>
-                  {onShowDiff && (
+              {scaffold.files.map((f) => {
+                const open = expandedFile === f.path;
+                return (
+                  <li key={f.path} className="scaffold-file">
                     <button
                       type="button"
-                      className="scaffold-diff-btn"
-                      onClick={() => onShowDiff(f.path, f.old ?? '', f.content)}
+                      className="scaffold-row"
+                      aria-expanded={open}
+                      onClick={() => setExpandedFile(open ? null : f.path)}
                     >
-                      Diff
+                      <span className="scaffold-caret">{open ? '▾' : '▸'}</span>
+                      <span className={`scaffold-badge ${f.old === null ? 'is-new' : 'is-mod'}`}>
+                        {f.old === null ? 'NEW' : 'MOD'}
+                      </span>
+                      <span className="scaffold-path">{f.path}</span>
+                      {onShowDiff && (
+                        <span
+                          className="scaffold-diff-btn"
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onShowDiff(f.path, f.old ?? '', f.content);
+                          }}
+                        >
+                          Open ↗
+                        </span>
+                      )}
                     </button>
-                  )}
-                </li>
-              ))}
+                    {open && (
+                      <div className="scaffold-diff">
+                        <DiffViewer
+                          original={f.old ?? ''}
+                          modified={f.content}
+                          language={languageForPath(f.path)}
+                          theme={editorTheme}
+                        />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
             <p className="scaffold-warn">
               Applying writes these into the project (modified files are overwritten).

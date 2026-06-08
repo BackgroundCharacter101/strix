@@ -977,6 +977,7 @@ export default function App() {
                     onShowDiff={(p, original, modified) =>
                       setDiff({ path: p, original, modified })
                     }
+                    editorTheme={editorTheme}
                   />
                 </aside>
               </>
