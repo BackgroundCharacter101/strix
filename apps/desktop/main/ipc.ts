@@ -27,7 +27,7 @@ import {
 import { BrowserWindow } from 'electron';
 import { searchInFiles } from './search.js';
 import { popupMenu } from './menu.js';
-import { TerminalManager, type TerminalCreateOptions } from './terminal.js';
+import { TerminalManager, execCommand, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
 import { installServer, uninstallServer } from './languageServers.js';
@@ -112,6 +112,9 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.on('terminal:kill', (_event, { id }: { id: string }) => terminals.kill(id));
   ipcMain.handle('terminal:hasCommand', (_event, command: string) => commandExists(command));
+  ipcMain.handle('terminal:exec', (_event, command: string, cwd?: string) =>
+    execCommand(command, cwd || getRoot() || undefined),
+  );
 
   const lsp = new LspManager();
   ipcMain.handle('lsp:start', (event, language: Language) =>

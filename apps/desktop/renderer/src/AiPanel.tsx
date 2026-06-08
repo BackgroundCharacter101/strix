@@ -480,9 +480,10 @@ export function AiPanel({
   // A shell command the agent suggested (shown with a Run button; never auto-run).
   const [pendingRun, setPendingRun] = useState<string | null>(null);
 
-  // Ask the AI for a whole-project file plan from the prompt in the composer.
-  const buildProject = async () => {
-    const desc = input.trim();
+  // Ask the AI for a whole-project file plan. With no argument it uses the
+  // composer text; a descArg drives it programmatically (e.g. an auto-fix).
+  const buildProject = async (descArg?: string) => {
+    const desc = (descArg ?? input).trim();
     if (!desc || busy) return;
     if (!workspaceKey) {
       showToast('Open or create a project first, then ask me to build it.', 'info', 6000);
@@ -490,8 +491,11 @@ export function AiPanel({
     }
     // Record the request in the thread (like a chat turn) and clear the box.
     const priorHistory = history;
-    setHistory((h) => [...h, { role: 'user', content: desc }]);
-    setInput('');
+    setHistory((h) => [
+      ...h,
+      { role: 'user', content: descArg ? `⚠ ${descArg.split('\n')[0]}` : desc },
+    ]);
+    if (!descArg) setInput('');
     setBusy(true);
     setStreaming('');
     const controller = new AbortController();
@@ -604,6 +608,44 @@ export function AiPanel({
 
   const applyScaffold = () => {
     if (scaffold) void applyFiles(scaffold.files, scaffold.notes, scaffold.run);
+  };
+
+  // Run the agent's suggested command (with the user's click), capture its
+  // output, show it in the thread, and on failure auto-propose a fix.
+  const runPending = async () => {
+    const cmd = pendingRun;
+    if (!cmd || busy) return;
+    setPendingRun(null);
+    setBusy(true);
+    let res: { exitCode: number; output: string };
+    try {
+      res = await window.strix.terminal.exec(cmd, workspaceKey ?? undefined);
+    } catch {
+      setBusy(false);
+      showToast('Could not run the command.', 'error');
+      return;
+    }
+    setBusy(false);
+    const out = (res.output || '').slice(-4000);
+    const ok = res.exitCode === 0;
+    setHistory((h) => [
+      ...h,
+      {
+        role: 'assistant',
+        content:
+          `${ok ? '✅' : '❌'} Ran \`${cmd}\` — exit code ${res.exitCode}.\n\n` +
+          '```\n' +
+          (out || '(no output)') +
+          '\n```',
+      },
+    ]);
+    if (!ok) {
+      // The agent sees the failure and proposes a fix (which the user approves).
+      await buildProject(
+        `The command \`${cmd}\` failed with exit code ${res.exitCode}. Output:\n${out}\n\n` +
+          'Fix the project so this command succeeds, then provide the corrected "run" command to retry.',
+      );
+    }
   };
 
   const clearHistory = () => {
@@ -846,23 +888,30 @@ export function AiPanel({
             ▶ {pendingRun}
           </code>
           <div className="ai-run-actions">
-            <button
-              type="button"
-              className="ai-ghost-btn"
-              onClick={() => setPendingRun(null)}
-            >
+            <button type="button" className="ai-ghost-btn" onClick={() => setPendingRun(null)}>
               Dismiss
             </button>
+            {onRunCommand && (
+              <button
+                type="button"
+                className="ai-ghost-btn"
+                title="Run in the integrated terminal (output not analysed)"
+                onClick={() => {
+                  onRunCommand(pendingRun);
+                  setPendingRun(null);
+                }}
+              >
+                Terminal ↗
+              </button>
+            )}
             <button
               type="button"
               className="ai-run-go"
-              disabled={!onRunCommand}
-              onClick={() => {
-                onRunCommand?.(pendingRun);
-                setPendingRun(null);
-              }}
+              disabled={busy}
+              onClick={() => void runPending()}
+              title="Run and let the AI read the output (auto-fixes on error)"
             >
-              Run in terminal
+              Run &amp; check
             </button>
           </div>
         </div>

@@ -55,6 +55,9 @@ export interface StrixTerminalApi {
   onExit(cb: (e: { id: string; exitCode: number }) => void): () => void;
   // Whether an executable (e.g. `claude`) is available on PATH.
   hasCommand(command: string): Promise<boolean>;
+  // Run a one-off command and capture its exit code + combined output (so the AI
+  // can see failures). cwd defaults to the workspace root.
+  exec(command: string, cwd?: string): Promise<{ exitCode: number; output: string }>;
 }
 
 export interface StrixLspApi {

@@ -1,7 +1,35 @@
 import { createRequire } from 'module';
+import { exec } from 'node:child_process';
 import type { IPty } from 'node-pty';
 
 const nodeRequire = createRequire(import.meta.url);
+
+export interface ExecResult {
+  exitCode: number;
+  output: string;
+}
+
+// Run a one-off shell command, capturing combined stdout+stderr and the exit
+// code, so the AI agent can see whether a command succeeded or failed and why.
+// Capped + timed out so a hung/long process can't block forever.
+export function execCommand(
+  command: string,
+  cwd?: string,
+  timeoutMs = 120_000,
+): Promise<ExecResult> {
+  return new Promise((resolve) => {
+    exec(
+      command,
+      { cwd, timeout: timeoutMs, maxBuffer: 8 * 1024 * 1024, windowsHide: true },
+      (err, stdout, stderr) => {
+        const output = `${stdout ?? ''}${stderr ?? ''}`.slice(-8000);
+        const code = err as (Error & { code?: number; killed?: boolean }) | null;
+        const exitCode = code ? (typeof code.code === 'number' ? code.code : code.killed ? 124 : 1) : 0;
+        resolve({ exitCode, output: output || (err ? String(err) : '') });
+      },
+    );
+  });
+}
 
 export interface TerminalCreateOptions {
   shell?: string;

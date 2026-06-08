@@ -279,18 +279,35 @@ describe('AiPanel', () => {
     expect(screen.queryByRole('button', { name: 'Apply changes' })).not.toBeInTheDocument();
   });
 
-  it('offers a Run button for an agent-suggested command', async () => {
+  it('runs an agent command captured so output is analysed', async () => {
     complete.mockResolvedValue('{"files":[],"run":"npm start","notes":"Run the scanner."}');
-    const onRunCommand = vi.fn();
-    render(
-      <AiPanel filePath={null} fileContent="" workspaceKey="/ws" onRunCommand={onRunCommand} />,
-    );
+    const exec = vi.fn(async () => ({ exitCode: 0, output: 'done' }));
+    window.strix = makeStrixApi({ terminal: { exec } });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" />);
+
     fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'run the project' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
-    const runBtn = await screen.findByRole('button', { name: 'Run in terminal' });
+    const runBtn = await screen.findByRole('button', { name: 'Run & check' });
     fireEvent.click(runBtn);
-    expect(onRunCommand).toHaveBeenCalledWith('npm start');
+    await waitFor(() => expect(exec).toHaveBeenCalledWith('npm start', '/ws'));
+  });
+
+  it('auto-proposes a fix when an agent command fails', async () => {
+    complete
+      .mockResolvedValueOnce('{"files":[],"run":"node index.js","notes":"run it"}')
+      .mockResolvedValueOnce('{"files":[{"path":"index.js","content":"fixed"}],"notes":"fixed"}');
+    const exec = vi.fn(async () => ({ exitCode: 1, output: 'SyntaxError: bad' }));
+    window.strix = makeStrixApi({ terminal: { exec } });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" />);
+
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'run it' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Run & check' }));
+
+    // The failing run triggers a second agent call whose fix shows in review.
+    await screen.findByText('index.js');
+    expect(complete).toHaveBeenCalledTimes(2);
   });
 
   it('hands the question off to Claude Code', async () => {
