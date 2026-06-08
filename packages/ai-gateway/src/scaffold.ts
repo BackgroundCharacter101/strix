@@ -11,6 +11,9 @@ export interface ScaffoldFile {
 export interface ScaffoldPlan {
   files: ScaffoldFile[];
   notes?: string;
+  // An optional shell command the agent suggests running (e.g. "npm install").
+  // Surfaced to the user to run in the terminal — never executed automatically.
+  run?: string;
 }
 
 // A safe relative path: non-empty, forward-slashed, staying inside the project
@@ -63,17 +66,15 @@ export function parseScaffold(
     return { error: e instanceof Error ? e.message : 'Invalid JSON.' };
   }
 
-  const obj = parsed as { files?: unknown; notes?: unknown };
-  if (!Array.isArray(obj.files) || obj.files.length === 0) {
-    return { error: 'The plan has no files.' };
-  }
-  if (obj.files.length > maxFiles) {
-    return { error: `Too many files (${obj.files.length} > ${maxFiles}).` };
+  const obj = parsed as { files?: unknown; notes?: unknown; run?: unknown };
+  const fileArr = Array.isArray(obj.files) ? obj.files : [];
+  if (fileArr.length > maxFiles) {
+    return { error: `Too many files (${fileArr.length} > ${maxFiles}).` };
   }
 
   const files: ScaffoldFile[] = [];
   let total = 0;
-  for (const raw of obj.files) {
+  for (const raw of fileArr) {
     const f = raw as { path?: unknown; content?: unknown };
     if (typeof f.path !== 'string' || typeof f.content !== 'string') {
       return { error: 'A file entry is missing a string path/content.' };
@@ -91,5 +92,18 @@ export function parseScaffold(
     });
   }
 
-  return { files, notes: typeof obj.notes === 'string' ? obj.notes : undefined };
+  // Optional run command: either "run": "cmd" or "run": { "command": "cmd" }.
+  let run: string | undefined;
+  const runRaw = obj.run;
+  if (typeof runRaw === 'string') run = runRaw.trim() || undefined;
+  else if (runRaw && typeof runRaw === 'object') {
+    const c = (runRaw as { command?: unknown }).command;
+    if (typeof c === 'string') run = c.trim() || undefined;
+  }
+
+  const notes = typeof obj.notes === 'string' ? obj.notes : undefined;
+  if (files.length === 0 && !run && !notes) {
+    return { error: 'The plan has no files.' };
+  }
+  return { files, notes, run };
 }

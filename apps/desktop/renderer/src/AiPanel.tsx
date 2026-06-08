@@ -146,6 +146,7 @@ export function AiPanel({
   onShowDiff,
   editorTheme,
   autoApply,
+  onRunCommand,
 }: {
   filePath: string | null;
   fileContent: string;
@@ -162,6 +163,8 @@ export function AiPanel({
   editorTheme?: string;
   // When true, agent file changes are applied immediately (no review modal).
   autoApply?: boolean;
+  // Run a shell command the agent suggested, in the integrated terminal.
+  onRunCommand?: (command: string) => void;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
@@ -468,10 +471,14 @@ export function AiPanel({
   // Each pending file carries its previous on-disk content (null = new file) so
   // the review modal can show New/Modified and a real diff.
   type ReviewFile = { path: string; content: string; old: string | null; summary?: string };
-  const [scaffold, setScaffold] = useState<{ files: ReviewFile[]; notes?: string } | null>(null);
+  const [scaffold, setScaffold] = useState<
+    { files: ReviewFile[]; notes?: string; run?: string } | null
+  >(null);
   const [applying, setApplying] = useState(false);
   // Which file's inline diff is expanded in the review panel.
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
+  // A shell command the agent suggested (shown with a Run button; never auto-run).
+  const [pendingRun, setPendingRun] = useState<string | null>(null);
 
   // Ask the AI for a whole-project file plan from the prompt in the composer.
   const buildProject = async () => {
@@ -534,22 +541,24 @@ export function AiPanel({
     // Drop files the model returned unchanged.
     const changed = files.filter((f) => f.old !== f.content);
     if (changed.length === 0) {
+      // No file edits — post the explanation, and offer the run command if any.
       setHistory((h) => [
         ...h,
-        { role: 'assistant', content: plan.notes || 'No changes were needed.' },
+        { role: 'assistant', content: plan.notes || 'No file changes were needed.' },
       ]);
+      if (plan.run) setPendingRun(plan.run);
       return;
     }
-    // Hands-off mode applies immediately; otherwise open the review modal.
+    // Hands-off mode applies immediately; otherwise open the review panel.
     if (autoApply) {
-      await applyFiles(changed, plan.notes);
+      await applyFiles(changed, plan.notes, plan.run);
     } else {
-      setScaffold({ files: changed, notes: plan.notes });
+      setScaffold({ files: changed, notes: plan.notes, run: plan.run });
     }
   };
 
   // Write a set of pending files to disk, post a summary, and reopen them live.
-  const applyFiles = async (files: ReviewFile[], notes?: string) => {
+  const applyFiles = async (files: ReviewFile[], notes?: string, run?: string) => {
     if (!workspaceKey || files.length === 0) return;
     setApplying(true);
     try {
@@ -585,6 +594,7 @@ export function AiPanel({
       toOpen.reverse().forEach((p) => onOpenPath?.(p));
       setScaffold(null);
       setExpandedFile(null);
+      if (run) setPendingRun(run);
     } catch (e) {
       showToast(`Write failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 7000);
     } finally {
@@ -593,7 +603,7 @@ export function AiPanel({
   };
 
   const applyScaffold = () => {
-    if (scaffold) void applyFiles(scaffold.files, scaffold.notes);
+    if (scaffold) void applyFiles(scaffold.files, scaffold.notes, scaffold.run);
   };
 
   const clearHistory = () => {
@@ -827,6 +837,34 @@ export function AiPanel({
               ↻ Regenerate
             </button>
           )}
+        </div>
+      )}
+
+      {pendingRun && (
+        <div className="ai-run-bar">
+          <code className="ai-run-cmd" title={pendingRun}>
+            ▶ {pendingRun}
+          </code>
+          <div className="ai-run-actions">
+            <button
+              type="button"
+              className="ai-ghost-btn"
+              onClick={() => setPendingRun(null)}
+            >
+              Dismiss
+            </button>
+            <button
+              type="button"
+              className="ai-run-go"
+              disabled={!onRunCommand}
+              onClick={() => {
+                onRunCommand?.(pendingRun);
+                setPendingRun(null);
+              }}
+            >
+              Run in terminal
+            </button>
+          </div>
         </div>
       )}
 

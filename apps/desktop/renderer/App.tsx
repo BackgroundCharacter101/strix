@@ -979,6 +979,7 @@ export default function App() {
                     }
                     editorTheme={editorTheme}
                     autoApply={settings.agentAutoApply}
+                    onRunCommand={(cmd) => runTarget(cmd, 'AI run')}
                   />
                 </aside>
               </>

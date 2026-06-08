@@ -279,6 +279,20 @@ describe('AiPanel', () => {
     expect(screen.queryByRole('button', { name: 'Apply changes' })).not.toBeInTheDocument();
   });
 
+  it('offers a Run button for an agent-suggested command', async () => {
+    complete.mockResolvedValue('{"files":[],"run":"npm start","notes":"Run the scanner."}');
+    const onRunCommand = vi.fn();
+    render(
+      <AiPanel filePath={null} fileContent="" workspaceKey="/ws" onRunCommand={onRunCommand} />,
+    );
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'run the project' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    const runBtn = await screen.findByRole('button', { name: 'Run in terminal' });
+    fireEvent.click(runBtn);
+    expect(onRunCommand).toHaveBeenCalledWith('npm start');
+  });
+
   it('hands the question off to Claude Code', async () => {
     const onAskClaude = vi.fn();
     render(<AiPanel filePath="/ws/a.ts" fileContent="x" onAskClaude={onAskClaude} />);

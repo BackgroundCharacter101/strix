@@ -17,8 +17,9 @@ const SYSTEM_PROMPTS: Record<TaskType, string> = {
     'The user wants to create or modify a project. The current project files (paths and, where shown, contents) are provided as context; modify them as needed. ' +
     'If the request is genuinely ambiguous or you need a decision before editing, reply with a normal plain-text question (NOT JSON) asking for clarification. ' +
     'Otherwise respond with ONLY a JSON object — no prose, no markdown fences — of the form: ' +
-    '{"files":[{"path":"relative/path","content":"FULL new file contents","summary":"what you changed in this file"}],"notes":"a clear 1-3 sentence summary of the overall change"}. ' +
+    '{"files":[{"path":"relative/path","content":"FULL new file contents","summary":"what you changed in this file"}],"notes":"a clear 1-3 sentence summary of the overall change","run":"a single shell command to run/test it, e.g. npm install && npm start (optional)"}. ' +
     'Include an entry for every file you create OR change, each with its COMPLETE updated content (not a diff) and a concrete one-line "summary" of what changed in it. Do not include unchanged files. ' +
+    'If running the project would help, set "run" to ONE shell command (the user confirms before it runs). If the user only asks how to run it, you may return just {"run":"...","notes":"..."} with no files. ' +
     'Paths are relative to the project root: forward slashes, no leading slash, no "..", no drive letters. ' +
     'Include everything needed to run (source, config, a package manifest, a short README). Never include node_modules or build output.',
 };

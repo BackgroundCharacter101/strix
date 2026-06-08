@@ -46,6 +46,12 @@ describe('parseScaffold', () => {
   it('errors when there is no JSON', () => {
     expect('error' in parseScaffold('no json here')).toBe(true);
   });
+  it('captures a run command and allows a files-less run plan', () => {
+    const out = parseScaffold('{"files":[],"run":"npm start","notes":"runs it"}');
+    expect('run' in out && out.run).toBe('npm start');
+    const out2 = parseScaffold('{"run":{"command":"npm install"}}');
+    expect('run' in out2 && out2.run).toBe('npm install');
+  });
   it('captures a per-file summary when present', () => {
     const out = parseScaffold(
       '{"files":[{"path":"a.ts","content":"x","summary":"added retry logic"}]}',

@@ -2711,6 +2711,39 @@ kbd {
   gap: 6px;
 }
 
+/* The agent's suggested run command (never auto-run). */
+.ai-run-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--selection);
+  border-radius: var(--radius-md);
+}
+.ai-run-cmd {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+}
+.ai-run-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 6px;
+}
+.ai-run-go {
+  background: var(--accent-gradient);
+  color: var(--accent-ink);
+  font-weight: var(--weight-medium);
+}
+
 .ai-pane textarea {
   width: 100%;
   resize: vertical;
