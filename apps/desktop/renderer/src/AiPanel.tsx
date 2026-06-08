@@ -7,7 +7,9 @@ import {
   type TaskType,
   type ChatMessage,
   type SecurityStance,
+  type Attachment,
 } from '@strix/ai-gateway';
+import { readAttachment, MAX_ATTACH_BYTES } from './attachments';
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
@@ -249,6 +251,9 @@ export function AiPanel({
 }) {
   const securityMode = mode === 'cybersec';
   const [input, setInput] = useState('');
+  // Files the user attached for the next message (read once, sent as context).
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [model, setModel] = useState('auto');
   const [models, setModels] = useState<string[]>(['auto']);
   const [history, setHistory] = useState<ChatMessage[]>(() =>
@@ -347,9 +352,11 @@ export function AiPanel({
     setRoutedVia(null);
     const userMessage = input;
     const priorHistory = history;
-    if (task === 'chat' && userMessage) {
-      setHistory((h) => [...h, { role: 'user', content: userMessage }]);
+    if (task === 'chat' && (userMessage || attachments.length)) {
+      const tag = attachments.length ? ` 📎 ${attachments.map((a) => a.name).join(', ')}` : '';
+      setHistory((h) => [...h, { role: 'user', content: `${userMessage}${tag}` }]);
       setInput('');
+      setAttachments([]);
     }
 
     const controller = new AbortController();
@@ -358,7 +365,7 @@ export function AiPanel({
     try {
       await runTask(
         task,
-        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext, securityMode, securityStance, securityPersonaText },
+        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext, securityMode, securityStance, securityPersonaText, attachments: task === 'chat' ? attachments : undefined },
         {
           onToken: (token) => {
             acc += token;
@@ -558,11 +565,16 @@ export function AiPanel({
     }
     // Record the request in the thread (like a chat turn) and clear the box.
     const priorHistory = history;
+    const atts = attachments;
+    const tag = atts.length ? ` 📎 ${atts.map((a) => a.name).join(', ')}` : '';
     setHistory((h) => [
       ...h,
-      { role: 'user', content: descArg ? `⚠ ${descArg.split('\n')[0]}` : desc },
+      { role: 'user', content: descArg ? `⚠ ${descArg.split('\n')[0]}` : `${desc}${tag}` },
     ]);
-    if (!descArg) setInput('');
+    if (!descArg) {
+      setInput('');
+      setAttachments([]);
+    }
     setBusy(true);
     setStreaming('');
     const controller = new AbortController();
@@ -577,7 +589,7 @@ export function AiPanel({
         : projectContext;
       raw = await complete(
         'scaffold',
-        { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText },
+        { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: atts },
         { model, signal: controller.signal },
       );
     } catch {
@@ -767,13 +779,30 @@ export function AiPanel({
     setPendingRun(target);
   };
 
+  // Read picked/dropped files into attachments for the next message.
+  const addFiles = async (files: FileList | File[]) => {
+    const list = Array.from(files);
+    for (const file of list) {
+      if (file.size > MAX_ATTACH_BYTES) {
+        showToast(`${file.name} is too large (max 10 MB).`, 'error', 5000);
+        continue;
+      }
+      try {
+        const att = await readAttachment(file);
+        setAttachments((a) => [...a, att]);
+      } catch {
+        showToast(`Could not read ${file.name}.`, 'error');
+      }
+    }
+  };
+
   // Send: in an open project, route to run / agent-edit / chat by intent.
   const send = () => {
     const text = input.trim();
-    if (!text || busy) return;
-    if (workspaceKey && isRunIntent(text)) {
+    if ((!text && attachments.length === 0) || busy) return;
+    if (text && workspaceKey && isRunIntent(text)) {
       void handleRun(text);
-    } else if (workspaceKey && !isQuestion(text)) {
+    } else if (text && workspaceKey && !isQuestion(text) && attachments.length === 0) {
       void buildProject();
     } else {
       void run('chat');
@@ -781,7 +810,19 @@ export function AiPanel({
   };
 
   return (
-    <section className="ai-pane-content" aria-label="AI chat">
+    <section
+      className="ai-pane-content"
+      aria-label="AI chat"
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('Files')) e.preventDefault();
+      }}
+      onDrop={(e) => {
+        if (e.dataTransfer.files.length) {
+          e.preventDefault();
+          void addFiles(e.dataTransfer.files);
+        }
+      }}
+    >
       <header className="ai-pane-header">
         <span className="ai-pane-title">
           <SparkleIcon size={15} />
@@ -1021,9 +1062,38 @@ export function AiPanel({
       )}
 
       <div className="ai-composer">
+        {attachments.length > 0 && (
+          <div className="ai-attachments" aria-label="attachments">
+            {attachments.map((a, i) => (
+              <span key={`${a.name}-${i}`} className="ai-chip">
+                <span className="ai-chip-icon">{a.imageUrl ? '🖼' : '📄'}</span>
+                <span className="ai-chip-name">{a.name}</span>
+                <button
+                  type="button"
+                  className="ai-chip-x"
+                  aria-label={`remove ${a.name}`}
+                  onClick={() => setAttachments((arr) => arr.filter((_, j) => j !== i))}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          hidden
+          aria-hidden="true"
+          onChange={(e) => {
+            if (e.target.files) void addFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
         <textarea
           aria-label="Ask AI"
-          placeholder="Ask, or say what to build…  (Enter to send, Shift+Enter for a new line)"
+          placeholder="Ask, say what to build, or attach files…  (Enter to send)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -1033,8 +1103,25 @@ export function AiPanel({
               send();
             }
           }}
+          onPaste={(e) => {
+            const files = Array.from(e.clipboardData.files);
+            if (files.length) {
+              e.preventDefault();
+              void addFiles(files);
+            }
+          }}
         />
         <div className="ai-actions">
+          <button
+            type="button"
+            className="ai-attach-btn"
+            title="Attach files (images, PDFs, Markdown, code)"
+            aria-label="Attach files"
+            disabled={busy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            📎
+          </button>
           {busy ? (
             <button
               type="button"
@@ -1049,7 +1136,7 @@ export function AiPanel({
               type="button"
               className="ai-primary-btn"
               onClick={send}
-              disabled={input.length === 0}
+              disabled={input.length === 0 && attachments.length === 0}
             >
               Send
             </button>

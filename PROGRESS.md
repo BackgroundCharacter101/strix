@@ -422,6 +422,13 @@ strix/ (folder: tabea)
   switching folders switches the conversation (a ref keeps saves on the right key).
 - **Live Fix** (`FileViewer.tsx` selection toolbar): "Fix" now writes the AI's
   corrected code straight into the selection (one undo step); "Explain" still chats.
+- **AI panel attachments (multimodal):** attach files to the chat via the 📎
+  button, drag-drop, or paste. Images → base64 data URL (sent as OpenAI
+  image_url parts for vision models like gpt-4o/gemini); PDFs → text extracted
+  with pdf.js (lazy-loaded, own chunk); md/txt/code/json/csv → UTF-8 text. The
+  gateway grew Attachment/ContentPart/PromptMessage types; buildPrompt appends
+  attached text and emits multimodal content when images are present. Attachments
+  feed chat AND the build/scaffold agent, then clear after sending.
 - **Cross-platform packaging:** runtime was already portable (terminal uses
   `$SHELL`/bash off-Windows, LSP `shell:true` only on Windows, menu adapts for
   macOS, AI server is sql.js/WASM). Added electron-builder **Linux** (AppImage +

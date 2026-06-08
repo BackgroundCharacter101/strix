@@ -24,8 +24,8 @@ describe('buildPrompt', () => {
     expect(messages[0].role).toBe('system');
     const user = messages[messages.length - 1];
     expect(user.role).toBe('user');
-    expect(user.content).toContain('File: src/main.ts');
-    expect(user.content).toContain('Selected code:');
+    expect(user.content as string).toContain('File: src/main.ts');
+    expect(user.content as string).toContain('Selected code:');
   });
 
   it('includes project context and omits the empty File header with no file open', () => {
@@ -36,10 +36,35 @@ describe('buildPrompt', () => {
       projectContext: 'Project: demo\nsrc/\n  index.ts',
     });
     const user = messages[messages.length - 1];
-    expect(user.content).toContain('Project structure:');
-    expect(user.content).toContain('Project: demo');
-    expect(user.content).toContain('explain this project');
-    expect(user.content).not.toContain('File:');
+    expect(user.content as string).toContain('Project structure:');
+    expect(user.content as string).toContain('Project: demo');
+    expect(user.content as string).toContain('explain this project');
+    expect(user.content as string).not.toContain('File:');
+  });
+
+  it('appends attached text and adds images as multimodal content parts', () => {
+    const messages = buildPrompt('chat', {
+      filePath: '',
+      fileContent: '',
+      userMessage: 'look at these',
+      attachments: [
+        { name: 'spec.md', text: 'SPEC BODY' },
+        { name: 'shot.png', imageUrl: 'data:image/png;base64,AAAA' },
+      ],
+    });
+    const user = messages[messages.length - 1];
+    const parts = user.content as Array<{
+      type: string;
+      text?: string;
+      image_url?: { url: string };
+    }>;
+    expect(Array.isArray(parts)).toBe(true);
+    const textPart = parts.find((p) => p.type === 'text');
+    expect(textPart?.text).toContain('spec.md');
+    expect(textPart?.text).toContain('SPEC BODY');
+    expect(parts.some((p) => p.type === 'image_url' && p.image_url?.url.startsWith('data:image'))).toBe(
+      true,
+    );
   });
 
   it('replays conversation history for chat tasks', () => {
@@ -64,27 +89,27 @@ describe('buildPrompt', () => {
       history: [{ role: 'user', content: 'ignored' }],
     });
     expect(messages).toHaveLength(2);
-    expect(messages[messages.length - 1].content).toContain('Error:');
+    expect(messages[messages.length - 1].content as string).toContain('Error:');
   });
 
   it('uses a security-oriented system prompt for vuln_check', () => {
     const [system] = buildPrompt('vuln_check', { filePath: 'a.ts', fileContent: '' });
-    expect(system.content.toLowerCase()).toContain('security');
+    expect((system.content as string).toLowerCase()).toContain('security');
   });
 
   it('prepends the security persona when securityMode is set (Cybersec mode)', () => {
     const [system] = buildPrompt('chat', { filePath: 'a.ts', fileContent: '', securityMode: true });
     expect(system.role).toBe('system');
-    expect(system.content.toLowerCase()).toContain('cybersec mode');
-    expect(system.content.toLowerCase()).toContain('offensive');
-    expect(system.content.toLowerCase()).toContain('defensive');
+    expect((system.content as string).toLowerCase()).toContain('cybersec mode');
+    expect((system.content as string).toLowerCase()).toContain('offensive');
+    expect((system.content as string).toLowerCase()).toContain('defensive');
     // The task's base prompt is still appended after the persona.
-    expect(system.content).toContain('coding assistant');
+    expect((system.content as string)).toContain('coding assistant');
   });
 
   it('omits the security persona in normal mode', () => {
     const [system] = buildPrompt('chat', { filePath: 'a.ts', fileContent: '' });
-    expect(system.content.toLowerCase()).not.toContain('cybersec mode');
+    expect((system.content as string).toLowerCase()).not.toContain('cybersec mode');
   });
 
   it('uses a red-team emphasis for the offensive stance', () => {
@@ -94,7 +119,7 @@ describe('buildPrompt', () => {
       securityMode: true,
       securityStance: 'offensive',
     });
-    expect(system.content.toLowerCase()).toContain('red-team');
+    expect((system.content as string).toLowerCase()).toContain('red-team');
   });
 
   it('uses a blue-team emphasis for the defensive stance', () => {
@@ -104,7 +129,7 @@ describe('buildPrompt', () => {
       securityMode: true,
       securityStance: 'defensive',
     });
-    expect(system.content.toLowerCase()).toContain('blue-team');
+    expect((system.content as string).toLowerCase()).toContain('blue-team');
   });
 
   it('honors a custom persona text, overriding the stance default', () => {
@@ -115,11 +140,11 @@ describe('buildPrompt', () => {
       securityStance: 'offensive',
       securityPersonaText: 'CUSTOM PERSONA RULES',
     });
-    expect(system.content).toContain('CUSTOM PERSONA RULES');
+    expect((system.content as string)).toContain('CUSTOM PERSONA RULES');
     // The default offensive emphasis is replaced, not appended.
-    expect(system.content.toLowerCase()).not.toContain('red-team');
+    expect((system.content as string).toLowerCase()).not.toContain('red-team');
     // The task's base prompt is still appended.
-    expect(system.content).toContain('coding assistant');
+    expect((system.content as string)).toContain('coding assistant');
   });
 });
 

@@ -13,6 +13,25 @@ export interface ChatMessage {
   content: string;
 }
 
+// A user-attached file the assistant can read: extracted `text` (md / txt /
+// code / PDF) and/or an `imageUrl` (base64 data URL) for vision models.
+export interface Attachment {
+  name: string;
+  text?: string;
+  imageUrl?: string;
+}
+
+// OpenAI-style multimodal content parts (for messages with images).
+export type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+// A prompt message whose content may be plain text or multimodal parts.
+export interface PromptMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | ContentPart[];
+}
+
 // Security-expert stance used in Strix Cybersec mode.
 export type SecurityStance = 'balanced' | 'offensive' | 'defensive';
 
@@ -33,4 +52,7 @@ export interface BuildPromptOptions {
   // Optional user-customized persona text (base + stance emphasis). When set it
   // overrides the built-in default for the active stance.
   securityPersonaText?: string;
+  // Files the user attached (text extracted from md/txt/code/PDF; images as
+  // base64 data URLs for vision-capable models).
+  attachments?: Attachment[];
 }

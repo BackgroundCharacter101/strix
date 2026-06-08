@@ -1,4 +1,11 @@
-import type { BuildPromptOptions, ChatMessage, SecurityStance, TaskType } from './types';
+import type {
+  BuildPromptOptions,
+  ChatMessage,
+  ContentPart,
+  PromptMessage,
+  SecurityStance,
+  TaskType,
+} from './types';
 
 const SYSTEM_PROMPTS: Record<TaskType, string> = {
   autocomplete:
@@ -72,25 +79,43 @@ function buildUserContent(opts: BuildPromptOptions): string {
     parts.push('', opts.userMessage);
   }
 
+  // Text from attached files (md / txt / code / extracted PDF text), capped.
+  for (const att of opts.attachments ?? []) {
+    if (att.text && att.text.trim()) {
+      parts.push('', `Attached file "${att.name}":`, '```', att.text.slice(0, 60_000), '```');
+    }
+  }
+
   return parts.join('\n');
 }
 
-export function buildPrompt(task: TaskType, opts: BuildPromptOptions): ChatMessage[] {
+export function buildPrompt(task: TaskType, opts: BuildPromptOptions): PromptMessage[] {
   const stance = opts.securityStance ?? 'balanced';
   // A user-customized persona (from Settings) wins; otherwise use the defaults.
   const persona = opts.securityPersonaText ?? defaultPersonaText(stance);
   const system = opts.securityMode
     ? `${persona}\n\n${SYSTEM_PROMPTS[task]}`
     : SYSTEM_PROMPTS[task];
-  const messages: ChatMessage[] = [{ role: 'system', content: system }];
+  const messages: PromptMessage[] = [{ role: 'system', content: system }];
 
   // Chat + the agent scaffolder are multi-turn: prior conversation is replayed
   // before the new turn so follow-ups ("add those", "make it advanced") work.
   if ((task === 'chat' || task === 'scaffold') && opts.history) {
-    messages.push(...opts.history);
+    messages.push(...(opts.history as ChatMessage[]));
   }
 
-  messages.push({ role: 'user', content: buildUserContent(opts) });
+  // The new user turn: plain text, or multimodal parts when images are attached.
+  const text = buildUserContent(opts);
+  const images = (opts.attachments ?? []).filter((a) => a.imageUrl).map((a) => a.imageUrl as string);
+  if (images.length) {
+    const content: ContentPart[] = [
+      { type: 'text', text },
+      ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
+    ];
+    messages.push({ role: 'user', content });
+  } else {
+    messages.push({ role: 'user', content: text });
+  }
 
   return messages;
 }
