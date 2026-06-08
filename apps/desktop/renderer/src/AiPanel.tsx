@@ -77,6 +77,73 @@ function joinUnder(root: string, rel: string): string {
   return base + sep + tail;
 }
 
+// Work out how to run the project the user means: pick the target directory
+// (a subfolder named in the message, else the root) and a command from its
+// package.json scripts or an obvious entry file. Returns null if unsure.
+async function detectRunTarget(
+  root: string,
+  message: string,
+): Promise<{ command: string; cwd: string } | null> {
+  let tree: TreeNode;
+  try {
+    tree = (await window.strix.fs.tree(root)) as TreeNode;
+  } catch {
+    return null;
+  }
+  const msg = message.toLowerCase();
+
+  // Find the deepest directory whose name is mentioned in the message.
+  let dir = root;
+  let dirNode: TreeNode = tree;
+  let best = '';
+  const walk = (node: TreeNode & { path?: string }) => {
+    for (const c of node.children ?? []) {
+      if (c.type === 'directory') {
+        const n = c.name.toLowerCase();
+        if (n.length > best.length && msg.includes(n)) {
+          best = n;
+          dir = (c as TreeNode & { path: string }).path;
+          dirNode = c;
+        }
+        walk(c as TreeNode & { path?: string });
+      }
+    }
+  };
+  walk(tree);
+
+  const children = dirNode.children ?? [];
+  const hasFile = (name: string) =>
+    children.some((c) => c.type === 'file' && c.name.toLowerCase() === name);
+
+  if (hasFile('package.json')) {
+    try {
+      const pj = JSON.parse(await window.strix.fs.read(joinUnder(dir, 'package.json'))) as {
+        scripts?: Record<string, string>;
+        main?: string;
+      };
+      const s = pj.scripts ?? {};
+      if (s.start) return { command: 'npm install && npm start', cwd: dir };
+      if (s.dev) return { command: 'npm install && npm run dev', cwd: dir };
+      if (s.serve) return { command: 'npm install && npm run serve', cwd: dir };
+      if (pj.main) return { command: `npm install && node ${pj.main}`, cwd: dir };
+      return { command: 'npm install && npm test', cwd: dir };
+    } catch {
+      /* fall through to entry-file detection */
+    }
+  }
+  const entries: [string, string][] = [
+    ['index.js', 'node index.js'],
+    ['server.js', 'node server.js'],
+    ['app.js', 'node app.js'],
+    ['main.py', 'python main.py'],
+    ['app.py', 'python app.py'],
+  ];
+  for (const [file, cmd] of entries) {
+    if (hasFile(file)) return { command: cmd, cwd: dir };
+  }
+  return null;
+}
+
 // Text file extensions worth sending to the agent so it can MODIFY them.
 const TEXT_EXT =
   /\.(ts|tsx|js|jsx|mjs|cjs|json|md|txt|css|scss|less|html|htm|py|rb|php|go|rs|java|kt|c|h|cpp|hpp|cs|sh|bash|yml|yaml|toml|ini|env|sql|xml|svg|vue|svelte|astro|gitignore|dockerfile)$/i;
@@ -477,8 +544,8 @@ export function AiPanel({
   const [applying, setApplying] = useState(false);
   // Which file's inline diff is expanded in the review panel.
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
-  // A shell command the agent suggested (shown with a Run button; never auto-run).
-  const [pendingRun, setPendingRun] = useState<string | null>(null);
+  // A command to offer running (shown with a Run button; never auto-run).
+  const [pendingRun, setPendingRun] = useState<{ command: string; cwd: string } | null>(null);
 
   // Ask the AI for a whole-project file plan. With no argument it uses the
   // composer text; a descArg drives it programmatically (e.g. an auto-fix).
@@ -550,7 +617,7 @@ export function AiPanel({
         ...h,
         { role: 'assistant', content: plan.notes || 'No file changes were needed.' },
       ]);
-      if (plan.run) setPendingRun(plan.run);
+      if (plan.run && workspaceKey) setPendingRun({ command: plan.run, cwd: workspaceKey });
       return;
     }
     // Hands-off mode applies immediately; otherwise open the review panel.
@@ -598,7 +665,7 @@ export function AiPanel({
       toOpen.reverse().forEach((p) => onOpenPath?.(p));
       setScaffold(null);
       setExpandedFile(null);
-      if (run) setPendingRun(run);
+      if (run && workspaceKey) setPendingRun({ command: run, cwd: workspaceKey });
     } catch (e) {
       showToast(`Write failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 7000);
     } finally {
@@ -613,13 +680,14 @@ export function AiPanel({
   // Run the agent's suggested command (with the user's click), capture its
   // output, show it in the thread, and on failure auto-propose a fix.
   const runPending = async () => {
-    const cmd = pendingRun;
-    if (!cmd || busy) return;
+    const pr = pendingRun;
+    if (!pr || busy) return;
+    const { command: cmd, cwd } = pr;
     setPendingRun(null);
     setBusy(true);
     let res: { exitCode: number; output: string };
     try {
-      res = await window.strix.terminal.exec(cmd, workspaceKey ?? undefined);
+      res = await window.strix.terminal.exec(cmd, cwd);
     } catch {
       setBusy(false);
       showToast('Could not run the command.', 'error');
@@ -666,12 +734,46 @@ export function AiPanel({
     );
   };
 
-  // Send: in an open project, any instruction (not a question) goes to the agent,
-  // which edits/creates the project's files live; questions are normal chat.
+  // A "run/start the project" request (and not a build/edit request).
+  const isRunIntent = (text: string): boolean => {
+    const t = ` ${text.toLowerCase()} `;
+    if (
+      /\b(make|create|build|add|implement|generate|write|refactor|fix|change|update|modify|enhance|improve)\b/.test(
+        t,
+      )
+    )
+      return false;
+    return /\b(run|start|launch|execute)\b/.test(t);
+  };
+
+  // Resolve the run command for the named project and offer to run it.
+  const handleRun = async (text: string) => {
+    if (!workspaceKey) return;
+    const target = await detectRunTarget(workspaceKey, text);
+    if (!target) {
+      void buildProject(text); // couldn't work it out — let the agent try
+      return;
+    }
+    const rel = target.cwd.slice(workspaceKey.length).replace(/^[\\/]/, '') || '.';
+    setHistory((h) => [
+      ...h,
+      { role: 'user', content: text },
+      {
+        role: 'assistant',
+        content: `I'll run \`${target.command}\` in \`${rel}\`. Click **Run & check** to run it in the terminal — I'll watch the output and offer a fix if it errors.`,
+      },
+    ]);
+    setInput('');
+    setPendingRun(target);
+  };
+
+  // Send: in an open project, route to run / agent-edit / chat by intent.
   const send = () => {
     const text = input.trim();
     if (!text || busy) return;
-    if (workspaceKey && !isQuestion(text)) {
+    if (workspaceKey && isRunIntent(text)) {
+      void handleRun(text);
+    } else if (workspaceKey && !isQuestion(text)) {
       void buildProject();
     } else {
       void run('chat');
@@ -884,8 +986,8 @@ export function AiPanel({
 
       {pendingRun && (
         <div className="ai-run-bar">
-          <code className="ai-run-cmd" title={pendingRun}>
-            ▶ {pendingRun}
+          <code className="ai-run-cmd" title={pendingRun.command}>
+            ▶ {pendingRun.command}
           </code>
           <div className="ai-run-actions">
             <button type="button" className="ai-ghost-btn" onClick={() => setPendingRun(null)}>
@@ -897,7 +999,8 @@ export function AiPanel({
                 className="ai-ghost-btn"
                 title="Run in the integrated terminal (output not analysed)"
                 onClick={() => {
-                  onRunCommand(pendingRun);
+                  const { command, cwd } = pendingRun;
+                  onRunCommand(workspaceKey && cwd !== workspaceKey ? `cd "${cwd}"; ${command}` : command);
                   setPendingRun(null);
                 }}
               >
