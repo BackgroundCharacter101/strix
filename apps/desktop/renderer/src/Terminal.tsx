@@ -53,10 +53,28 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
 
     let disposed = false;
 
-    // PTY output → terminal.
+    // Seed handling: an interactive agent (FreeBuff) finishes booting at an
+    // unknown time, so a fixed delay drops the prompt. Instead we watch the
+    // output for the agent's "ready for input" banner and type the prompt then,
+    // with a generous fallback in case the banner text changes.
+    const seedText = seedInput ? seedInput.replace(/[\r\n]+/g, ' ').trim() : '';
+    const READY_RE = /enter a coding task|\/ for commands|what would you like to work on/i;
+    let seeded = false;
+    let outBuf = '';
+    const seedNow = () => {
+      if (seeded || !seedText || !sessionRef.current) return;
+      seeded = true;
+      window.strix.terminal.input(sessionRef.current, seedText);
+    };
+
+    // PTY output → terminal (and watch for the agent's input prompt to seed).
     const offData = window.strix.terminal.onData(({ id, data }) => {
       if (id === sessionRef.current) {
         term.write(data);
+        if (seedText && !seeded) {
+          outBuf = (outBuf + data).slice(-2000);
+          if (READY_RE.test(outBuf)) setTimeout(seedNow, 350);
+        }
       }
     });
 
@@ -79,26 +97,39 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
       if (bootCommand) {
         setTimeout(() => window.strix.terminal.input(id, `${bootCommand}\r`), 400);
       }
-      // Seed a prompt into an interactive agent after it has had time to start.
-      // No trailing newline: the user reviews the text and presses Enter.
-      if (seedInput) {
-        const text = seedInput.replace(/[\r\n]+/g, ' ').trim();
-        setTimeout(() => window.strix.terminal.input(id, text), 2600);
+      // Fallback seed if the readiness banner is never detected (e.g. a future
+      // FreeBuff redesign): type the prompt after a long grace period.
+      if (seedText) {
+        setTimeout(seedNow, 30000);
       }
     });
 
-    // Keep the PTY's dimensions in sync with the rendered terminal.
-    const onResize = () => {
+    // Keep the PTY's dimensions in sync with the RENDERED size. A ResizeObserver
+    // catches every cause (panel drag, tab show/hide, window resize, late
+    // layout) — a window 'resize' listener alone missed panel/tab changes, so
+    // TUI apps like FreeBuff rendered at the wrong size.
+    const syncSize = () => {
       fit.fit();
       if (sessionRef.current) {
         window.strix.terminal.resize(sessionRef.current, term.cols, term.rows);
       }
     };
-    window.addEventListener('resize', onResize);
+    // ResizeObserver isn't available in some test (jsdom) environments. Only
+    // refit from it when the element is actually visible (a hidden/display:none
+    // tab reports 0 size — fitting that would resize the PTY to nothing).
+    const ro =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            if (el.clientWidth > 0 && el.clientHeight > 0) syncSize();
+          })
+        : null;
+    ro?.observe(el);
+    window.addEventListener('resize', syncSize);
 
     return () => {
       disposed = true;
-      window.removeEventListener('resize', onResize);
+      ro?.disconnect();
+      window.removeEventListener('resize', syncSize);
       offData();
       keySub.dispose();
       if (sessionRef.current) {

@@ -574,7 +574,9 @@ export default function App() {
     launchClaude(prompt);
   };
 
-  // Hand a question (+ the active file's path) off to a FreeBuff session.
+  // Hand a question (+ the active file's path) off to a FreeBuff session. The
+  // prompt is auto-typed once the agent is ready; we also copy it to the
+  // clipboard as a reliable fallback (FreeBuff boots slowly the first time).
   const askFreebuff = (text: string) => {
     const rel = activeTabs.activePath ? relativeSegments(root, activeTabs.activePath).join('/') : '';
     const q = text.trim();
@@ -582,6 +584,8 @@ export default function App() {
     if (rel && q) prompt = `In ${rel}: ${q}`;
     else if (rel) prompt = `Review ${rel}`;
     else prompt = q;
+    void navigator.clipboard?.writeText(prompt).catch(() => {});
+    showToast('Asking FreeBuff — it auto-fills when ready (or paste with Ctrl+V)', 'info', 4000);
     launchFreebuff(prompt);
   };
 
