@@ -6,4 +6,10 @@ declare global {
   }
 }
 
+// Vite resolves image imports to their served/bundled URL (a string).
+declare module '*.png' {
+  const src: string;
+  export default src;
+}
+
 export {};

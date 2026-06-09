@@ -61,6 +61,7 @@
             }
         ],
         "win": {
+            "icon": "build/icon.png",
             "target": [
                 "nsis",
                 "portable"
@@ -72,6 +73,7 @@
             "perMachine": false
         },
         "linux": {
+            "icon": "build/icon.png",
             "target": [
                 "AppImage",
                 "deb"
@@ -81,6 +83,7 @@
             "maintainer": "Strix <strix@example.com>"
         },
         "mac": {
+            "icon": "build/icon.png",
             "target": [
                 "dmg",
                 "zip"
