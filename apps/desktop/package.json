@@ -29,6 +29,7 @@
         "appId": "com.strix.ide",
         "productName": "Strix",
         "electronVersion": "32.3.3",
+        "asar": false,
         "directories": {
             "output": "release"
         },
@@ -36,9 +37,6 @@
             "dist/**/*",
             "renderer/dist/**/*",
             "package.json"
-        ],
-        "asarUnpack": [
-            "**/node_modules/node-pty/**/*"
         ],
         "extraResources": [
             {
