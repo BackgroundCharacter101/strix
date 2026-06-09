@@ -97,6 +97,20 @@ export interface StrixCollabApi {
   url(): Promise<string | null>;
 }
 
+export interface StaticServerInfo {
+  url: string;
+  port: number;
+  root: string;
+}
+
+// A local static file server (127.0.0.1 only) for hosting a folder and backing
+// the HTML preview. Shared/idempotent per root in the main process.
+export interface StrixServeApi {
+  start(root?: string): Promise<StaticServerInfo>;
+  stop(): Promise<void>;
+  info(): Promise<StaticServerInfo | null>;
+}
+
 export interface StrixSearchApi {
   find(query: string): Promise<SearchMatch[]>;
 }
@@ -129,6 +143,7 @@ export interface StrixApi {
   lsp: StrixLspApi;
   ai: StrixAiApi;
   collab: StrixCollabApi;
+  serve: StrixServeApi;
   search: StrixSearchApi;
   menu: StrixMenuApi;
   win: StrixWindowApi;

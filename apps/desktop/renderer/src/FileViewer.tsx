@@ -18,6 +18,8 @@ import {
 } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
 import { MarkdownPreview } from './MarkdownPreview';
+import { HtmlPreview, relUrlPath } from './HtmlPreview';
+import { showToast } from './toast';
 import { OwlIcon } from './icons';
 
 // LSP completion/hover/definition need ONE global Monaco provider per language
@@ -172,7 +174,21 @@ export function FileViewer({
   onSelectionAction?: (kind: 'explain' | 'fix', selection: string) => void;
 }) {
   const [showPreview, setShowPreview] = useState(true);
+  const [previewNonce, setPreviewNonce] = useState(0);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
+  const isHtml = path ? /\.html?$/i.test(path) : false;
+
+  // Open the current HTML file in the system browser via the local host server.
+  const openHtmlInBrowser = async () => {
+    if (!path) return;
+    const root = rootPath || path.slice(0, Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')));
+    try {
+      const info = await window.strix.serve.start(root);
+      window.strix.win.openExternal(`${info.url}/${relUrlPath(info.root, path)}`);
+    } catch (e) {
+      showToast(`Could not open preview: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    }
+  };
   // A NUL byte in the decoded text strongly implies a binary file.
   const isBinary = (buffer?.draft ?? '').includes(String.fromCharCode(0));
 
@@ -291,7 +307,27 @@ export function FileViewer({
         )}
         {buffer.saveError && <span role="alert">{buffer.saveError}</span>}
         <span className="toolbar-right" />
-        {isMarkdown && !isBinary && (
+        {isHtml && !isBinary && showPreview && (
+          <>
+            <button
+              type="button"
+              className="ai-ghost-btn"
+              title="Reload the preview from disk"
+              onClick={() => setPreviewNonce((n) => n + 1)}
+            >
+              Reload
+            </button>
+            <button
+              type="button"
+              className="ai-ghost-btn"
+              title="Open this page in your browser"
+              onClick={() => void openHtmlInBrowser()}
+            >
+              Open in browser ↗
+            </button>
+          </>
+        )}
+        {(isMarkdown || isHtml) && !isBinary && (
           <button
             type="button"
             className="ai-ghost-btn"
@@ -310,6 +346,8 @@ export function FileViewer({
           </div>
         ) : isMarkdown && showPreview ? (
           <MarkdownPreview content={buffer.draft} />
+        ) : isHtml && showPreview ? (
+          <HtmlPreview path={path} rootPath={rootPath} reloadNonce={previewNonce} />
         ) : (
         <CodeEditor
           // Key by path so switching files mounts a fresh editor (fixes the

@@ -1768,6 +1768,48 @@ kbd {
   white-space: nowrap;
 }
 
+.html-preview {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+  display: block;
+}
+
+.run-server-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px 6px;
+}
+.run-server-url {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.run-server-url:hover {
+  text-decoration: underline;
+}
+.run-server-stop {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+  font-size: 11px;
+}
+.run-server-stop:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
 .scm-message-wrap {
   position: relative;
 }

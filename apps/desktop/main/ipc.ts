@@ -31,6 +31,7 @@ import { TerminalManager, execCommand, type TerminalCreateOptions } from './term
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
 import { installServer, uninstallServer } from './languageServers.js';
+import { startStaticServer, stopStaticServer, staticServerInfo } from './staticServer.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
@@ -158,6 +159,15 @@ export function registerIpcHandlers(): void {
 
   // Collaboration is opt-in: set COLLAB_SERVER_URL to enable (off by default).
   ipcMain.handle('collab:url', () => process.env.COLLAB_SERVER_URL ?? null);
+
+  // --- Local static host server (Run & Serve + HTML preview) ---
+  ipcMain.handle('serve:start', (_event, root?: string) => {
+    const target = root || getRoot();
+    if (!target) throw new Error('No workspace folder open to host.');
+    return startStaticServer(target);
+  });
+  ipcMain.handle('serve:stop', () => stopStaticServer());
+  ipcMain.handle('serve:info', () => staticServerInfo());
 
   ipcMain.handle('ai:models', async (_event, url?: string) => {
     const base = baseFrom(url);

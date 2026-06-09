@@ -11,6 +11,7 @@ interface StrixApiOverrides {
   lsp?: Partial<StrixApi['lsp']>;
   ai?: Partial<StrixApi['ai']>;
   collab?: Partial<StrixApi['collab']>;
+  serve?: Partial<StrixApi['serve']>;
   search?: Partial<StrixApi['search']>;
   menu?: Partial<StrixApi['menu']>;
   win?: Partial<StrixApi['win']>;
@@ -79,6 +80,11 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     collab: {
       url: vi.fn(async (): Promise<string | null> => null),
     },
+    serve: {
+      start: vi.fn(async () => ({ url: 'http://127.0.0.1:0', port: 0, root: '/' })),
+      stop: vi.fn(async (): Promise<void> => {}),
+      info: vi.fn(async () => null),
+    },
     search: {
       find: vi.fn(async () => []),
     },
@@ -105,6 +111,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     lsp: { ...base.lsp, ...overrides.lsp },
     ai: { ...base.ai, ...overrides.ai },
     collab: { ...base.collab, ...overrides.collab },
+    serve: { ...base.serve, ...overrides.serve },
     search: { ...base.search, ...overrides.search },
     menu: { ...base.menu, ...overrides.menu },
     win: { ...base.win, ...overrides.win },

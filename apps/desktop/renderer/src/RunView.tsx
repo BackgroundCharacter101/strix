@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { detectNpmTargets, detectPythonTargets, type RunTarget } from './runTargets';
 import { PlayIcon } from './icons';
+import type { StaticServerInfo } from '../../main/bridge';
+import { showToast } from './toast';
 
 interface TreeNode {
   name: string;
@@ -25,6 +27,36 @@ export function RunView({
 }) {
   const [targets, setTargets] = useState<RunTarget[]>([]);
   const [loading, setLoading] = useState(false);
+  const [server, setServer] = useState<StaticServerInfo | null>(null);
+
+  // Reflect an already-running host server (e.g. started by the HTML preview).
+  useEffect(() => {
+    let cancelled = false;
+    void window.strix.serve.info().then((info) => {
+      if (!cancelled) setServer(info);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [rootPath]);
+
+  const hostFolder = async () => {
+    if (!rootPath) return;
+    try {
+      const info = await window.strix.serve.start(rootPath);
+      setServer(info);
+      window.strix.win.openExternal(info.url);
+      showToast(`Hosting at ${info.url}`, 'success', 3000);
+    } catch (e) {
+      showToast(`Could not host: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    }
+  };
+
+  const stopHost = async () => {
+    await window.strix.serve.stop();
+    setServer(null);
+    showToast('Stopped local server', 'info', 2000);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -95,11 +127,44 @@ export function RunView({
 
   return (
     <div className="run-view" aria-label="run and serve">
+      <div className="scm-group-head">
+        <span>Local server</span>
+      </div>
+      <ul className="run-list">
+        <li className="run-row">
+          <button
+            type="button"
+            className="run-target"
+            title="Serve this folder over http://127.0.0.1 and open it in your browser"
+            onClick={() => void hostFolder()}
+          >
+            <PlayIcon size={13} />
+            <span className="run-label">Host this folder</span>
+            <span className="run-cmd">static · 127.0.0.1</span>
+          </button>
+        </li>
+        {server && (
+          <li className="run-row run-server-status">
+            <button
+              type="button"
+              className="run-server-url"
+              title="Open in browser"
+              onClick={() => window.strix.win.openExternal(server.url)}
+            >
+              ● {server.url}
+            </button>
+            <button type="button" className="run-server-stop" onClick={() => void stopHost()}>
+              Stop
+            </button>
+          </li>
+        )}
+      </ul>
       {loading && targets.length === 0 ? (
         <p className="muted">Scanning…</p>
       ) : targets.length === 0 ? (
         <p className="muted">
-          No run targets found. Add scripts to package.json, or open a Python file.
+          No npm or Python targets found. Add scripts to package.json or open a Python file —
+          or use “Host this folder” above for static sites.
         </p>
       ) : (
         <>

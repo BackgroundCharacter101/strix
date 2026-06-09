@@ -69,6 +69,11 @@ const api: StrixApi = {
   collab: {
     url: () => ipcRenderer.invoke('collab:url'),
   },
+  serve: {
+    start: (root) => ipcRenderer.invoke('serve:start', root),
+    stop: () => ipcRenderer.invoke('serve:stop'),
+    info: () => ipcRenderer.invoke('serve:info'),
+  },
   search: {
     find: (query) => ipcRenderer.invoke('search:find', query),
   },
