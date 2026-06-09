@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Terminal as XTerm } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { WebglAddon } from '@xterm/addon-webgl';
 
 // NOTE: '@xterm/xterm/css/xterm.css' must be included by the app bundle for
 // correct rendering; it's imported at the entry point, not here, so this
@@ -46,6 +47,17 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
     fitRef.current = fit;
     term.loadAddon(fit);
     term.open(el);
+    // Use the GPU (WebGL) renderer — the default DOM renderer makes dense TUIs
+    // (FreeBuff/Claude Code: box-drawing, colours, spinners) blurry and
+    // misaligned. Fall back to the DOM renderer if WebGL is unavailable or its
+    // context is lost. Must be loaded AFTER term.open().
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => webgl.dispose());
+      term.loadAddon(webgl);
+    } catch {
+      /* WebGL unavailable — keep the default DOM renderer */
+    }
     fit.fit();
     if (notice) {
       for (const line of notice.split('\n')) term.writeln(line);
