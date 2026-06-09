@@ -37,10 +37,19 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
       return;
     }
 
+    const isWindows = typeof navigator !== 'undefined' && /windows/i.test(navigator.userAgent);
     const term = new XTerm({
-      convertEol: true,
+      // MUST stay false for raw-mode TUIs (FreeBuff / Claude Code). Forcing
+      // \n → \r\n drags the cursor to column 0 on a bare line-feed, which
+      // corrupts the agent's in-place redraws — the tell-tale leftover
+      // characters running down the left edge. The PTY already emits CRLF.
+      convertEol: false,
+      scrollback: 5000,
       fontSize: fontSize ?? 13,
       fontFamily: fontFamily || 'Cascadia Code, Consolas, monospace',
+      // On Windows node-pty uses ConPTY, which has its own reflow/wrapping
+      // behaviour; telling xterm about it fixes redraw artifacts on resize.
+      ...(isWindows ? { windowsPty: { backend: 'conpty' as const } } : {}),
     });
     termRef.current = term;
     const fit = new FitAddon();
