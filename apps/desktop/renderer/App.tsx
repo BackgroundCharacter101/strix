@@ -75,6 +75,7 @@ export default function App() {
     prompt?: string;
     command?: string;
     title?: string;
+    agent?: 'claude' | 'freebuff';
   }>({
     nonce: 0,
   });
@@ -539,7 +540,14 @@ export default function App() {
 
   const launchClaude = (prompt?: string) => {
     setShowTerminal(true);
-    setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt }));
+    setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt, agent: 'claude' }));
+  };
+
+  // Launch the FreeBuff free coding agent (both editions), optionally seeded
+  // with a prompt handed off from the AI panel.
+  const launchFreebuff = (prompt?: string) => {
+    setShowTerminal(true);
+    setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt, agent: 'freebuff' }));
   };
 
   // Run a project target (npm script / Python) in a new integrated terminal.
@@ -564,6 +572,17 @@ export default function App() {
     else if (rel) prompt = `Review ${rel}`;
     else prompt = q;
     launchClaude(prompt);
+  };
+
+  // Hand a question (+ the active file's path) off to a FreeBuff session.
+  const askFreebuff = (text: string) => {
+    const rel = activeTabs.activePath ? relativeSegments(root, activeTabs.activePath).join('/') : '';
+    const q = text.trim();
+    let prompt: string;
+    if (rel && q) prompt = `In ${rel}: ${q}`;
+    else if (rel) prompt = `Review ${rel}`;
+    else prompt = q;
+    launchFreebuff(prompt);
   };
 
   const openDiff = async (absPath: string) => {
@@ -592,6 +611,12 @@ export default function App() {
       label: 'Start Claude Code',
       detail: '',
       run: () => launchClaude(),
+    },
+    {
+      id: 'terminal.freebuff',
+      label: 'Start FreeBuff (free coding agent)',
+      detail: '',
+      run: () => launchFreebuff(),
     },
     { id: 'view.zen', label: 'View: Toggle Zen Mode', detail: 'Ctrl+K Z', run: toggleZen },
     {
@@ -966,6 +991,7 @@ export default function App() {
                     fileContent={activeTabs.active?.draft ?? ''}
                     onApplyEdit={(content) => activeTabs.active?.setDraft(content)}
                     onAskClaude={CLAUDE_ENABLED ? askClaude : undefined}
+                    onAskFreebuff={askFreebuff}
                     selectionRequest={selectionReq}
                     aiServerUrl={settings.aiServerUrl}
                     mode={CYBERSEC_ENABLED ? settings.mode : 'normal'}

@@ -39,6 +39,7 @@ Strix ships in **two editions from one codebase**, selected by a build-time flag
 | | **M1** (free public release) | **M1 Competition** (private) |
 |---|---|---|
 | FreeLLMAPI AI | ✅ | ✅ |
+| FreeBuff (free coding agent) | ✅ | ✅ |
 | Claude Code hand-off | ❌ | ✅ |
 | Cybersec mode | ❌ | ✅ |
 | productName / appId | `Strix M1` / `com.strix.ide` | `Strix M1 Competition` / `com.strix.ide.competition` |
@@ -65,6 +66,17 @@ minified M1 bundle — verified).
   status-bar mode toggle + `view.mode` command, the AI panel `mode` prop (forced
   `'normal'` in M1), and the "Security AI" Settings section.
 - About dialog shows the edition (`EDITION_LABEL`).
+
+**FreeBuff (free coding agent, BOTH editions):** `freebuff` is a free coding-agent
+CLI (a build of Codebuff, `github.com/CodebuffAI/codebuff`; `npm i -g freebuff`).
+It's M1's answer to Claude Code and ships in both editions (not gated). Wired the
+same way as Claude Code — a "✨ FreeBuff" terminal launcher button, an "Ask
+FreeBuff" button in the AI panel (hands the question + active file off), a
+`terminal.freebuff` command + "Start FreeBuff" menu item, and `terminal.hasCommand`
+auto-detect. It's **interactive** (no one-shot prompt arg), so the hand-off seeds
+the prompt into the live session (Terminal `seedInput`, typed ~2.6s after boot,
+no trailing newline — user reviews + Enter). Missing CLI → one-click `npm i -g
+freebuff` in a terminal tab. No new bridge methods.
 
 **Build / run / package** (cross-platform wrapper `scripts/edition.mjs`, no new deps):
 ```
@@ -103,7 +115,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 244 tests / 44 files.**
+  **`npm test`** (vitest) — **all green: 247 tests / 44 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.

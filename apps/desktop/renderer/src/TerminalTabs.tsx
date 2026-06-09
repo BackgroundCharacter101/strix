@@ -9,6 +9,8 @@ interface TabDesc {
   // are numbered by position via terminalTitle().
   title?: string;
   bootCommand?: string;
+  // Prompt typed into an interactive agent after it boots (FreeBuff hand-off).
+  seedInput?: string;
   notice?: string;
 }
 
@@ -16,6 +18,13 @@ const CLAUDE_INSTALL =
   'Claude Code CLI not found on PATH.\r\n' +
   'Install it with:  npm install -g @anthropic-ai/claude-code\r\n' +
   'Then type:  claude';
+
+// FreeBuff (a free coding-agent CLI) runs interactively. When it's missing we
+// kick off a one-click global install; once it finishes the user types freebuff
+// (or clicks the FreeBuff button again, which now detects it and launches).
+const FREEBUFF_NOTICE_INSTALL =
+  'FreeBuff CLI not found — installing it now (npm install -g freebuff)…\r\n' +
+  'When the install finishes, type:  freebuff';
 
 // Display title for a tab. Shell tabs are numbered by their position among other
 // shell tabs, so the tab bar always reads "Terminal 1, 2, 3…" in order — no gaps
@@ -44,10 +53,17 @@ export function TerminalTabs({
   fontFamily,
 }: {
   cwd?: string;
-  // Bumping nonce (from a command / menu / AI hand-off) opens a session. With no
-  // command it's a Claude Code session (optionally seeded with a prompt); with a
-  // command it's a generic run target (e.g. "npm run dev") in a titled tab.
-  launch?: { nonce: number; prompt?: string; command?: string; title?: string };
+  // Bumping nonce (from a command / menu / AI hand-off) opens a session:
+  //  - command set  → a generic run target (e.g. "npm run dev") in a titled tab
+  //  - agent:'freebuff' → a FreeBuff session (optionally seeded with a prompt)
+  //  - otherwise    → a Claude Code session (optionally seeded with a prompt)
+  launch?: {
+    nonce: number;
+    prompt?: string;
+    command?: string;
+    title?: string;
+    agent?: 'claude' | 'freebuff';
+  };
   // Terminal font, following the editor settings.
   fontSize?: number;
   fontFamily?: string;
@@ -77,6 +93,27 @@ export function TerminalTabs({
     setActive(id);
   };
 
+  const launchFreebuff = async (prompt?: string) => {
+    const id = nextId.current++;
+    const installed = await window.strix.terminal.hasCommand('freebuff');
+    const tab: TabDesc = installed
+      ? {
+          id,
+          title: 'FreeBuff',
+          bootCommand: 'freebuff',
+          seedInput: prompt,
+          notice: prompt ? 'Asking FreeBuff…' : 'Starting FreeBuff…',
+        }
+      : {
+          id,
+          title: 'FreeBuff',
+          bootCommand: 'npm install -g freebuff',
+          notice: FREEBUFF_NOTICE_INSTALL,
+        };
+    setTabs((prev) => [...prev, tab]);
+    setActive(id);
+  };
+
   // Open a titled tab running an arbitrary command (Run/Serve targets).
   const runCommand = (command: string, title: string) => {
     const id = nextId.current++;
@@ -89,6 +126,7 @@ export function TerminalTabs({
   const launchRef = useRef<(l: typeof launch) => void>(() => {});
   launchRef.current = (l) => {
     if (l.command) runCommand(l.command, l.title ?? 'Run');
+    else if (l.agent === 'freebuff') void launchFreebuff(l.prompt);
     else void launchClaude(l.prompt);
   };
   useEffect(() => {
@@ -131,10 +169,19 @@ export function TerminalTabs({
         <button type="button" aria-label="new terminal" onClick={addShell}>
           +
         </button>
+        <button
+          type="button"
+          className="term-agent-btn term-freebuff-btn"
+          aria-label="Start FreeBuff"
+          title="Start FreeBuff (free coding agent) in this workspace"
+          onClick={() => void launchFreebuff()}
+        >
+          <SparkleIcon size={13} /> FreeBuff
+        </button>
         {CLAUDE_ENABLED && (
           <button
             type="button"
-            className="term-claude-btn"
+            className="term-agent-btn term-claude-btn"
             aria-label="Start Claude Code"
             title="Start Claude Code in this workspace"
             onClick={() => void launchClaude()}
@@ -155,6 +202,7 @@ export function TerminalTabs({
             <Terminal
               cwd={cwd}
               bootCommand={tab.bootCommand}
+              seedInput={tab.seedInput}
               notice={tab.notice}
               fontSize={fontSize}
               fontFamily={fontFamily}

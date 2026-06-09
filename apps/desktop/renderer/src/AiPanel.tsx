@@ -203,6 +203,7 @@ export function AiPanel({
   fileContent,
   onApplyEdit,
   onAskClaude,
+  onAskFreebuff,
   selectionRequest,
   aiServerUrl,
   mode = 'normal',
@@ -236,6 +237,8 @@ export function AiPanel({
   onRunCommand?: (command: string) => void;
   // Hand the typed question (+ active file) off to a Claude Code terminal session.
   onAskClaude?: (text: string) => void;
+  // Hand the typed question (+ active file) off to a FreeBuff terminal session.
+  onAskFreebuff?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
   selectionRequest?: { nonce: number; kind: 'explain' | 'fix'; selection: string };
   // Shared FreeLLMAPI host URL (blank = local server).
@@ -1240,10 +1243,21 @@ export function AiPanel({
             Refactor
           </button>
         </div>
+        {onAskFreebuff && (
+          <button
+            type="button"
+            className="ai-agent-btn ai-freebuff-btn"
+            title="Open FreeBuff (free coding agent) in the terminal with this question and file"
+            disabled={input.trim().length === 0 && !fileReady}
+            onClick={() => onAskFreebuff(input)}
+          >
+            <SparkleIcon size={13} /> Ask FreeBuff
+          </button>
+        )}
         {onAskClaude && (
           <button
             type="button"
-            className="ai-claude-btn"
+            className="ai-agent-btn ai-claude-btn"
             title="Open Claude Code in the terminal with this question and file"
             disabled={input.trim().length === 0 && !fileReady}
             onClick={() => onAskClaude(input)}

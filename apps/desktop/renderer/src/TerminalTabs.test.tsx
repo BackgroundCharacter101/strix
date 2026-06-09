@@ -5,8 +5,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Stub the xterm-backed Terminal; we're testing tab management, not rendering.
 vi.mock('./Terminal', () => ({
-  Terminal: ({ bootCommand, notice }: { bootCommand?: string; notice?: string }) => (
-    <div data-testid="terminal" data-boot={bootCommand} data-notice={notice} />
+  Terminal: ({
+    bootCommand,
+    seedInput,
+    notice,
+  }: {
+    bootCommand?: string;
+    seedInput?: string;
+    notice?: string;
+  }) => (
+    <div data-testid="terminal" data-boot={bootCommand} data-seed={seedInput} data-notice={notice} />
   ),
 }));
 
@@ -86,6 +94,50 @@ describe('TerminalTabs', () => {
     await screen.findByRole('tab', { name: 'Claude Code' });
     await waitFor(() => {
       const slot = screen.getAllByTestId('terminal').find((t) => t.dataset.notice?.includes('npm install'));
+      expect(slot).toBeTruthy();
+    });
+  });
+
+  it('launches a FreeBuff tab that boots `freebuff` when installed', async () => {
+    const hasCommand = vi.fn(async () => true);
+    window.strix = makeStrixApi({ terminal: { hasCommand } });
+    render(<TerminalTabs />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start FreeBuff' }));
+
+    expect(await screen.findByRole('tab', { name: 'FreeBuff' })).toBeInTheDocument();
+    await waitFor(() => {
+      const slot = screen.getAllByTestId('terminal').find((t) => t.dataset.boot === 'freebuff');
+      expect(slot).toBeTruthy();
+    });
+    expect(hasCommand).toHaveBeenCalledWith('freebuff');
+  });
+
+  it('seeds the FreeBuff session with a prompt via the launch prop', async () => {
+    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => true) } });
+    const { rerender } = render(<TerminalTabs launch={{ nonce: 0 }} />);
+    rerender(<TerminalTabs launch={{ nonce: 1, agent: 'freebuff', prompt: 'In a.ts: why slow?' }} />);
+
+    await waitFor(() => {
+      const slot = screen
+        .getAllByTestId('terminal')
+        .find((t) => t.dataset.seed === 'In a.ts: why slow?');
+      expect(slot).toBeTruthy();
+      expect(slot?.dataset.boot).toBe('freebuff');
+    });
+  });
+
+  it('one-click installs FreeBuff when it is not on PATH', async () => {
+    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => false) } });
+    render(<TerminalTabs />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start FreeBuff' }));
+
+    await screen.findByRole('tab', { name: 'FreeBuff' });
+    await waitFor(() => {
+      const slot = screen
+        .getAllByTestId('terminal')
+        .find((t) => t.dataset.boot === 'npm install -g freebuff');
       expect(slot).toBeTruthy();
     });
   });

@@ -2978,7 +2978,8 @@ kbd {
   color: var(--text-muted);
 }
 
-.ai-claude-btn {
+.ai-claude-btn,
+.ai-agent-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2990,12 +2991,19 @@ kbd {
   font-weight: var(--weight-medium);
 }
 
-.ai-claude-btn:hover:not(:disabled) {
+.ai-claude-btn:hover:not(:disabled),
+.ai-agent-btn:hover:not(:disabled) {
   background: var(--selection);
 }
 
-.ai-claude-btn svg {
+.ai-claude-btn svg,
+.ai-agent-btn svg {
   color: var(--accent);
+}
+
+/* Two agent buttons (Ask FreeBuff + Ask Claude Code) sit side by side. */
+.ai-agent-btn + .ai-agent-btn {
+  margin-top: 6px;
 }
 
 .ai-response {
@@ -3078,8 +3086,8 @@ kbd {
   color: var(--text);
 }
 
-.term-claude-btn {
-  margin-left: auto;
+.term-claude-btn,
+.term-agent-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -3091,12 +3099,22 @@ kbd {
   font-weight: var(--weight-medium);
 }
 
-.term-claude-btn:hover:not(:disabled) {
+/* Right-align the agent button group; the FreeBuff button is always leftmost. */
+.term-freebuff-btn {
+  margin-left: auto;
+}
+.term-agent-btn + .term-agent-btn {
+  margin-left: 6px;
+}
+
+.term-claude-btn:hover:not(:disabled),
+.term-agent-btn:hover:not(:disabled) {
   background: var(--selection);
   border-color: var(--accent);
 }
 
-.term-claude-btn svg {
+.term-claude-btn svg,
+.term-agent-btn svg {
   color: var(--accent);
 }
 

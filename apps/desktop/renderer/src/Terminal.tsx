@@ -10,6 +10,10 @@ export interface TerminalProps {
   cwd?: string;
   // A command to run automatically once the shell is ready (e.g. 'claude').
   bootCommand?: string;
+  // Text typed into the session a few seconds after the boot command, WITHOUT a
+  // trailing newline — used to seed a prompt into an interactive agent (e.g.
+  // FreeBuff) so the user can review it and press Enter to submit.
+  seedInput?: string;
   // A local message written to the terminal on open (not sent to the PTY).
   notice?: string;
   // Font, following the editor settings.
@@ -17,7 +21,7 @@ export interface TerminalProps {
   fontFamily?: string;
 }
 
-export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: TerminalProps) {
+export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFamily }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -74,6 +78,12 @@ export function Terminal({ cwd, bootCommand, notice, fontSize, fontFamily }: Ter
       // Run the boot command once the shell has had a moment to initialise.
       if (bootCommand) {
         setTimeout(() => window.strix.terminal.input(id, `${bootCommand}\r`), 400);
+      }
+      // Seed a prompt into an interactive agent after it has had time to start.
+      // No trailing newline: the user reviews the text and presses Enter.
+      if (seedInput) {
+        const text = seedInput.replace(/[\r\n]+/g, ' ').trim();
+        setTimeout(() => window.strix.terminal.input(id, text), 2600);
       }
     });
 
