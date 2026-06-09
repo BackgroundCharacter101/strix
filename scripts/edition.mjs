@@ -37,9 +37,16 @@ const env = { ...process.env, STRIX_EDITION: edition };
 const onWin = process.platform === 'win32';
 
 function run(cmd, args, cwd) {
-  const printable = [cmd, ...args].join(' ');
+  // On Windows we need shell:true so npm/npx resolve their .cmd shims — but the
+  // shell then re-parses the command line, so any arg containing a space (e.g.
+  // `-c.productName=Strix M1`) must be quoted or it splits into stray positional
+  // arguments ("Unknown argument: M1").
+  const finalArgs = onWin
+    ? args.map((a) => (/\s/.test(a) && !a.startsWith('"') ? `"${a}"` : a))
+    : args;
+  const printable = [cmd, ...finalArgs].join(' ');
   console.log(`\n[edition:${edition}] ${printable}\n`);
-  const r = spawnSync(cmd, args, { cwd, env, stdio: 'inherit', shell: onWin });
+  const r = spawnSync(cmd, finalArgs, { cwd, env, stdio: 'inherit', shell: onWin });
   if (r.status !== 0) {
     console.error(`\n[edition:${edition}] failed (${r.status}): ${printable}`);
     process.exit(r.status ?? 1);
