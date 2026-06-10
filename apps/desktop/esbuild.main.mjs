@@ -27,6 +27,13 @@ const common = {
   external: ['electron', 'node-pty'],
   define: {
     __STRIX_EDITION__: JSON.stringify(edition),
+    // CJS output has no `import.meta.url`; code uses it (createRequire,
+    // fileURLToPath). Map every occurrence to a banner const derived from the
+    // CJS __filename, or createRequire(undefined) throws ERR_INVALID_ARG_VALUE.
+    'import.meta.url': '__strixImportMetaUrl',
+  },
+  banner: {
+    js: 'const __strixImportMetaUrl = require("url").pathToFileURL(__filename).href;',
   },
   logLevel: 'info',
 };
