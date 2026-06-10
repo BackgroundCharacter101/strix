@@ -394,7 +394,9 @@ export default function App() {
   const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600, persistKey: 'strix.size.terminal' });
 
   useEffect(() => {
-    window.strix.workspace.root().then(setRoot);
+    // Empty root → no workspace open → show the welcome screen (not the app's
+    // own install directory).
+    window.strix.workspace.root().then((r) => setRoot(r || null));
   }, []);
 
   // Track recently opened folders (most-recent first, capped, persisted).

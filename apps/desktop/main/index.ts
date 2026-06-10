@@ -58,7 +58,7 @@ function createWindow() {
         // dist/main → ../../build/icon.png; "build/icon.png" ships via files[].
         icon: path.join(__dirname, '../../build/icon.png'),
         webPreferences: {
-            preload: path.join(__dirname, 'preload.mjs'),
+            preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
             // ESM preload scripts require the sandbox to be disabled.
             sandbox: false,

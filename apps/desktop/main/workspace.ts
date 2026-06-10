@@ -7,9 +7,10 @@ import { repoNameFromUrl } from './repoName.js';
 
 export { repoNameFromUrl };
 
-// The active workspace root. Starts at the launch cwd but can be changed at
-// runtime via Open Folder / Clone.
-let currentRoot = process.cwd();
+// The active workspace root. Empty until the user opens a folder, so a fresh
+// launch shows the welcome screen instead of the app's own install directory
+// (the launch cwd). Set at runtime via Open Folder / Clone / New Project.
+let currentRoot = '';
 
 export function getRoot(): string {
   return currentRoot;

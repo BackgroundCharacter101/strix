@@ -5,7 +5,7 @@
     "type": "module",
     "description": "Strix — an AI-native desktop IDE.",
     "author": "Strix",
-    "main": "dist/main/index.js",
+    "main": "dist/main/index.cjs",
     "scripts": {
         "build:main": "tsc -p . && node esbuild.main.mjs",
         "build:renderer": "cd renderer && vite build",
@@ -29,7 +29,7 @@
         "appId": "com.strix.ide",
         "productName": "Strix",
         "electronVersion": "32.3.3",
-        "asar": false,
+        "asar": true,
         "directories": {
             "output": "release"
         },
@@ -38,6 +38,9 @@
             "renderer/dist/**/*",
             "build/icon.png",
             "package.json"
+        ],
+        "asarUnpack": [
+            "**/node_modules/node-pty/**/*"
         ],
         "extraResources": [
             {
@@ -73,7 +76,10 @@
             "runAfterFinish": true,
             "createDesktopShortcut": true,
             "createStartMenuShortcut": true,
-            "deleteAppDataOnUninstall": false
+            "deleteAppDataOnUninstall": false,
+            "installerSidebar": "build/installerSidebar.bmp",
+            "uninstallerSidebar": "build/installerSidebar.bmp",
+            "installerHeader": "build/installerHeader.bmp"
         },
         "linux": {
             "icon": "build/icon.png",
