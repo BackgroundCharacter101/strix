@@ -92,6 +92,24 @@ assistant sandbox; the `build:*` step IS verified here for both editions.)
 
 ---
 
+## 1c. Recent features (HTML preview · local host · AI roll-back)
+
+- **Local static host server** (`main/staticServer.ts`, dependency-free, 127.0.0.1
+  only, ephemeral port, shared/idempotent per root, path-traversal guarded —
+  `resolveStaticPath`). Bridge `serve.start/stop/info`. **Run & Serve → "Host this
+  folder"** serves the workspace and opens it in the browser (Stop button +
+  reflects an already-running server).
+- **In-IDE HTML preview**: a Preview/Edit toggle on `.html` files (FileViewer)
+  renders the page live in an `<iframe>` served by the host server so CSS/JS and
+  relative paths resolve like a real browser; **Reload** + **Open in browser ↗**.
+  CSP gained `frame-src http://127.0.0.1:* http://localhost:*`. `HtmlPreview.tsx`.
+- **AI roll-back** (`AiPanel`): every applied agent batch snapshots prior file
+  contents (`applyFiles` already had `old` per file); an "↩ AI changes (N)" list
+  above the composer reverts any batch this session — restoring modified files
+  and deleting ones the batch newly created. Session-scoped (in-memory).
+
+---
+
 ## 2. How to run (one command)
 
 ```powershell

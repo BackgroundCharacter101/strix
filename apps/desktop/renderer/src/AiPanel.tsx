@@ -554,6 +554,13 @@ export function AiPanel({
   const [applying, setApplying] = useState(false);
   // Which file's inline diff is expanded in the review panel.
   const [expandedFile, setExpandedFile] = useState<string | null>(null);
+  // Roll-back history (this session): each applied AI batch snapshots the prior
+  // contents so it can be reverted. `before === null` means the file was newly
+  // created (revert = delete it).
+  type RollbackFile = { path: string; before: string | null };
+  type RollbackBatch = { id: number; time: number; label: string; files: RollbackFile[] };
+  const [rollbacks, setRollbacks] = useState<RollbackBatch[]>([]);
+  const [reverting, setReverting] = useState(false);
   // A command to offer running (shown with a Run button; never auto-run).
   const [pendingRun, setPendingRun] = useState<{ command: string; cwd: string } | null>(null);
 
@@ -737,6 +744,16 @@ export function AiPanel({
         [created ? `${created} new` : '', updated ? `${updated} updated` : '']
           .filter(Boolean)
           .join(', ') || `${files.length} file(s)`;
+      // Snapshot prior contents so this batch can be rolled back.
+      setRollbacks((rs) => [
+        ...rs,
+        {
+          id: Date.now() + rs.length,
+          time: Date.now(),
+          label: summary,
+          files: files.map((f) => ({ path: f.path, before: f.old })),
+        },
+      ]);
       showToast(`Applied — ${summary}.`, 'success');
       setHistory((h) => [
         ...h,
@@ -770,6 +787,43 @@ export function AiPanel({
 
   const applyScaffold = () => {
     if (scaffold) void applyFiles(scaffold.files, scaffold.notes, scaffold.run);
+  };
+
+  // Roll back an applied AI batch: restore each file's prior content, or delete
+  // files the batch had newly created. Reopens the modified files so the editor
+  // reflects the revert.
+  const revertBatch = async (id: number) => {
+    const batch = rollbacks.find((b) => b.id === id);
+    if (!batch || !workspaceKey || reverting) return;
+    setReverting(true);
+    try {
+      for (const f of batch.files) {
+        const abs = joinUnder(workspaceKey, f.path);
+        if (f.before === null) {
+          await window.strix.fs.remove(abs).catch(() => {});
+        } else {
+          await window.strix.fs.write(abs, f.before);
+        }
+      }
+      // Reopen only the files that still exist (skip the ones we deleted).
+      batch.files
+        .filter((f) => f.before !== null)
+        .slice(0, 8)
+        .forEach((f) => onOpenPath?.(joinUnder(workspaceKey, f.path)));
+      setRollbacks((rs) => rs.filter((b) => b.id !== id));
+      showToast(`Rolled back — ${batch.label}.`, 'success');
+      setHistory((h) => [
+        ...h,
+        {
+          role: 'assistant',
+          content: `Rolled back ${batch.files.length} file(s) (${batch.label}).`,
+        },
+      ]);
+    } catch (e) {
+      showToast(`Roll back failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 7000);
+    } finally {
+      setReverting(false);
+    }
   };
 
   // Run the agent's suggested command (with the user's click), capture its
@@ -1145,6 +1199,35 @@ export function AiPanel({
               Run &amp; check
             </button>
           </div>
+        </div>
+      )}
+
+      {rollbacks.length > 0 && (
+        <div className="ai-rollback" aria-label="AI changes — roll back">
+          <div className="ai-rollback-head">
+            <span>↩ AI changes ({rollbacks.length})</span>
+          </div>
+          <ul className="ai-rollback-list">
+            {[...rollbacks].reverse().map((b) => (
+              <li key={b.id} className="ai-rollback-row">
+                <span className="ai-rollback-info" title={b.files.map((f) => f.path).join('\n')}>
+                  <span className="ai-rollback-label">{b.label}</span>
+                  <span className="ai-rollback-time">
+                    {new Date(b.time).toLocaleTimeString()}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  className="ai-ghost-btn"
+                  disabled={reverting}
+                  title={`Revert these ${b.files.length} file(s) to their state before this change`}
+                  onClick={() => void revertBatch(b.id)}
+                >
+                  Revert
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

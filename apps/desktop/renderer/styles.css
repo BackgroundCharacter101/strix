@@ -2765,6 +2765,52 @@ kbd {
   background: var(--selection);
   border-radius: var(--radius-md);
 }
+
+/* AI roll-back history (revert applied agent changes). */
+.ai-rollback {
+  flex: 0 0 auto;
+  max-height: 160px;
+  overflow-y: auto;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+}
+.ai-rollback-head {
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.ai-rollback-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ai-rollback-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+}
+.ai-rollback-row + .ai-rollback-row {
+  border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+.ai-rollback-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ai-rollback-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai-rollback-time {
+  font-size: 10px;
+  color: var(--text-muted);
+}
 .ai-run-cmd {
   flex: 1 1 auto;
   min-width: 0;
