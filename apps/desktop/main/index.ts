@@ -53,6 +53,10 @@ function createWindow() {
         // Frameless: Strix draws its own title bar (see renderer TitleBar).
         frame: false,
         backgroundColor: '#1e1e1e',
+        // Explicit window icon so the taskbar shows the Strix logo everywhere —
+        // including dev runs (`electron .` would otherwise show Electron's icon).
+        // dist/main → ../../build/icon.png; "build/icon.png" ships via files[].
+        icon: path.join(__dirname, '../../build/icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.mjs'),
             contextIsolation: true,
