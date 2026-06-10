@@ -584,8 +584,10 @@ export default function App() {
     if (rel && q) prompt = `In ${rel}: ${q}`;
     else if (rel) prompt = `Review ${rel}`;
     else prompt = q;
+    // Auto-typed + submitted into FreeBuff; clipboard is a fallback in case the
+    // session is still cold-starting the very first time.
     void navigator.clipboard?.writeText(prompt).catch(() => {});
-    showToast('Asking FreeBuff — it auto-fills when ready (or paste with Ctrl+V)', 'info', 4000);
+    showToast('Sent to FreeBuff', 'info', 2500);
     launchFreebuff(prompt);
   };
 

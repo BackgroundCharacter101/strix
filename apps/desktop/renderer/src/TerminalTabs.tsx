@@ -9,8 +9,9 @@ interface TabDesc {
   // are numbered by position via terminalTitle().
   title?: string;
   bootCommand?: string;
-  // Prompt typed into an interactive agent after it boots (FreeBuff hand-off).
-  seedInput?: string;
+  // Prompt auto-typed + submitted into an interactive agent (FreeBuff hand-off).
+  // Bumping the nonce re-prompts a session that's already running.
+  seed?: { nonce: number; text: string };
   notice?: string;
 }
 
@@ -94,6 +95,23 @@ export function TerminalTabs({
   };
 
   const launchFreebuff = async (prompt?: string) => {
+    // Reuse a running FreeBuff session (FreeBuff is most users' main AI, so
+    // repeated asks should go to the SAME agent, not spawn a fresh one each
+    // time). Bump its seed nonce to send the new prompt to it.
+    const existing = tabs.find((t) => t.title === 'FreeBuff' && t.bootCommand === 'freebuff');
+    if (existing) {
+      setActive(existing.id);
+      if (prompt) {
+        setTabs((prev) =>
+          prev.map((t) =>
+            t.id === existing.id
+              ? { ...t, seed: { nonce: (t.seed?.nonce ?? 0) + 1, text: prompt } }
+              : t,
+          ),
+        );
+      }
+      return;
+    }
     const id = nextId.current++;
     const installed = await window.strix.terminal.hasCommand('freebuff');
     const tab: TabDesc = installed
@@ -101,7 +119,7 @@ export function TerminalTabs({
           id,
           title: 'FreeBuff',
           bootCommand: 'freebuff',
-          seedInput: prompt,
+          seed: prompt ? { nonce: 1, text: prompt } : undefined,
           notice: prompt ? 'Asking FreeBuff…' : 'Starting FreeBuff…',
         }
       : {
@@ -202,7 +220,7 @@ export function TerminalTabs({
             <Terminal
               cwd={cwd}
               bootCommand={tab.bootCommand}
-              seedInput={tab.seedInput}
+              seed={tab.seed}
               notice={tab.notice}
               fontSize={fontSize}
               fontFamily={fontFamily}

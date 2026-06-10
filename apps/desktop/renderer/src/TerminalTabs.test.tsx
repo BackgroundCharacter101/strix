@@ -7,14 +7,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 vi.mock('./Terminal', () => ({
   Terminal: ({
     bootCommand,
-    seedInput,
+    seed,
     notice,
   }: {
     bootCommand?: string;
-    seedInput?: string;
+    seed?: { nonce: number; text: string };
     notice?: string;
   }) => (
-    <div data-testid="terminal" data-boot={bootCommand} data-seed={seedInput} data-notice={notice} />
+    <div data-testid="terminal" data-boot={bootCommand} data-seed={seed?.text} data-notice={notice} />
   ),
 }));
 
@@ -125,6 +125,21 @@ describe('TerminalTabs', () => {
       expect(slot).toBeTruthy();
       expect(slot?.dataset.boot).toBe('freebuff');
     });
+  });
+
+  it('reuses the running FreeBuff session for a new prompt (no second tab)', async () => {
+    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => true) } });
+    const { rerender } = render(<TerminalTabs launch={{ nonce: 0 }} />);
+    rerender(<TerminalTabs launch={{ nonce: 1, agent: 'freebuff', prompt: 'first prompt' }} />);
+    await screen.findByRole('tab', { name: 'FreeBuff' });
+
+    // Asking again routes to the SAME session (re-seeded), not a new tab.
+    rerender(<TerminalTabs launch={{ nonce: 2, agent: 'freebuff', prompt: 'second prompt' }} />);
+    await waitFor(() => {
+      const slot = screen.getAllByTestId('terminal').find((t) => t.dataset.seed === 'second prompt');
+      expect(slot).toBeTruthy();
+    });
+    expect(screen.getAllByRole('tab', { name: 'FreeBuff' })).toHaveLength(1);
   });
 
   it('one-click installs FreeBuff when it is not on PATH', async () => {

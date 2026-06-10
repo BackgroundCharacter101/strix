@@ -1264,6 +1264,12 @@ export function AiPanel({
         <textarea
           aria-label="Ask AI"
           placeholder="Ask, say what to build, or attach files…  (Enter to send)"
+          // Native spell-check (red underline + right-click suggestions, wired
+          // to the system dictionary by the main process). autoCorrect/
+          // autoCapitalize hint the platform's text correction where supported.
+          spellCheck
+          autoCorrect="on"
+          autoCapitalize="sentences"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -1330,9 +1336,12 @@ export function AiPanel({
           <button
             type="button"
             className="ai-agent-btn ai-freebuff-btn"
-            title="Open FreeBuff (free coding agent) in the terminal with this question and file"
+            title="Send this prompt to FreeBuff (free coding agent) and run it"
             disabled={input.trim().length === 0 && !fileReady}
-            onClick={() => onAskFreebuff(input)}
+            onClick={() => {
+              onAskFreebuff(input);
+              setInput('');
+            }}
           >
             <SparkleIcon size={13} /> Ask FreeBuff
           </button>

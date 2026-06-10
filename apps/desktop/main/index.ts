@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, Menu, MenuItem } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -58,7 +58,53 @@ function createWindow() {
             contextIsolation: true,
             // ESM preload scripts require the sandbox to be disabled.
             sandbox: false,
+            // Native spell-check for the AI prompt and other text inputs.
+            spellcheck: true,
         },
+    });
+
+    // Spell-check in English (red underline). Wrapped — locale data may be absent.
+    try {
+        mainWindow.webContents.session.setSpellCheckerLanguages(['en-US']);
+    } catch {
+        /* keep the system default */
+    }
+
+    // Right-click in an editable field → spelling suggestions + add-to-dictionary
+    // and the standard cut/copy/paste actions. Without this handler the red
+    // underline shows but offers no corrections.
+    mainWindow.webContents.on('context-menu', (_event, params) => {
+        const menu = new Menu();
+        for (const suggestion of params.dictionarySuggestions) {
+            menu.append(
+                new MenuItem({
+                    label: suggestion,
+                    click: () => mainWindow.webContents.replaceMisspelling(suggestion),
+                }),
+            );
+        }
+        if (params.misspelledWord) {
+            menu.append(new MenuItem({ type: 'separator' }));
+            menu.append(
+                new MenuItem({
+                    label: 'Add to dictionary',
+                    click: () =>
+                        mainWindow.webContents.session.addWordToSpellCheckerDictionary(
+                            params.misspelledWord,
+                        ),
+                }),
+            );
+        }
+        if (params.isEditable) {
+            if (menu.items.length) menu.append(new MenuItem({ type: 'separator' }));
+            menu.append(new MenuItem({ role: 'cut', enabled: params.editFlags.canCut }));
+            menu.append(new MenuItem({ role: 'copy', enabled: params.editFlags.canCopy }));
+            menu.append(new MenuItem({ role: 'paste', enabled: params.editFlags.canPaste }));
+            menu.append(new MenuItem({ role: 'selectAll' }));
+        } else if (params.editFlags.canCopy) {
+            menu.append(new MenuItem({ role: 'copy' }));
+        }
+        if (menu.items.length) menu.popup();
     });
 
     // Security hardening: this is a single-page app that never navigates its top

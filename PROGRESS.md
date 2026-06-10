@@ -67,6 +67,15 @@ minified M1 bundle — verified).
   `'normal'` in M1), and the "Security AI" Settings section.
 - About dialog shows the edition (`EDITION_LABEL`).
 
+**FreeBuff hand-off optimizations (it's most users' main AI):** "Ask FreeBuff"
+now **auto-submits** (types the prompt + Enter) and **reuses the running FreeBuff
+session** instead of spawning a new tab each time — `TerminalTabs.launchFreebuff`
+finds the existing FreeBuff tab and bumps a `seed:{nonce,text}` to re-prompt it;
+`Terminal` types it immediately on a warm session or after the readiness banner
+on a cold start (30s fallback). The AI composer also clears after sending and has
+native **spell-check** (red underline + right-click suggestions / add-to-dictionary
+via a main-process `context-menu` handler; `webPreferences.spellcheck`, en-US).
+
 **FreeBuff (free coding agent, BOTH editions):** `freebuff` is a free coding-agent
 CLI (a build of Codebuff, `github.com/CodebuffAI/codebuff`; `npm i -g freebuff`).
 It's M1's answer to Claude Code and ships in both editions (not gated). Wired the

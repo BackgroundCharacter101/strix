@@ -11,10 +11,10 @@ export interface TerminalProps {
   cwd?: string;
   // A command to run automatically once the shell is ready (e.g. 'claude').
   bootCommand?: string;
-  // Text typed into the session a few seconds after the boot command, WITHOUT a
-  // trailing newline — used to seed a prompt into an interactive agent (e.g.
-  // FreeBuff) so the user can review it and press Enter to submit.
-  seedInput?: string;
+  // A prompt to type into an interactive agent (FreeBuff) and auto-submit. The
+  // prompt is typed once the agent's input is ready (cold start) or immediately
+  // (warm session). Bump `nonce` to re-prompt an already-running session.
+  seed?: { nonce: number; text: string };
   // A local message written to the terminal on open (not sent to the PTY).
   notice?: string;
   // Font, following the editor settings.
@@ -22,11 +22,30 @@ export interface TerminalProps {
   fontFamily?: string;
 }
 
-export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFamily }: TerminalProps) {
+export function Terminal({ cwd, bootCommand, seed, notice, fontSize, fontFamily }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const sessionRef = useRef<string | null>(null);
+  // Seed state shared between the mount effect (cold-start, banner-detected) and
+  // the re-seed effect (warm session). `ready` flips true once the agent's input
+  // prompt has appeared; `pending` holds a seed waiting for that.
+  const readyRef = useRef(false);
+  const pendingSeedRef = useRef<{ nonce: number; text: string } | null>(null);
+  const lastSeedNonceRef = useRef(0);
+
+  // Type a prompt into the live agent session and auto-submit it (Enter shortly
+  // after, so the agent receives the text first, then the newline).
+  const typeSeed = (text: string) => {
+    const id = sessionRef.current;
+    if (!id) return;
+    const clean = text.replace(/[\r\n]+/g, ' ').trim();
+    if (!clean) return;
+    window.strix.terminal.input(id, clean);
+    setTimeout(() => {
+      if (sessionRef.current) window.strix.terminal.input(sessionRef.current, '\r');
+    }, 250);
+  };
   // The directory the PTY was spawned in / last cd'd to, so we only re-cd when
   // the workspace actually changes (not on the initial mount).
   const cwdRef = useRef<string | undefined>(cwd);
@@ -74,27 +93,29 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
 
     let disposed = false;
 
-    // Seed handling: an interactive agent (FreeBuff) finishes booting at an
-    // unknown time, so a fixed delay drops the prompt. Instead we watch the
-    // output for the agent's "ready for input" banner and type the prompt then,
-    // with a generous fallback in case the banner text changes.
-    const seedText = seedInput ? seedInput.replace(/[\r\n]+/g, ' ').trim() : '';
+    // An interactive agent (FreeBuff) finishes booting at an unknown time, so a
+    // fixed delay drops the prompt. Watch the output for the agent's "ready for
+    // input" banner; when seen, mark ready and type any pending seed.
     const READY_RE = /enter a coding task|\/ for commands|what would you like to work on/i;
-    let seeded = false;
     let outBuf = '';
-    const seedNow = () => {
-      if (seeded || !seedText || !sessionRef.current) return;
-      seeded = true;
-      window.strix.terminal.input(sessionRef.current, seedText);
+    const flushPendingSeed = () => {
+      const p = pendingSeedRef.current;
+      if (!p) return;
+      pendingSeedRef.current = null;
+      lastSeedNonceRef.current = p.nonce;
+      typeSeed(p.text);
     };
 
     // PTY output → terminal (and watch for the agent's input prompt to seed).
     const offData = window.strix.terminal.onData(({ id, data }) => {
       if (id === sessionRef.current) {
         term.write(data);
-        if (seedText && !seeded) {
+        if (!readyRef.current) {
           outBuf = (outBuf + data).slice(-2000);
-          if (READY_RE.test(outBuf)) setTimeout(seedNow, 350);
+          if (READY_RE.test(outBuf)) {
+            readyRef.current = true;
+            setTimeout(flushPendingSeed, 350);
+          }
         }
       }
     });
@@ -118,11 +139,14 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
       if (bootCommand) {
         setTimeout(() => window.strix.terminal.input(id, `${bootCommand}\r`), 400);
       }
-      // Fallback seed if the readiness banner is never detected (e.g. a future
-      // FreeBuff redesign): type the prompt after a long grace period.
-      if (seedText) {
-        setTimeout(seedNow, 30000);
-      }
+      // Fallback: if the readiness banner is never detected (e.g. a future
+      // FreeBuff redesign), seed anyway after a long grace period.
+      setTimeout(() => {
+        if (pendingSeedRef.current) {
+          readyRef.current = true;
+          flushPendingSeed();
+        }
+      }, 30000);
     });
 
     // Keep the PTY's dimensions in sync with the RENDERED size. A ResizeObserver
@@ -159,6 +183,19 @@ export function Terminal({ cwd, bootCommand, seedInput, notice, fontSize, fontFa
       term.dispose();
     };
   }, []);
+
+  // Seed / re-seed: type a new prompt into the agent. On a warm (already-ready)
+  // session it types immediately; otherwise it waits for the readiness banner.
+  // Bumping seed.nonce (e.g. "Ask FreeBuff" again) re-prompts the SAME session.
+  useEffect(() => {
+    if (!seed || seed.nonce === lastSeedNonceRef.current) return;
+    if (readyRef.current) {
+      lastSeedNonceRef.current = seed.nonce;
+      typeSeed(seed.text);
+    } else {
+      pendingSeedRef.current = { nonce: seed.nonce, text: seed.text };
+    }
+  }, [seed?.nonce]);
 
   // Follow the workspace: when the opened folder changes, cd the live shell into
   // it (instead of leaving it at the launch directory). Skips the first run.
