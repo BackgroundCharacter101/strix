@@ -535,6 +535,70 @@ export function SettingsPage({
 
           <div className="set-row set-row-block">
             <div className="set-info">
+              <div className="set-label">FreeBuff connection (your own VPS / full access)</div>
+              <div className="set-desc">
+                Point the FreeBuff agent at your own server for full, unthrottled access. These
+                are injected as environment variables when FreeBuff launches. After changing them,
+                close the FreeBuff terminal tab and click <em>Ask FreeBuff</em> again to apply.
+              </div>
+            </div>
+          </div>
+          <Row
+            query={query}
+            label="FreeBuff API key"
+            desc="Your full-access key (set as CODEBUFF_API_KEY / FREEBUFF_API_KEY)."
+          >
+            <input
+              type="password"
+              aria-label="FreeBuff API key"
+              placeholder="sk-…"
+              value={settings.freebuffApiKey}
+              onChange={(e) => onChange({ freebuffApiKey: e.target.value })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Proxy / VPS URL"
+            desc="Route FreeBuff's traffic through your VPS/VPN (sets HTTP(S)_PROXY)."
+          >
+            <input
+              type="text"
+              aria-label="FreeBuff proxy URL"
+              placeholder="http://your-vps:8080"
+              value={settings.freebuffProxyUrl}
+              onChange={(e) => onChange({ freebuffProxyUrl: e.target.value })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Self-hosted backend URL"
+            desc="If you run the FreeBuff/Codebuff backend yourself, its base URL."
+          >
+            <input
+              type="text"
+              aria-label="FreeBuff backend URL"
+              placeholder="https://freebuff.your-domain.com"
+              value={settings.freebuffBackendUrl}
+              onChange={(e) => onChange({ freebuffBackendUrl: e.target.value })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Extra environment variables"
+            desc="One KEY=VALUE per line — overrides the above. Use FreeBuff's documented names."
+          >
+            <textarea
+              className="set-textarea"
+              aria-label="FreeBuff extra environment variables"
+              rows={3}
+              placeholder={'CODEBUFF_API_KEY=…\nCODEBUFF_BACKEND_URL=…'}
+              value={settings.freebuffExtraEnv}
+              onChange={(e) => onChange({ freebuffExtraEnv: e.target.value })}
+            />
+          </Row>
+
+          <div className="set-row set-row-block">
+            <div className="set-info">
               <div className="set-label">Provider API keys</div>
               <div className="set-desc">
                 Add keys for the free LLM providers right here — no need to open the server&apos;s

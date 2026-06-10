@@ -37,6 +37,12 @@ export interface Settings {
   aiServerUrl: string;
   // Agent: apply file changes immediately, skipping the review/confirm modal.
   agentAutoApply: boolean;
+  // FreeBuff connection (self-hosted / full access). Injected as env vars into
+  // the FreeBuff terminal session so users can point the CLI at their own VPS.
+  freebuffApiKey: string;
+  freebuffProxyUrl: string;
+  freebuffBackendUrl: string;
+  freebuffExtraEnv: string;
   // Workbench mode: 'normal' (clean coding) or 'cybersec' (pentester vibe +
   // security-expert AI persona).
   mode: 'normal' | 'cybersec';
@@ -73,6 +79,10 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSaveSeconds: 60,
   aiServerUrl: '',
   agentAutoApply: false,
+  freebuffApiKey: '',
+  freebuffProxyUrl: '',
+  freebuffBackendUrl: '',
+  freebuffExtraEnv: '',
   mode: 'normal',
   securityStance: 'balanced',
   securityPersona: { ...DEFAULT_SECURITY_PERSONA },

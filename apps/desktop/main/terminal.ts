@@ -36,6 +36,9 @@ export interface TerminalCreateOptions {
   cwd?: string;
   cols?: number;
   rows?: number;
+  // Extra environment variables merged over process.env for this session (used
+  // to point the FreeBuff CLI at a user's own VPS / full-access backend).
+  env?: Record<string, string>;
 }
 
 // Minimal surface the manager needs from a PTY — lets tests inject a fake.
@@ -49,7 +52,7 @@ export interface PtyProcess {
 
 export type SpawnFn = (
   shell: string,
-  opts: { cwd: string; cols: number; rows: number },
+  opts: { cwd: string; cols: number; rows: number; env?: Record<string, string> },
 ) => PtyProcess;
 
 export function defaultShell(): string {
@@ -70,7 +73,8 @@ const defaultSpawn: SpawnFn = (shell, opts) => {
     cwd: opts.cwd,
     cols: opts.cols,
     rows: opts.rows,
-    env: process.env as Record<string, string>,
+    // Caller env merged over the inherited environment.
+    env: { ...(process.env as Record<string, string>), ...(opts.env ?? {}) },
     // Use the modern ConPTY backend on Windows (better ANSI/Unicode + speed
     // than the legacy winpty). Ignored on other platforms.
     ...(process.platform === 'win32' ? { useConpty: true } : {}),
@@ -100,6 +104,7 @@ export class TerminalManager {
       cwd: opts.cwd ?? process.cwd(),
       cols: opts.cols ?? 80,
       rows: opts.rows ?? 24,
+      env: opts.env,
     });
 
     proc.onData((data) => onData?.(id, data));

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FileNode } from '../main/fs';
 import { FileTree } from './src/FileTree';
 import { FileViewer } from './src/FileViewer';
@@ -38,6 +38,7 @@ import {
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED } from './src/edition';
+import { buildFreebuffEnv } from './src/freebuffEnv';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -550,6 +551,24 @@ export default function App() {
     setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt, agent: 'freebuff' }));
   };
 
+  // Env injected into the FreeBuff session so users can point the CLI at their
+  // own VPS / full-access backend (Settings → AI → FreeBuff connection).
+  const freebuffEnv = useMemo(
+    () =>
+      buildFreebuffEnv({
+        apiKey: settings.freebuffApiKey,
+        proxyUrl: settings.freebuffProxyUrl,
+        backendUrl: settings.freebuffBackendUrl,
+        extraEnv: settings.freebuffExtraEnv,
+      }),
+    [
+      settings.freebuffApiKey,
+      settings.freebuffProxyUrl,
+      settings.freebuffBackendUrl,
+      settings.freebuffExtraEnv,
+    ],
+  );
+
   // Run a project target (npm script / Python) in a new integrated terminal.
   const runTarget = (command: string, title: string) => {
     setShowTerminal(true);
@@ -1034,6 +1053,7 @@ export default function App() {
                 <TerminalTabs
                   cwd={root ?? undefined}
                   launch={claudeLaunch}
+                  freebuffEnv={freebuffEnv}
                   fontSize={settings.fontSize}
                   fontFamily={settings.fontFamily || undefined}
                 />

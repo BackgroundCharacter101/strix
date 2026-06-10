@@ -12,6 +12,8 @@ interface TabDesc {
   // Prompt auto-typed + submitted into an interactive agent (FreeBuff hand-off).
   // Bumping the nonce re-prompts a session that's already running.
   seed?: { nonce: number; text: string };
+  // Extra env for this session's PTY (FreeBuff → user's VPS/backend).
+  env?: Record<string, string>;
   notice?: string;
 }
 
@@ -50,10 +52,13 @@ function claudeCommand(prompt?: string): string {
 export function TerminalTabs({
   cwd,
   launch = { nonce: 0 },
+  freebuffEnv,
   fontSize,
   fontFamily,
 }: {
   cwd?: string;
+  // Env injected into a FreeBuff session (self-hosted / full-access backend).
+  freebuffEnv?: Record<string, string>;
   // Bumping nonce (from a command / menu / AI hand-off) opens a session:
   //  - command set  → a generic run target (e.g. "npm run dev") in a titled tab
   //  - agent:'freebuff' → a FreeBuff session (optionally seeded with a prompt)
@@ -120,6 +125,7 @@ export function TerminalTabs({
           title: 'FreeBuff',
           bootCommand: 'freebuff',
           seed: prompt ? { nonce: 1, text: prompt } : undefined,
+          env: freebuffEnv,
           notice: prompt ? 'Asking FreeBuff…' : 'Starting FreeBuff…',
         }
       : {
@@ -221,6 +227,7 @@ export function TerminalTabs({
               cwd={cwd}
               bootCommand={tab.bootCommand}
               seed={tab.seed}
+              env={tab.env}
               notice={tab.notice}
               fontSize={fontSize}
               fontFamily={fontFamily}

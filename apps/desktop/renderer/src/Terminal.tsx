@@ -15,6 +15,9 @@ export interface TerminalProps {
   // prompt is typed once the agent's input is ready (cold start) or immediately
   // (warm session). Bump `nonce` to re-prompt an already-running session.
   seed?: { nonce: number; text: string };
+  // Extra env merged over the inherited environment for this PTY (FreeBuff →
+  // user's own VPS / full-access backend).
+  env?: Record<string, string>;
   // A local message written to the terminal on open (not sent to the PTY).
   notice?: string;
   // Font, following the editor settings.
@@ -22,7 +25,7 @@ export interface TerminalProps {
   fontFamily?: string;
 }
 
-export function Terminal({ cwd, bootCommand, seed, notice, fontSize, fontFamily }: TerminalProps) {
+export function Terminal({ cwd, bootCommand, seed, env, notice, fontSize, fontFamily }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -129,7 +132,7 @@ export function Terminal({ cwd, bootCommand, seed, notice, fontSize, fontFamily 
 
     // Spawn in the latest cwd (cwdRef may have advanced before the session was
     // ready, e.g. a folder was opened during launch).
-    window.strix.terminal.create({ cols: term.cols, rows: term.rows, cwd: cwdRef.current }).then((id) => {
+    window.strix.terminal.create({ cols: term.cols, rows: term.rows, cwd: cwdRef.current, env }).then((id) => {
       if (disposed) {
         window.strix.terminal.kill(id);
         return;

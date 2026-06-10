@@ -67,6 +67,16 @@ minified M1 bundle — verified).
   `'normal'` in M1), and the "Security AI" Settings section.
 - About dialog shows the edition (`EDITION_LABEL`).
 
+**FreeBuff connection (self-hosted / full access):** Settings → AI → "FreeBuff
+connection" lets users point the local `freebuff` CLI at their own VPS/backend
+for unthrottled access — API key, Proxy/VPS URL (HTTP(S)_PROXY), self-hosted
+backend URL, and a freeform KEY=VALUE box. `buildFreebuffEnv()` (renderer
+`freebuffEnv.ts`, tested) maps these to env vars (CODEBUFF_API_KEY etc.; freeform
+overrides), injected into the FreeBuff PTY session: `terminal.ts`
+TerminalCreateOptions/`SpawnFn` gained `env` (merged over process.env), plumbed
+App → TerminalTabs → Terminal. FreeBuff stays local (edits local files); only its
+backend traffic is redirected. Change settings → reopen FreeBuff to apply.
+
 **FreeBuff hand-off optimizations (it's most users' main AI):** "Ask FreeBuff"
 now **auto-submits** (types the prompt + Enter) and **reuses the running FreeBuff
 session** instead of spawning a new tab each time — `TerminalTabs.launchFreebuff`
