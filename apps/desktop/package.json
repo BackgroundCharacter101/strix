@@ -62,14 +62,18 @@
         "win": {
             "icon": "build/icon.png",
             "target": [
-                "nsis",
-                "portable"
+                "nsis"
             ]
         },
         "nsis": {
             "oneClick": false,
+            "perMachine": false,
             "allowToChangeInstallationDirectory": true,
-            "perMachine": false
+            "license": "build/license.txt",
+            "runAfterFinish": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "deleteAppDataOnUninstall": false
         },
         "linux": {
             "icon": "build/icon.png",
