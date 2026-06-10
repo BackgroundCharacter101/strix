@@ -556,17 +556,11 @@ export default function App() {
   const freebuffEnv = useMemo(
     () =>
       buildFreebuffEnv({
-        apiKey: settings.freebuffApiKey,
         proxyUrl: settings.freebuffProxyUrl,
         backendUrl: settings.freebuffBackendUrl,
         extraEnv: settings.freebuffExtraEnv,
       }),
-    [
-      settings.freebuffApiKey,
-      settings.freebuffProxyUrl,
-      settings.freebuffBackendUrl,
-      settings.freebuffExtraEnv,
-    ],
+    [settings.freebuffProxyUrl, settings.freebuffBackendUrl, settings.freebuffExtraEnv],
   );
 
   // Run a project target (npm script / Python) in a new integrated terminal.

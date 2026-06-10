@@ -8,7 +8,6 @@
 // the freeform "extra env" box override anything (applied last).
 
 export interface FreebuffConnection {
-  apiKey?: string;
   proxyUrl?: string;
   backendUrl?: string;
   extraEnv?: string;
@@ -31,12 +30,6 @@ export function parseEnvLines(text: string): Record<string, string> {
 
 export function buildFreebuffEnv(c: FreebuffConnection): Record<string, string> {
   const env: Record<string, string> = {};
-  const apiKey = c.apiKey?.trim();
-  if (apiKey) {
-    // Cover both the FreeBuff and upstream Codebuff naming.
-    env.CODEBUFF_API_KEY = apiKey;
-    env.FREEBUFF_API_KEY = apiKey;
-  }
   const proxy = c.proxyUrl?.trim();
   if (proxy) {
     // Standard proxy vars (upper + lower case — tools read either) route the

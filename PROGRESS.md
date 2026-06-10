@@ -69,10 +69,12 @@ minified M1 bundle — verified).
 
 **FreeBuff connection (self-hosted / full access):** Settings → AI → "FreeBuff
 connection" lets users point the local `freebuff` CLI at their own VPS/backend
-for unthrottled access — API key, Proxy/VPS URL (HTTP(S)_PROXY), self-hosted
-backend URL, and a freeform KEY=VALUE box. `buildFreebuffEnv()` (renderer
-`freebuffEnv.ts`, tested) maps these to env vars (CODEBUFF_API_KEY etc.; freeform
-overrides), injected into the FreeBuff PTY session: `terminal.ts`
+for unthrottled access — Proxy/VPS URL (HTTP(S)_PROXY), self-hosted backend URL,
+and a freeform KEY=VALUE box (NO API-key field — FreeBuff has no API keys; the
+freeform box covers any var it may document). A collapsible plain-language guide
+sits in the panel for non-technical users. `buildFreebuffEnv()` (renderer
+`freebuffEnv.ts`, tested) maps these to env vars (freeform overrides),
+injected into the FreeBuff PTY session: `terminal.ts`
 TerminalCreateOptions/`SpawnFn` gained `env` (merged over process.env), plumbed
 App → TerminalTabs → Terminal. FreeBuff stays local (edits local files); only its
 backend traffic is redirected. Change settings → reopen FreeBuff to apply.

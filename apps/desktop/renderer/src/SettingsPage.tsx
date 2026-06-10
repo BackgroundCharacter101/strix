@@ -553,12 +553,8 @@ export function SettingsPage({
               </p>
 
               <h4>Which box do I fill in?</h4>
-              <p>You almost never need all four — pick the ONE that matches what you were given:</p>
+              <p>You almost never need all three — pick the ONE that matches what you were given:</p>
               <ul>
-                <li>
-                  <strong>Someone gave you a key</strong> (a secret code, usually starting with{' '}
-                  <code>sk-</code>) → put it in <strong>FreeBuff API key</strong>. Done.
-                </li>
                 <li>
                   <strong>Someone gave you a server address with a port</strong> (looks like{' '}
                   <code>http://203.0.113.7:8080</code> — an address, a colon, a number) → put it in{' '}
@@ -616,19 +612,6 @@ export function SettingsPage({
           </details>
           <Row
             query={query}
-            label="FreeBuff API key"
-            desc="Your full-access key (set as CODEBUFF_API_KEY / FREEBUFF_API_KEY)."
-          >
-            <input
-              type="password"
-              aria-label="FreeBuff API key"
-              placeholder="sk-…"
-              value={settings.freebuffApiKey}
-              onChange={(e) => onChange({ freebuffApiKey: e.target.value })}
-            />
-          </Row>
-          <Row
-            query={query}
             label="Proxy / VPS URL"
             desc="Route FreeBuff's traffic through your VPS/VPN (sets HTTP(S)_PROXY)."
           >
@@ -662,7 +645,7 @@ export function SettingsPage({
               className="set-textarea"
               aria-label="FreeBuff extra environment variables"
               rows={3}
-              placeholder={'CODEBUFF_API_KEY=…\nCODEBUFF_BACKEND_URL=…'}
+              placeholder={'HTTPS_PROXY=…\nCODEBUFF_BACKEND_URL=…'}
               value={settings.freebuffExtraEnv}
               onChange={(e) => onChange({ freebuffExtraEnv: e.target.value })}
             />

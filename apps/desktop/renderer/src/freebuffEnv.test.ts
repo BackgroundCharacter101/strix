@@ -19,12 +19,6 @@ describe('buildFreebuffEnv', () => {
     expect(hasFreebuffConnection({})).toBe(false);
   });
 
-  it('maps the API key to both naming conventions', () => {
-    const env = buildFreebuffEnv({ apiKey: ' sk-123 ' });
-    expect(env.CODEBUFF_API_KEY).toBe('sk-123');
-    expect(env.FREEBUFF_API_KEY).toBe('sk-123');
-  });
-
   it('maps a proxy to upper- and lower-case proxy vars', () => {
     const env = buildFreebuffEnv({ proxyUrl: 'http://vps:8080' });
     expect(env.HTTPS_PROXY).toBe('http://vps:8080');
@@ -32,8 +26,11 @@ describe('buildFreebuffEnv', () => {
   });
 
   it('lets the freeform box override the defaults', () => {
-    const env = buildFreebuffEnv({ apiKey: 'x', extraEnv: 'CODEBUFF_API_KEY=override\nFOO=bar' });
-    expect(env.CODEBUFF_API_KEY).toBe('override');
+    const env = buildFreebuffEnv({
+      proxyUrl: 'http://vps:8080',
+      extraEnv: 'HTTPS_PROXY=http://other:9090\nFOO=bar',
+    });
+    expect(env.HTTPS_PROXY).toBe('http://other:9090');
     expect(env.FOO).toBe('bar');
   });
 

@@ -39,7 +39,7 @@ export interface Settings {
   agentAutoApply: boolean;
   // FreeBuff connection (self-hosted / full access). Injected as env vars into
   // the FreeBuff terminal session so users can point the CLI at their own VPS.
-  freebuffApiKey: string;
+  // (FreeBuff has no API keys — connection is via proxy/backend/env only.)
   freebuffProxyUrl: string;
   freebuffBackendUrl: string;
   freebuffExtraEnv: string;
@@ -79,7 +79,6 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSaveSeconds: 60,
   aiServerUrl: '',
   agentAutoApply: false,
-  freebuffApiKey: '',
   freebuffProxyUrl: '',
   freebuffBackendUrl: '',
   freebuffExtraEnv: '',
