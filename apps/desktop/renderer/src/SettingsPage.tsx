@@ -543,6 +543,77 @@ export function SettingsPage({
               </div>
             </div>
           </div>
+          <details className="set-guide">
+            <summary>📖 New to this? Step-by-step guide (no tech knowledge needed)</summary>
+            <div className="set-guide-body">
+              <p>
+                <strong>Don&apos;t have your own server?</strong> Then skip this whole section —
+                FreeBuff already works out of the box, just with the free limits. Nothing here is
+                required.
+              </p>
+
+              <h4>Which box do I fill in?</h4>
+              <p>You almost never need all four — pick the ONE that matches what you were given:</p>
+              <ul>
+                <li>
+                  <strong>Someone gave you a key</strong> (a secret code, usually starting with{' '}
+                  <code>sk-</code>) → put it in <strong>FreeBuff API key</strong>. Done.
+                </li>
+                <li>
+                  <strong>Someone gave you a server address with a port</strong> (looks like{' '}
+                  <code>http://203.0.113.7:8080</code> — an address, a colon, a number) → put it in{' '}
+                  <strong>Proxy / VPS URL</strong>. Done.
+                </li>
+                <li>
+                  <strong>Someone gave you a website-style address</strong> (looks like{' '}
+                  <code>https://freebuff.mycompany.com</code>) → put it in{' '}
+                  <strong>Self-hosted backend URL</strong>. Done.
+                </li>
+                <li>
+                  <strong>Someone gave you lines that contain an = sign</strong> (like{' '}
+                  <code>SOME_NAME=some-value</code>) → paste them, exactly as given, one per line,
+                  into <strong>Extra environment variables</strong>. Done.
+                </li>
+              </ul>
+
+              <h4>Then make it take effect (3 clicks)</h4>
+              <ol>
+                <li>
+                  Click <strong>Save</strong> at the top of Settings.
+                </li>
+                <li>
+                  If a <strong>FreeBuff</strong> tab is open in the terminal at the bottom, close it
+                  with the little <strong>×</strong> next to its name.
+                </li>
+                <li>
+                  Click <strong>Ask FreeBuff</strong> (or the ✨ FreeBuff button) — the new session
+                  now uses your server.
+                </li>
+              </ol>
+
+              <h4>If it doesn&apos;t work</h4>
+              <ul>
+                <li>
+                  Check for typos — no spaces before/after what you pasted, and addresses must
+                  start with <code>http://</code> or <code>https://</code>.
+                </li>
+                <li>
+                  If you use a VPN app to reach the server, make sure the VPN is{' '}
+                  <strong>switched on</strong> before opening FreeBuff.
+                </li>
+                <li>
+                  Still stuck? Ask the person who runs your server for the exact value — then paste
+                  it into <strong>Extra environment variables</strong> exactly as they wrote it
+                  (that box always wins over the others).
+                </li>
+              </ul>
+
+              <p className="set-guide-note">
+                🔒 Everything you enter here stays on this computer. It is only handed to FreeBuff
+                when it starts — Strix never sends it anywhere else.
+              </p>
+            </div>
+          </details>
           <Row
             query={query}
             label="FreeBuff API key"
