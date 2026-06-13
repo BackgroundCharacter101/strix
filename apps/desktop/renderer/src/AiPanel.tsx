@@ -10,6 +10,7 @@ import {
   type Attachment,
 } from '@strix/ai-gateway';
 import { readAttachment, MAX_ATTACH_BYTES } from './attachments';
+import { rankFiles, formatRepoContext, type RepoFile } from './repoContext';
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
@@ -150,12 +151,12 @@ async function detectRunTarget(
 const TEXT_EXT =
   /\.(ts|tsx|js|jsx|mjs|cjs|json|md|txt|css|scss|less|html|htm|py|rb|php|go|rs|java|kt|c|h|cpp|hpp|cs|sh|bash|yml|yaml|toml|ini|env|sql|xml|svg|vue|svelte|astro|gitignore|dockerfile)$/i;
 
-// Read the project's small text files (capped) so the agent can edit existing
-// files instead of asking the user to open them. Returns fenced blocks.
-async function gatherProjectFiles(
+// Read the project's small text files (capped) as structured {path, content}.
+// Used to feed the agent (edits) and to rank repo-wide context for chat.
+async function gatherRepoFiles(
   workspaceKey: string,
   opts: { maxFiles?: number; maxBytes?: number; maxFileBytes?: number } = {},
-): Promise<string> {
+): Promise<RepoFile[]> {
   const maxFiles = opts.maxFiles ?? 24;
   const maxBytes = opts.maxBytes ?? 60_000;
   const maxFileBytes = opts.maxFileBytes ?? 24_000;
@@ -163,7 +164,7 @@ async function gatherProjectFiles(
   try {
     tree = (await window.strix.fs.tree(workspaceKey)) as TreeNode;
   } catch {
-    return '';
+    return [];
   }
 
   // Collect candidate file paths (absolute) from the tree.
@@ -178,11 +179,10 @@ async function gatherProjectFiles(
   };
   walk(tree.children ?? []);
 
-  const parts: string[] = [];
+  const files: RepoFile[] = [];
   let total = 0;
-  let count = 0;
   for (const abs of paths) {
-    if (count >= maxFiles || total >= maxBytes) break;
+    if (files.length >= maxFiles || total >= maxBytes) break;
     let content = '';
     try {
       content = await window.strix.fs.read(abs);
@@ -191,11 +191,19 @@ async function gatherProjectFiles(
     }
     if (content.length > maxFileBytes) continue;
     const rel = abs.slice(workspaceKey.length).replace(/^[\\/]/, '').replace(/\\/g, '/');
-    parts.push(`File: ${rel}\n\`\`\`\n${content}\n\`\`\``);
+    files.push({ path: rel, content });
     total += content.length;
-    count += 1;
   }
-  return parts.join('\n\n');
+  return files;
+}
+
+// Fenced blocks of the project's files (for the build/edit agent prompt).
+async function gatherProjectFiles(
+  workspaceKey: string,
+  opts: { maxFiles?: number; maxBytes?: number; maxFileBytes?: number } = {},
+): Promise<string> {
+  const files = await gatherRepoFiles(workspaceKey, opts);
+  return files.map((f) => `File: ${f.path}\n\`\`\`\n${f.content}\n\`\`\``).join('\n\n');
 }
 
 export function AiPanel({
@@ -364,11 +372,30 @@ export function AiPanel({
 
     const controller = new AbortController();
     abortRef.current = controller;
+
+    // Repo-wide context: for chat/explain, pull the files most relevant to the
+    // question and add them to the project context so the AI can reason about
+    // the whole codebase (not just the open file + tree).
+    let ctx = projectContext;
+    if ((task === 'chat' || task === 'explain') && workspaceKey && userMessage.trim()) {
+      try {
+        const pool = await gatherRepoFiles(workspaceKey, {
+          maxFiles: 60,
+          maxBytes: 200_000,
+          maxFileBytes: 16_000,
+        });
+        const block = formatRepoContext(rankFiles(userMessage, pool, { maxFiles: 6, maxBytes: 24_000 }));
+        if (block) ctx = `${projectContext}\n\n${block}`;
+      } catch {
+        /* fall back to tree-only context */
+      }
+    }
+
     let acc = '';
     try {
       await runTask(
         task,
-        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext, securityMode, securityStance, securityPersonaText, attachments: task === 'chat' ? attachments : undefined },
+        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: task === 'chat' ? attachments : undefined },
         {
           onToken: (token) => {
             acc += token;
