@@ -20,6 +20,8 @@ import { useSettings, DEFAULT_SETTINGS } from './src/useSettings';
 import { applyAccent } from './src/monaco-setup';
 import { accentHex, monacoThemeFor } from './src/themes';
 import { AiPanel } from './src/AiPanel';
+import { ProblemsView } from './src/ProblemsView';
+import type { Problem } from './src/FileViewer';
 import { StatusBar } from './src/StatusBar';
 import { TerminalTabs } from './src/TerminalTabs';
 import { useEditorTabs } from './src/useEditorTabs';
@@ -29,6 +31,7 @@ import {
   ExtensionsIcon,
   FilesIcon,
   GearIcon,
+  ProblemsIcon,
   RunIcon,
   SearchIcon,
   SourceControlIcon,
@@ -46,7 +49,9 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
-  const [sidebarView, setSidebarView] = useState<'explorer' | 'search' | 'scm' | 'run' | 'extensions'>(
+  const [sidebarView, setSidebarView] = useState<
+    'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems'
+  >(
     'explorer',
   );
   const [diff, setDiff] = useState<{ path: string; original: string; modified: string } | null>(
@@ -55,6 +60,7 @@ export default function App() {
   const [palette, setPalette] = useState<null | 'files' | 'commands'>(null);
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
+  const [problemsByPath, setProblemsByPath] = useState<Record<string, Problem[]>>({});
   const [cloneOpen, setCloneOpen] = useState(false);
   // A generic single-input prompt (new file / folder / project naming).
   const [namePrompt, setNamePrompt] = useState<{
@@ -542,7 +548,22 @@ export default function App() {
   useEffect(() => window.strix.menu.onCommand((id) => runCommandRef.current(id)), []);
 
   // Activity-bar view switch: re-clicking the active view hides the sidebar.
-  const selectView = (view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions') => {
+  // Track per-file diagnostics for the Problems view; drop a file when it clears.
+  const onDiagnostics = useCallback((p: string, items: Problem[]) => {
+    setProblemsByPath((prev) => {
+      if (items.length === 0) {
+        if (!prev[p]) return prev;
+        const next = { ...prev };
+        delete next[p];
+        return next;
+      }
+      return { ...prev, [p]: items };
+    });
+  }, []);
+
+  const selectView = (
+    view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems',
+  ) => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
     } else {
@@ -652,6 +673,7 @@ export default function App() {
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.run', label: 'View: Run & Serve', detail: '', run: () => selectView('run') },
+    { id: 'view.problems', label: 'View: Problems', detail: '', run: () => selectView('problems') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
     {
@@ -719,6 +741,10 @@ export default function App() {
 
   const gitStatus = useGitStatus(root);
   const changedCount = gitStatus?.isRepo ? gitStatus.files.length : 0;
+  const problemTotal = useMemo(
+    () => Object.values(problemsByPath).reduce((n, items) => n + items.length, 0),
+    [problemsByPath],
+  );
 
   zenRef.current = zen;
   settingsRef.current = settingsOpen;
@@ -838,6 +864,7 @@ export default function App() {
         buffer={group.active}
         onCursorChange={setCursor}
         onMarkersChange={setProblems}
+        onDiagnostics={onDiagnostics}
         onOpenFolder={openFolder}
         onOpenFile={openFile}
         onCloneRepo={() => setCloneOpen(true)}
@@ -902,6 +929,17 @@ export default function App() {
           </button>
           <button
             type="button"
+            className="activity-with-badge"
+            aria-label="Problems"
+            aria-pressed={showSidebar && sidebarView === 'problems'}
+            title={`Problems${problemTotal ? ` — ${problemTotal}` : ''}`}
+            onClick={() => selectView('problems')}
+          >
+            <ProblemsIcon />
+            {problemTotal > 0 && <span className="activity-badge">{problemTotal}</span>}
+          </button>
+          <button
+            type="button"
             aria-label="Extensions"
             aria-pressed={showSidebar && sidebarView === 'extensions'}
             title="Languages & Extensions"
@@ -952,10 +990,14 @@ export default function App() {
                           ? 'Run & Serve'
                           : sidebarView === 'extensions'
                             ? 'Languages & Extensions'
-                            : 'Explorer'}
+                            : sidebarView === 'problems'
+                              ? 'Problems'
+                              : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={(p) => activeTabs.open(p)} />
+                  ) : sidebarView === 'problems' ? (
+                    <ProblemsView byPath={problemsByPath} onOpen={(p) => activeTabs.open(p)} />
                   ) : sidebarView === 'scm' ? (
                     <SourceControlView
                       rootPath={root}

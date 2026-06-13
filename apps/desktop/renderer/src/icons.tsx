@@ -40,6 +40,17 @@ export function OwlIcon({ size = 22 }: IconProps) {
   );
 }
 
+// Problems: a warning triangle with an exclamation mark.
+export function ProblemsIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M10.3 3.9 2.4 17.4A1.5 1.5 0 0 0 3.7 19.7h16.6a1.5 1.5 0 0 0 1.3-2.3L13.7 3.9a1.6 1.6 0 0 0-2.8 0z" />
+      <path d="M12 9v4" />
+      <path d="M12 16.5h.01" />
+    </svg>
+  );
+}
+
 export function FilesIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

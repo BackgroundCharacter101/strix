@@ -1797,6 +1797,59 @@ kbd {
   overflow-y: auto;
 }
 
+/* Problems view */
+.problems-view {
+  overflow-y: auto;
+  padding-bottom: var(--space-3);
+}
+.problems-group {
+  margin-top: var(--space-1);
+}
+.problems-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.problems-file-name {
+  color: var(--text);
+}
+.problems-count {
+  margin-left: auto;
+  opacity: 0.7;
+}
+.problems-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 2px var(--space-3) 2px var(--space-5);
+  font-size: var(--text-xs);
+  color: var(--text);
+}
+.problems-row:hover {
+  background: var(--bg-elevated);
+}
+.problems-sev {
+  flex: 0 0 auto;
+}
+.problems-msg {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.problems-loc {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
 .scm-branchbar {
   display: flex;
   align-items: center;

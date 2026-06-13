@@ -129,11 +129,20 @@ function ensureLspProviders(monaco: typeof import('monaco-editor'), languageId: 
   });
 }
 
+// A single diagnostic surfaced in the Problems view.
+export interface Problem {
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+  line: number;
+  column: number;
+}
+
 export function FileViewer({
   path,
   buffer,
   onCursorChange,
   onMarkersChange,
+  onDiagnostics,
   onOpenFolder,
   onOpenFile,
   onCloneRepo,
@@ -153,6 +162,8 @@ export function FileViewer({
   buffer: FileBuffer | null;
   onCursorChange?: (pos: { line: number; column: number }) => void;
   onMarkersChange?: (counts: { errors: number; warnings: number }) => void;
+  // This file's detailed diagnostics (for the Problems view).
+  onDiagnostics?: (path: string, items: Problem[]) => void;
   onOpenFolder?: () => void;
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
@@ -461,17 +472,40 @@ export function FileViewer({
               disposers.push(() => registerFormat(null));
             }
 
-            // Report error/warning counts to the status bar's Problems item.
-            if (onMarkersChange) {
+            // Report error/warning counts to the status bar, and this file's
+            // detailed diagnostics to the Problems view.
+            if (onMarkersChange || onDiagnostics) {
+              const sevName = (s: number): Problem['severity'] =>
+                s === monaco.MarkerSeverity.Error
+                  ? 'error'
+                  : s === monaco.MarkerSeverity.Warning
+                    ? 'warning'
+                    : 'info';
               const report = () => {
-                const markers = monaco.editor.getModelMarkers({});
+                const all = monaco.editor.getModelMarkers({});
                 let errors = 0;
                 let warnings = 0;
-                for (const m of markers) {
+                for (const m of all) {
                   if (m.severity === monaco.MarkerSeverity.Error) errors++;
                   else if (m.severity === monaco.MarkerSeverity.Warning) warnings++;
                 }
-                onMarkersChange({ errors, warnings });
+                onMarkersChange?.({ errors, warnings });
+                // This file's own markers (model URIs are auto-generated, so we
+                // scope by this model and pair them with the known path).
+                if (onDiagnostics && path) {
+                  const mine = monaco.editor.getModelMarkers({ resource: model.uri });
+                  onDiagnostics(
+                    path,
+                    mine
+                      .filter((m) => m.severity >= monaco.MarkerSeverity.Warning)
+                      .map((m) => ({
+                        message: m.message,
+                        severity: sevName(m.severity),
+                        line: m.startLineNumber,
+                        column: m.startColumn,
+                      })),
+                  );
+                }
               };
               const markerSub = monaco.editor.onDidChangeMarkers(report);
               report();

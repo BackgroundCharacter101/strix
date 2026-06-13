@@ -131,6 +131,27 @@ assistant sandbox; the `build:*` step IS verified here for both editions.)
 
 ---
 
+## 1d. Daily essentials (live-reload · find/replace · git · problems)
+
+- **Editor live-reload**: `main/watcher.ts` (fs.watch recursive, debounced,
+  `shouldIgnore` tested) → `fs.onChanged`. App reloads open tabs with NO unsaved
+  edits across all groups (`useEditorTabs.reload`), warns (no clobber) for dirty;
+  Explorer also refreshes on the event. Recursive-watch failure (Linux) falls
+  back to the 10s poll.
+- **Find & Replace across files**: Search view has a Replace row + "Replace All"
+  (confirm w/ file count). `main/search.ts` `replaceInFiles` + pure
+  `replaceAllCaseInsensitive`/`escapeRegExp` (tested). In-file F&R is Monaco's
+  built-in Ctrl+F/Ctrl+H.
+- **Git essentials**: SCM view branch bar (switch/create), Pull/Push (system
+  `git`, uses existing creds — no token storage), collapsible commit History.
+  `git.ts`: listBranches/checkoutBranch/createBranch/gitLog/pull/push (tested).
+- **Problems view**: activity-bar Problems panel + count badge. CodeEditor uses
+  auto model URIs (no path-based models), so it's scoped to OPEN editors: each
+  `FileViewer` reports its file's markers via `onDiagnostics(path, items)`; App
+  aggregates `problemsByPath` (pruned on clear). `ProblemsView.tsx`.
+
+---
+
 ## 2. How to run (one command)
 
 ```powershell
@@ -154,7 +175,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 247 tests / 44 files.**
+  **`npm test`** (vitest) — **all green: 275 tests / 49 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
