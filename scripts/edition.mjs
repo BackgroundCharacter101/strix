@@ -79,4 +79,9 @@ if (action === 'build') {
     desktop,
   );
   console.log(`\n[edition:${edition}] packaged "${productName}" → apps/desktop/${outDir}`);
+  // Verify the Windows package didn't regress (asar/CJS entry/import.meta/node-pty).
+  // win-unpacked layout is produced by the win/dir targets.
+  if (action === 'win' || action === 'dir') {
+    run('node', ['scripts/verify-package.mjs', edition], root);
+  }
 }
