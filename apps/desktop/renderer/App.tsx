@@ -61,6 +61,10 @@ export default function App() {
   const [fileItems, setFileItems] = useState<PaletteItem[]>([]);
   const [problems, setProblems] = useState({ errors: 0, warnings: 0 });
   const [problemsByPath, setProblemsByPath] = useState<Record<string, Problem[]>>({});
+  // Open a file and jump to a line (from Search results / the Problems panel).
+  const [gotoTarget, setGotoTarget] = useState<{ path: string; line: number; nonce: number } | null>(
+    null,
+  );
   const [cloneOpen, setCloneOpen] = useState(false);
   // A generic single-input prompt (new file / folder / project naming).
   const [namePrompt, setNamePrompt] = useState<{
@@ -155,6 +159,15 @@ export default function App() {
   const visibleGroups = GROUP_ORDER.slice(0, splitCount);
   const effectiveActive = visibleGroups.includes(activeGroup) ? activeGroup : 'a';
   const activeTabs = split ? groupTabs[effectiveActive] : tabs;
+
+  // Open a file in the active group and jump to a 1-based line (Search/Problems).
+  const openAtLine = useCallback(
+    (path: string, line: number) => {
+      activeTabs.open(path);
+      setGotoTarget((p) => ({ path, line, nonce: (p?.nonce ?? 0) + 1 }));
+    },
+    [activeTabs],
+  );
 
   // Track recently opened files (most-recent first, capped, persisted) whenever
   // the active file changes — surfaced first in Quick Open.
@@ -865,6 +878,8 @@ export default function App() {
         onCursorChange={setCursor}
         onMarkersChange={setProblems}
         onDiagnostics={onDiagnostics}
+        gotoLine={gotoTarget?.path === group.activePath ? gotoTarget.line : undefined}
+        gotoNonce={gotoTarget?.path === group.activePath ? gotoTarget.nonce : undefined}
         onOpenFolder={openFolder}
         onOpenFile={openFile}
         onCloneRepo={() => setCloneOpen(true)}
@@ -995,9 +1010,9 @@ export default function App() {
                               : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
-                    <SearchView onOpen={(p) => activeTabs.open(p)} />
+                    <SearchView onOpen={openAtLine} />
                   ) : sidebarView === 'problems' ? (
-                    <ProblemsView byPath={problemsByPath} onOpen={(p) => activeTabs.open(p)} />
+                    <ProblemsView byPath={problemsByPath} onOpen={openAtLine} />
                   ) : sidebarView === 'scm' ? (
                     <SourceControlView
                       rootPath={root}

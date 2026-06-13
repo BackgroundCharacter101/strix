@@ -143,6 +143,8 @@ export function FileViewer({
   onCursorChange,
   onMarkersChange,
   onDiagnostics,
+  gotoLine,
+  gotoNonce,
   onOpenFolder,
   onOpenFile,
   onCloneRepo,
@@ -164,6 +166,10 @@ export function FileViewer({
   onMarkersChange?: (counts: { errors: number; warnings: number }) => void;
   // This file's detailed diagnostics (for the Problems view).
   onDiagnostics?: (path: string, items: Problem[]) => void;
+  // Jump to a 1-based line on open (from Search results / Problems). gotoNonce
+  // re-triggers the jump even if the line number repeats.
+  gotoLine?: number;
+  gotoNonce?: number;
   onOpenFolder?: () => void;
   onOpenFile?: () => void;
   onCloneRepo?: () => void;
@@ -369,6 +375,8 @@ export function FileViewer({
           language={languageForPath(path)}
           editorOptions={editorOptions}
           theme={theme}
+          revealLine={gotoLine}
+          revealNonce={gotoNonce}
           onChange={buffer.setDraft}
           onCursorChange={onCursorChange}
           onGenerate={(description, fileContent) =>

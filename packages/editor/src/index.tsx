@@ -39,6 +39,10 @@ export interface CodeEditorProps {
   editorOptions?: EditorOptions;
   /** Monaco theme name (e.g. 'strix-dark' / 'strix-light'). */
   theme?: string;
+  /** Reveal + place the cursor on this 1-based line (e.g. from Search/Problems). */
+  revealLine?: number;
+  /** Bump to re-trigger revealLine even when the line number is unchanged. */
+  revealNonce?: number;
 }
 
 // Modern editor chrome shared by CodeEditor + DiffViewer. Animation options are
@@ -82,8 +86,24 @@ export function CodeEditor({
   onEditorMount,
   editorOptions,
   theme = 'strix-dark',
+  revealLine,
+  revealNonce,
 }: CodeEditorProps) {
   const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null);
+
+  // Reveal a target line (centered) and place the cursor there — used when
+  // jumping from Search results or the Problems panel.
+  const reveal = (line: number) => {
+    const ed = editorRef.current;
+    if (!ed || !line || line < 1) return;
+    ed.revealLineInCenter(line);
+    ed.setPosition({ lineNumber: line, column: 1 });
+    ed.focus();
+  };
+  useEffect(() => {
+    if (revealLine) reveal(revealLine);
+    // reveal reads editorRef; re-run when the target (line or nonce) changes.
+  }, [revealLine, revealNonce]);
 
   // The Monaco option object derived from the user's settings. Memoized on the
   // individual fields so a settings change produces a new object (and triggers
@@ -138,6 +158,9 @@ export function CodeEditor({
 
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    // If we mounted with a pending jump target (file opened from Search/
+    // Problems), reveal it once layout settles.
+    if (revealLine) setTimeout(() => reveal(revealLine), 0);
     editor.onDidChangeCursorPosition((e) =>
       onCursorChange?.({ line: e.position.lineNumber, column: e.position.column }),
     );
