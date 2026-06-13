@@ -25,6 +25,7 @@
         "ai:start": "node freellmapi/server/dist/index.js",
         "collab:start": "node node_modules/y-websocket/bin/server.cjs",
         "verify:package": "node scripts/verify-package.mjs",
+        "check:manifest": "node scripts/check-manifest.mjs",
         "security": "node scripts/security-scan.mjs",
         "security:audit": "npm audit --omit=dev",
         "security:ci": "node scripts/security-scan.mjs && npm audit --omit=dev --audit-level=critical",

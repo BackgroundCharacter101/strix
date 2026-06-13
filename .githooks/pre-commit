@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
-# Strix commit-time security gate. Secret scan is a hard block; the dependency
+# Strix commit-time gate. Manifest + secret scan are hard blocks; the dependency
 # audit is best-effort locally (needs network) and hard-enforced in CI.
+echo "[strix] checking desktop manifest (build config intact)…"
+npm run -s check:manifest || {
+  echo "[strix] commit blocked: apps/desktop/package.json is incomplete (truncated?)."
+  exit 1
+}
+
 echo "[strix] security scan (secrets / forbidden files)…"
 npm run -s security || {
   echo "[strix] commit blocked: security scan found issues."
