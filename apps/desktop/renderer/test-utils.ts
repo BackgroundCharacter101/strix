@@ -89,6 +89,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     },
     search: {
       find: vi.fn(async () => []),
+      replace: vi.fn(async () => ({ files: 0, occurrences: 0, changed: [] })),
     },
     menu: {
       onCommand: vi.fn(() => () => {}),

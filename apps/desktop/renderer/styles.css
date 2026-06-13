@@ -898,6 +898,40 @@ body {
   font-size: var(--text-sm);
 }
 
+/* Search/Replace rows */
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: var(--space-3);
+}
+.search-row .search-input {
+  flex: 1 1 auto;
+  margin-right: 0;
+}
+.search-toggle,
+.search-toggle-spacer {
+  width: 18px;
+  min-width: 18px;
+  margin-left: var(--space-2);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 0;
+  text-align: center;
+}
+.search-toggle:hover {
+  color: var(--text);
+}
+.search-replace-row {
+  margin-bottom: var(--space-1);
+}
+.search-replace-all {
+  font-size: var(--text-xs);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 .search-summary {
   padding: var(--space-1) var(--space-5) var(--space-2);
   font-size: var(--text-xs);

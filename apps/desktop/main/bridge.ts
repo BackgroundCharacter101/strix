@@ -1,6 +1,6 @@
 import type { FileNode } from './fs';
 import type { GitStatus } from './git';
-import type { SearchMatch } from './search';
+import type { SearchMatch, ReplaceResult } from './search';
 import type { TerminalCreateOptions } from './terminal';
 import type { Language, JsonRpcMessage } from './lsp';
 
@@ -117,6 +117,8 @@ export interface StrixServeApi {
 
 export interface StrixSearchApi {
   find(query: string): Promise<SearchMatch[]>;
+  // Replace query → replacement (case-insensitive) across the workspace.
+  replace(query: string, replacement: string): Promise<ReplaceResult>;
 }
 
 export interface StrixMenuApi {

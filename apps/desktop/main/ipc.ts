@@ -25,7 +25,7 @@ import {
   newProjectDialog,
 } from './workspace.js';
 import { BrowserWindow } from 'electron';
-import { searchInFiles } from './search.js';
+import { searchInFiles, replaceInFiles } from './search.js';
 import { popupMenu } from './menu.js';
 import { TerminalManager, execCommand, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
@@ -65,6 +65,9 @@ export function registerIpcHandlers(): void {
     newProjectDialog(BrowserWindow.fromWebContents(event.sender), name),
   );
   ipcMain.handle('search:find', (_event, query: string) => searchInFiles(getRoot(), query));
+  ipcMain.handle('search:replace', (_event, query: string, replacement: string) =>
+    replaceInFiles(getRoot(), query, replacement),
+  );
 
   // --- Custom title bar: window controls + menu popups ---
   const winOf = (event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent) =>

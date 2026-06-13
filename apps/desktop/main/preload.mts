@@ -82,6 +82,7 @@ const api: StrixApi = {
   },
   search: {
     find: (query) => ipcRenderer.invoke('search:find', query),
+    replace: (query, replacement) => ipcRenderer.invoke('search:replace', query, replacement),
   },
   menu: {
     onCommand: (cb) => {

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { SearchMatch } from '../../main/search';
 import { FileIcon } from './FileTree';
+import { showToast } from './toast';
 
 function basename(p: string): string {
   const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
@@ -9,8 +10,37 @@ function basename(p: string): string {
 
 export function SearchView({ onOpen }: { onOpen: (path: string, line: number) => void }) {
   const [query, setQuery] = useState('');
+  const [replacement, setReplacement] = useState('');
+  const [showReplace, setShowReplace] = useState(false);
   const [results, setResults] = useState<SearchMatch[]>([]);
   const [busy, setBusy] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+
+  const replaceAll = async () => {
+    const q = query.trim();
+    if (!q || replacing) return;
+    const fileCount = new Set(results.map((m) => m.path)).size;
+    const ok = window.confirm(
+      `Replace all case-insensitive occurrences of "${q}" with "${replacement}" across ${fileCount} file(s)?\n\nThis writes to disk. Use Git or Undo (Ctrl+Z per file) to revert.`,
+    );
+    if (!ok) return;
+    setReplacing(true);
+    try {
+      const res = await window.strix.search.replace(q, replacement);
+      showToast(
+        `Replaced ${res.occurrences} occurrence(s) in ${res.files} file(s)`,
+        'success',
+        4000,
+      );
+      // Re-run the search to refresh the (now-fewer) matches.
+      const next = await window.strix.search.find(q);
+      setResults(next);
+    } catch (e) {
+      showToast(`Replace failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 6000);
+    } finally {
+      setReplacing(false);
+    }
+  };
 
   // Debounced search as the user types.
   useEffect(() => {
@@ -42,13 +72,47 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
 
   return (
     <div className="search-view">
-      <input
-        className="search-input"
-        aria-label="Search"
-        placeholder="Search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div className="search-row">
+        <button
+          type="button"
+          className="search-toggle"
+          aria-label={showReplace ? 'Hide replace' : 'Show replace'}
+          aria-expanded={showReplace}
+          title="Toggle Replace"
+          onClick={() => setShowReplace((v) => !v)}
+        >
+          {showReplace ? '▾' : '▸'}
+        </button>
+        <input
+          className="search-input"
+          aria-label="Search"
+          placeholder="Search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+      {showReplace && (
+        <div className="search-row search-replace-row">
+          <span className="search-toggle-spacer" />
+          <input
+            className="search-input"
+            aria-label="Replace"
+            placeholder="Replace"
+            value={replacement}
+            onChange={(e) => setReplacement(e.target.value)}
+          />
+          <button
+            type="button"
+            className="search-replace-all"
+            aria-label="Replace all"
+            title="Replace all matches across files"
+            disabled={busy || replacing || results.length === 0}
+            onClick={() => void replaceAll()}
+          >
+            {replacing ? '…' : 'Replace All'}
+          </button>
+        </div>
+      )}
       <div className="search-summary" aria-live="polite">
         {busy
           ? 'Searching…'
