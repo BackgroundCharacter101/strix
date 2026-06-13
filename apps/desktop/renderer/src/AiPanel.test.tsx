@@ -327,6 +327,44 @@ describe('AiPanel', () => {
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('earlier question');
   });
 
+  it('suggests files for an @mention and accepts one into the composer', async () => {
+    window.strix = makeStrixApi({
+      fs: {
+        tree: vi.fn(async () => ({
+          name: '',
+          path: '/ws',
+          type: 'directory' as const,
+          children: [
+            {
+              name: 'src',
+              path: '/ws/src',
+              type: 'directory' as const,
+              children: [{ name: 'auth.ts', path: '/ws/src/auth.ts', type: 'file' as const }],
+            },
+            { name: 'README.md', path: '/ws/README.md', type: 'file' as const },
+          ],
+        })),
+      },
+    });
+    const tree = window.strix.fs.tree as ReturnType<typeof vi.fn>;
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" />);
+    const box = screen.getByLabelText('Ask AI') as HTMLTextAreaElement;
+    // Wait for the async path load (gatherAllPaths) to populate the typeahead.
+    await waitFor(() => expect(tree).toHaveBeenCalled());
+
+    // Typing an @mention shows matching files (caret at end of the token).
+    await waitFor(() => {
+      fireEvent.change(box, { target: { value: 'look at @au', selectionStart: 11 } });
+      fireEvent.keyUp(box, { key: 'u' });
+      expect(screen.getByRole('option', { name: 'src/auth.ts' })).toBeInTheDocument();
+    });
+
+    // Accepting (mousedown) rewrites the composer with the full @path.
+    fireEvent.mouseDown(screen.getByRole('option', { name: 'src/auth.ts' }));
+    await waitFor(() => expect(box.value).toBe('look at @src/auth.ts '));
+    expect(screen.queryByRole('option', { name: 'src/auth.ts' })).not.toBeInTheDocument();
+  });
+
   it('flattens a workspace tree into an indented listing', () => {
     const out = flattenTree({
       name: 'root',

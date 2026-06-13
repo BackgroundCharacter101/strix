@@ -18,6 +18,7 @@ import {
   type RepoFile,
   type RankedFile,
 } from './repoContext';
+import { activeMention, rankMentionCandidates, applyMention } from './mentionAutocomplete';
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
@@ -204,6 +205,30 @@ async function gatherRepoFiles(
   return files;
 }
 
+// Collect every text file's workspace-relative path (no content reads) to feed
+// the `@file` typeahead. Cheap: walks the tree only.
+async function gatherAllPaths(workspaceKey: string, cap = 4000): Promise<string[]> {
+  let tree: TreeNode;
+  try {
+    tree = (await window.strix.fs.tree(workspaceKey)) as TreeNode;
+  } catch {
+    return [];
+  }
+  const out: string[] = [];
+  const walk = (nodes: TreeNode[]) => {
+    for (const n of nodes) {
+      if (out.length >= cap) return;
+      if (n.type === 'directory') walk(n.children ?? []);
+      else if (TEXT_EXT.test(n.name) || !n.name.includes('.')) {
+        const abs = (n as TreeNode & { path: string }).path;
+        out.push(abs.slice(workspaceKey.length).replace(/^[\\/]/, '').replace(/\\/g, '/'));
+      }
+    }
+  };
+  walk(tree.children ?? []);
+  return out;
+}
+
 // Fenced blocks of the project's files (for the build/edit agent prompt).
 async function gatherProjectFiles(
   workspaceKey: string,
@@ -272,6 +297,11 @@ export function AiPanel({
   // Files the user attached for the next message (read once, sent as context).
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  // `@file` typeahead: all workspace paths + the currently-shown candidates.
+  const [allPaths, setAllPaths] = useState<string[]>([]);
+  const [mentionItems, setMentionItems] = useState<string[]>([]);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const [model, setModel] = useState('auto');
   const [models, setModels] = useState<string[]>(['auto']);
   const [history, setHistory] = useState<ChatMessage[]>(() =>
@@ -341,6 +371,51 @@ export function AiPanel({
       cancelled = true;
     };
   }, [workspaceKey]);
+
+  // Load all workspace file paths for the `@file` typeahead. Cheap (no reads).
+  useEffect(() => {
+    let cancelled = false;
+    if (!workspaceKey) {
+      setAllPaths([]);
+      return;
+    }
+    void gatherAllPaths(workspaceKey).then((paths) => {
+      if (!cancelled) setAllPaths(paths);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceKey]);
+
+  // Recompute the `@file` typeahead from the composer's current value + caret.
+  const refreshMentions = (value: string, caret: number | null) => {
+    const active = caret == null ? null : activeMention(value, caret);
+    if (!active) {
+      setMentionItems([]);
+      return;
+    }
+    setMentionItems(rankMentionCandidates(active.query, allPaths));
+    setMentionIndex(0);
+  };
+
+  // Accept a typeahead candidate: rewrite the composer text and move the caret.
+  const acceptMention = (chosen: string) => {
+    const el = composerRef.current;
+    const caret = el?.selectionStart ?? input.length;
+    const active = activeMention(input, caret);
+    if (!active) return;
+    const { text, caret: nextCaret } = applyMention(input, active, chosen);
+    setInput(text);
+    setMentionItems([]);
+    // Restore the caret after React re-renders the controlled textarea.
+    requestAnimationFrame(() => {
+      const node = composerRef.current;
+      if (node) {
+        node.focus();
+        node.setSelectionRange(nextCaret, nextCaret);
+      }
+    });
+  };
 
   // Persist to the current project's key (via the ref, so switching workspaces
   // doesn't write the old conversation into the new project).
@@ -1307,32 +1382,88 @@ export function AiPanel({
             e.target.value = '';
           }}
         />
-        <textarea
-          aria-label="Ask AI"
-          placeholder="Ask, say what to build, @file to pin context, or attach files…  (Enter to send)"
-          // Native spell-check (red underline + right-click suggestions, wired
-          // to the system dictionary by the main process). autoCorrect/
-          // autoCapitalize hint the platform's text correction where supported.
-          spellCheck
-          autoCorrect="on"
-          autoCapitalize="sentences"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            // Enter sends; Shift+Enter inserts a newline.
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          onPaste={(e) => {
-            const files = Array.from(e.clipboardData.files);
-            if (files.length) {
-              e.preventDefault();
-              void addFiles(files);
-            }
-          }}
-        />
+        <div className="ai-mention-wrap">
+          {mentionItems.length > 0 && (
+            <ul className="ai-mention-menu" role="listbox" aria-label="File suggestions">
+              {mentionItems.map((p, i) => (
+                <li
+                  key={p}
+                  role="option"
+                  aria-selected={i === mentionIndex}
+                  className={`ai-mention-item${i === mentionIndex ? ' active' : ''}`}
+                  // onMouseDown (not onClick) so it fires before the textarea blurs.
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    acceptMention(p);
+                  }}
+                  onMouseEnter={() => setMentionIndex(i)}
+                >
+                  {p}
+                </li>
+              ))}
+            </ul>
+          )}
+          <textarea
+            ref={composerRef}
+            aria-label="Ask AI"
+            placeholder="Ask, say what to build, @file to pin context, or attach files…  (Enter to send)"
+            // Native spell-check (red underline + right-click suggestions, wired
+            // to the system dictionary by the main process). autoCorrect/
+            // autoCapitalize hint the platform's text correction where supported.
+            spellCheck
+            autoCorrect="on"
+            autoCapitalize="sentences"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              refreshMentions(e.target.value, e.target.selectionStart);
+            }}
+            onKeyDown={(e) => {
+              // When the @file menu is open, the arrow/enter/tab/esc keys drive it.
+              if (mentionItems.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setMentionIndex((i) => (i + 1) % mentionItems.length);
+                  return;
+                }
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setMentionIndex((i) => (i - 1 + mentionItems.length) % mentionItems.length);
+                  return;
+                }
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault();
+                  acceptMention(mentionItems[mentionIndex]);
+                  return;
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setMentionItems([]);
+                  return;
+                }
+              }
+              // Enter sends; Shift+Enter inserts a newline.
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            // Recompute candidates as the caret moves (clicks, arrow keys).
+            onKeyUp={(e) => {
+              if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(e.key)) return;
+              refreshMentions(e.currentTarget.value, e.currentTarget.selectionStart);
+            }}
+            onClick={(e) => refreshMentions(e.currentTarget.value, e.currentTarget.selectionStart)}
+            onBlur={() => setMentionItems([])}
+            onPaste={(e) => {
+              const files = Array.from(e.clipboardData.files);
+              if (files.length) {
+                e.preventDefault();
+                void addFiles(files);
+              }
+            }}
+          />
+        </div>
         <div className="ai-actions">
           <button
             type="button"

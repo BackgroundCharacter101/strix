@@ -2987,6 +2987,42 @@ kbd {
   gap: 6px;
 }
 
+/* @file typeahead: dropdown floats above the composer textarea. */
+.ai-mention-wrap {
+  position: relative;
+}
+.ai-mention-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 4px);
+  z-index: 20;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface-1, var(--surface-2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg, 0 6px 24px rgba(0, 0, 0, 0.3));
+}
+.ai-mention-item {
+  padding: 4px 8px;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono, monospace);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.ai-mention-item.active {
+  background: var(--accent-soft, var(--selection));
+  color: var(--text);
+}
+
 /* The agent's suggested run command (never auto-run). */
 .ai-run-bar {
   flex: 0 0 auto;
