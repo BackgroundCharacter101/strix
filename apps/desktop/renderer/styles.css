@@ -1797,6 +1797,74 @@ kbd {
   overflow-y: auto;
 }
 
+.scm-branchbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-2) var(--space-3) 0;
+}
+.scm-branch-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-xs);
+  padding: 2px 4px;
+}
+.scm-sync-btn {
+  font-size: var(--text-xs);
+  padding: 2px 7px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.scm-sync-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.scm-newbranch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px var(--space-3) 0;
+}
+.scm-newbranch-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-xs);
+}
+.scm-history-head {
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.scm-history {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-3) var(--space-2);
+}
+.scm-commit-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 2px 4px;
+  font-size: var(--text-xs);
+  overflow: hidden;
+}
+.scm-oid {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+.scm-commit-msg {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .scm-commit {
   display: flex;
   flex-direction: column;

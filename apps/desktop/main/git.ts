@@ -130,6 +130,75 @@ export async function createPullRequest(rootPath: string): Promise<CreatePrResul
   return { url, pushed, branch, error };
 }
 
+export interface GitBranches {
+  current: string | null;
+  branches: string[];
+}
+
+export interface GitLogEntry {
+  oid: string;
+  message: string;
+  author: string;
+  date: number;
+}
+
+// Local branches + the current one.
+export async function listBranches(rootPath: string): Promise<GitBranches> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const branches = await git.listBranches({ fs, dir });
+  const current = (await git.currentBranch({ fs, dir, fullname: false })) ?? null;
+  return { current, branches };
+}
+
+// Switch to an existing branch.
+export async function checkoutBranch(rootPath: string, ref: string): Promise<void> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  await git.checkout({ fs, dir, ref });
+}
+
+// Create a new branch off HEAD and switch to it.
+export async function createBranch(rootPath: string, name: string): Promise<void> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  await git.branch({ fs, dir, ref: name, checkout: true });
+}
+
+// Recent commit history (first line of each message).
+export async function gitLog(rootPath: string, depth = 50): Promise<GitLogEntry[]> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const commits = await git.log({ fs, dir, depth });
+  return commits.map((c) => ({
+    oid: c.oid.slice(0, 7),
+    message: c.commit.message.split('\n')[0],
+    author: c.commit.author.name,
+    date: c.commit.author.timestamp * 1000,
+  }));
+}
+
+// Pull / push via the system git so the user's existing credentials/helper are
+// used (no token storage needed). Returns combined output on failure.
+export async function pull(rootPath: string): Promise<{ ok: boolean; output: string }> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  try {
+    const { stdout, stderr } = await execFileAsync('git', ['pull', '--ff-only'], {
+      cwd: dir,
+      timeout: 120_000,
+    });
+    return { ok: true, output: `${stdout}${stderr}`.trim() || 'Up to date.' };
+  } catch (e) {
+    return { ok: false, output: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function push(rootPath: string): Promise<{ ok: boolean; output: string }> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  try {
+    const { stdout, stderr } = await execFileAsync('git', ['push'], { cwd: dir, timeout: 120_000 });
+    return { ok: true, output: `${stdout}${stderr}`.trim() || 'Pushed.' };
+  } catch (e) {
+    return { ok: false, output: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 // The committed (HEAD) content of a file, for diffing against the working copy.
 // Returns '' for untracked/new files or any error.
 export async function getFileHeadContent(filePath: string): Promise<string> {

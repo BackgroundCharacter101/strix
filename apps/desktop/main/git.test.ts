@@ -4,7 +4,7 @@ import { promises as fsp } from 'fs';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { getGitStatus } from './git';
+import { getGitStatus, listBranches, createBranch, checkoutBranch, gitLog, commit } from './git';
 
 let tmp: string;
 
@@ -58,5 +58,42 @@ describe('getGitStatus', () => {
     const status = await getGitStatus(tmp);
     const file = status.files.find((f) => f.path === 'a.txt');
     expect(file).toEqual({ path: 'a.txt', status: 'added', staged: true });
+  });
+});
+
+describe('branches + history', () => {
+  async function repoWithCommit() {
+    await gitClient.init({ fs, dir: tmp, defaultBranch: 'main' });
+    await fsp.writeFile(path.join(tmp, 'a.txt'), 'hello', 'utf8');
+    await gitClient.add({ fs, dir: tmp, filepath: 'a.txt' });
+    await commit(tmp, 'initial commit');
+  }
+
+  it('lists branches and creates/switches', async () => {
+    await repoWithCommit();
+    let b = await listBranches(tmp);
+    expect(b.current).toBe('main');
+    expect(b.branches).toContain('main');
+
+    await createBranch(tmp, 'feature/x');
+    b = await listBranches(tmp);
+    expect(b.current).toBe('feature/x');
+    expect(b.branches).toEqual(expect.arrayContaining(['main', 'feature/x']));
+
+    await checkoutBranch(tmp, 'main');
+    expect((await listBranches(tmp)).current).toBe('main');
+  });
+
+  it('returns commit history (newest first)', async () => {
+    await repoWithCommit();
+    await fsp.writeFile(path.join(tmp, 'b.txt'), 'two', 'utf8');
+    await gitClient.add({ fs, dir: tmp, filepath: 'b.txt' });
+    await commit(tmp, 'second commit');
+
+    const log = await gitLog(tmp, 10);
+    expect(log.length).toBe(2);
+    expect(log[0].message).toBe('second commit');
+    expect(log[1].message).toBe('initial commit');
+    expect(log[0].oid).toHaveLength(7);
   });
 });

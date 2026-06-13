@@ -32,6 +32,12 @@ const api: StrixApi = {
     commit: (rootPath, message) => ipcRenderer.invoke('git:commit', rootPath, message),
     diffStaged: (rootPath) => ipcRenderer.invoke('git:diffStaged', rootPath),
     createPr: (rootPath) => ipcRenderer.invoke('git:createPr', rootPath),
+    listBranches: (rootPath) => ipcRenderer.invoke('git:listBranches', rootPath),
+    checkout: (rootPath, ref) => ipcRenderer.invoke('git:checkout', rootPath, ref),
+    createBranch: (rootPath, name) => ipcRenderer.invoke('git:createBranch', rootPath, name),
+    log: (rootPath, depth) => ipcRenderer.invoke('git:log', rootPath, depth),
+    pull: (rootPath) => ipcRenderer.invoke('git:pull', rootPath),
+    push: (rootPath) => ipcRenderer.invoke('git:push', rootPath),
   },
   terminal: {
     create: (opts) => ipcRenderer.invoke('terminal:create', opts),

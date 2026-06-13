@@ -16,6 +16,12 @@ import {
   commit,
   getStagedDiff,
   createPullRequest,
+  listBranches,
+  checkoutBranch,
+  createBranch,
+  gitLog,
+  pull,
+  push,
 } from './git.js';
 import {
   getRoot,
@@ -102,6 +108,14 @@ export function registerIpcHandlers(): void {
     if (res.url) void shell.openExternal(res.url);
     return res;
   });
+  ipcMain.handle('git:listBranches', (_event, root: string) => listBranches(root));
+  ipcMain.handle('git:checkout', (_event, root: string, ref: string) => checkoutBranch(root, ref));
+  ipcMain.handle('git:createBranch', (_event, root: string, name: string) =>
+    createBranch(root, name),
+  );
+  ipcMain.handle('git:log', (_event, root: string, depth?: number) => gitLog(root, depth));
+  ipcMain.handle('git:pull', (_event, root: string) => pull(root));
+  ipcMain.handle('git:push', (_event, root: string) => push(root));
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>

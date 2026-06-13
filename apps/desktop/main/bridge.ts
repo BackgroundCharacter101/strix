@@ -1,5 +1,5 @@
 import type { FileNode } from './fs';
-import type { GitStatus } from './git';
+import type { GitStatus, GitBranches, GitLogEntry } from './git';
 import type { SearchMatch, ReplaceResult } from './search';
 import type { TerminalCreateOptions } from './terminal';
 import type { Language, JsonRpcMessage } from './lsp';
@@ -48,6 +48,13 @@ export interface StrixGitApi {
     branch: string | null;
     error?: string;
   }>;
+  // Branches, history, and remote sync.
+  listBranches(rootPath: string): Promise<GitBranches>;
+  checkout(rootPath: string, ref: string): Promise<void>;
+  createBranch(rootPath: string, name: string): Promise<void>;
+  log(rootPath: string, depth?: number): Promise<GitLogEntry[]>;
+  pull(rootPath: string): Promise<{ ok: boolean; output: string }>;
+  push(rootPath: string): Promise<{ ok: boolean; output: string }>;
 }
 
 export interface StrixTerminalApi {
