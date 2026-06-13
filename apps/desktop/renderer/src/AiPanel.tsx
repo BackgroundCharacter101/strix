@@ -10,7 +10,14 @@ import {
   type Attachment,
 } from '@strix/ai-gateway';
 import { readAttachment, MAX_ATTACH_BYTES } from './attachments';
-import { rankFiles, formatRepoContext, type RepoFile } from './repoContext';
+import {
+  rankFiles,
+  formatRepoContext,
+  extractMentions,
+  resolveMentions,
+  type RepoFile,
+  type RankedFile,
+} from './repoContext';
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
@@ -384,7 +391,19 @@ export function AiPanel({
           maxBytes: 200_000,
           maxFileBytes: 16_000,
         });
-        const block = formatRepoContext(rankFiles(userMessage, pool, { maxFiles: 6, maxBytes: 24_000 }));
+        // Files the user pinned with @path always go in; ranked files fill the rest.
+        const pinned = resolveMentions(extractMentions(userMessage), pool);
+        const pinnedPaths = new Set(pinned.map((f) => f.path));
+        const ranked = rankFiles(
+          userMessage,
+          pool.filter((f) => !pinnedPaths.has(f.path)),
+          { maxFiles: 6, maxBytes: 24_000 },
+        );
+        const combined: RankedFile[] = [
+          ...pinned.map((f) => ({ ...f, score: Number.MAX_SAFE_INTEGER })),
+          ...ranked,
+        ];
+        const block = formatRepoContext(combined);
         if (block) ctx = `${projectContext}\n\n${block}`;
       } catch {
         /* fall back to tree-only context */
@@ -1290,7 +1309,7 @@ export function AiPanel({
         />
         <textarea
           aria-label="Ask AI"
-          placeholder="Ask, say what to build, or attach files…  (Enter to send)"
+          placeholder="Ask, say what to build, @file to pin context, or attach files…  (Enter to send)"
           // Native spell-check (red underline + right-click suggestions, wired
           // to the system dictionary by the main process). autoCorrect/
           // autoCapitalize hint the platform's text correction where supported.

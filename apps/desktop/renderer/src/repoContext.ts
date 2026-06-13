@@ -62,6 +62,32 @@ export function rankFiles(
   return out;
 }
 
+// Extract `@path` mentions from a message (tokens that look like a file path —
+// they contain a slash or a dot). Backslashes are normalised to '/'.
+export function extractMentions(text: string): string[] {
+  const out = new Set<string>();
+  for (const m of text.matchAll(/@([A-Za-z0-9_./\\-]+)/g)) {
+    const t = m[1].replace(/[.,;:)\]]+$/, '').replace(/\\/g, '/');
+    if (t && (t.includes('/') || t.includes('.'))) out.add(t);
+  }
+  return [...out];
+}
+
+// Resolve `@path` mentions against the gathered files: exact path, path suffix,
+// or basename match. Returns the matched files (unique, in mention order).
+export function resolveMentions(mentions: string[], files: RepoFile[]): RepoFile[] {
+  const out: RepoFile[] = [];
+  for (const raw of mentions) {
+    const m = raw.toLowerCase();
+    const hit = files.find((f) => {
+      const p = f.path.toLowerCase();
+      return p === m || p.endsWith('/' + m) || p.split('/').pop() === m;
+    });
+    if (hit && !out.includes(hit)) out.push(hit);
+  }
+  return out;
+}
+
 // Format the ranked files as a fenced context block for the prompt.
 export function formatRepoContext(files: RankedFile[]): string {
   if (files.length === 0) return '';

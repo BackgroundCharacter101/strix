@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { tokenize, scoreFile, rankFiles, formatRepoContext } from './repoContext';
+import {
+  tokenize,
+  scoreFile,
+  rankFiles,
+  formatRepoContext,
+  extractMentions,
+  resolveMentions,
+} from './repoContext';
 
 describe('tokenize', () => {
   it('extracts lowercase identifier tokens (≥2 chars)', () => {
@@ -54,6 +61,40 @@ describe('rankFiles', () => {
   it('returns nothing for a token-less query or no match', () => {
     expect(rankFiles('!!!', files)).toEqual([]);
     expect(rankFiles('zzzznomatch', files)).toEqual([]);
+  });
+});
+
+describe('extractMentions', () => {
+  it('pulls path-like @mentions and trims trailing punctuation', () => {
+    expect(extractMentions('explain @src/auth.ts and @lib/db.py, please')).toEqual([
+      'src/auth.ts',
+      'lib/db.py',
+    ]);
+  });
+  it('ignores @words that are not path-like', () => {
+    expect(extractMentions('hey @everyone look')).toEqual([]);
+  });
+  it('normalizes backslashes', () => {
+    expect(extractMentions('@src\\app.tsx')).toEqual(['src/app.tsx']);
+  });
+});
+
+describe('resolveMentions', () => {
+  const files = [
+    { path: 'src/auth.ts', content: 'a' },
+    { path: 'src/ui/button.tsx', content: 'b' },
+  ];
+  it('matches by full path, suffix, or basename', () => {
+    expect(resolveMentions(['src/auth.ts'], files).map((f) => f.path)).toEqual(['src/auth.ts']);
+    expect(resolveMentions(['auth.ts'], files).map((f) => f.path)).toEqual(['src/auth.ts']);
+    expect(resolveMentions(['ui/button.tsx'], files).map((f) => f.path)).toEqual([
+      'src/ui/button.tsx',
+    ]);
+  });
+  it('ignores unmatched mentions and de-dupes', () => {
+    expect(resolveMentions(['nope.ts', 'auth.ts', 'auth.ts'], files).map((f) => f.path)).toEqual([
+      'src/auth.ts',
+    ]);
   });
 });
 
