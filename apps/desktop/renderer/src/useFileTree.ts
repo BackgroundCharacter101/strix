@@ -45,12 +45,17 @@ export function useFileTree(rootPath: string): FileTreeState {
   // Initial (visible) load.
   useEffect(() => fetchTree(false), [fetchTree]);
 
-  // Live refresh: poll every 10s while the window is visible.
+  // Live refresh: poll every 10s while the window is visible (fallback), AND
+  // refresh immediately when the workspace watcher reports a change.
   useEffect(() => {
     const id = setInterval(() => {
       if (!document.hidden) fetchTree(true);
     }, POLL_MS);
-    return () => clearInterval(id);
+    const off = window.strix.fs.onChanged(() => fetchTree(true));
+    return () => {
+      clearInterval(id);
+      off();
+    };
   }, [fetchTree]);
 
   return { tree, loading, error, reload };

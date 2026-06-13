@@ -14,6 +14,10 @@ export interface StrixFsApi {
   create(targetPath: string, type: 'file' | 'directory'): Promise<void>;
   rename(from: string, to: string): Promise<void>;
   remove(targetPath: string): Promise<void>;
+  // Watch a folder for external changes (agent/terminal/other apps). Start once
+  // per workspace; onChanged delivers debounced absolute paths.
+  watch(root: string): void;
+  onChanged(cb: (paths: string[]) => void): () => void;
 }
 
 export interface StrixWorkspaceApi {

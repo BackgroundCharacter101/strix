@@ -9,6 +9,12 @@ const api: StrixApi = {
     create: (targetPath, type) => ipcRenderer.invoke('file:create', targetPath, type),
     rename: (from, to) => ipcRenderer.invoke('file:rename', from, to),
     remove: (targetPath) => ipcRenderer.invoke('file:remove', targetPath),
+    watch: (root) => ipcRenderer.send('fs:watch', root),
+    onChanged: (cb) => {
+      const handler = (_event: unknown, paths: string[]) => cb(paths);
+      ipcRenderer.on('fs:changed', handler);
+      return () => ipcRenderer.removeListener('fs:changed', handler);
+    },
   },
   workspace: {
     root: () => ipcRenderer.invoke('workspace:root'),

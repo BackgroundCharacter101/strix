@@ -399,6 +399,33 @@ export default function App() {
     window.strix.workspace.root().then((r) => setRoot(r || null));
   }, []);
 
+  // Watch the open workspace for changes made outside the editor.
+  useEffect(() => {
+    if (root) window.strix.fs.watch(root);
+  }, [root]);
+
+  // Live-reload: when files change on disk (AI agent, terminal, another app),
+  // re-read any open tab that has no unsaved edits; warn (don't clobber) for
+  // ones that do. groupsRef keeps the handler pointed at the latest groups
+  // without re-subscribing each render.
+  const tabGroupsRef = useRef([tabs, tabsB, tabsC]);
+  tabGroupsRef.current = [tabs, tabsB, tabsC];
+  useEffect(() => {
+    return window.strix.fs.onChanged((paths) => {
+      let dirty = 0;
+      for (const p of paths) {
+        for (const g of tabGroupsRef.current) {
+          if (!g.tabs.includes(p)) continue;
+          if (g.isDirty(p)) dirty += 1;
+          else g.reload(p);
+        }
+      }
+      if (dirty > 0) {
+        showToast(`${dirty} open file(s) changed on disk — kept your unsaved edits`, 'info', 4500);
+      }
+    });
+  }, []);
+
   // Track recently opened folders (most-recent first, capped, persisted).
   useEffect(() => {
     if (!root) return;

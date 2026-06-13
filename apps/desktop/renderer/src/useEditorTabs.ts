@@ -16,6 +16,8 @@ export interface EditorTabsApi {
   open(path: string): void;
   activate(path: string): void;
   close(path: string): void;
+  /** Re-read an open file from disk (skips if not open or has unsaved edits). */
+  reload(path: string): void;
   saveAll(): Promise<void>;
   /** Replace the whole open set (used to restore a project's saved session). */
   replaceAll(paths: string[], active: string | null): void;
@@ -61,6 +63,25 @@ export function useEditorTabs(): EditorTabsApi {
   }, []);
 
   const activate = useCallback((path: string) => setActivePath(path), []);
+
+  // Re-read a file changed on disk (e.g. by an AI agent). Only updates an open
+  // buffer that has NO unsaved edits, so a live draft is never clobbered.
+  const reload = useCallback((path: string) => {
+    if (!loaded.current.has(path)) return;
+    window.strix.fs
+      .read(path)
+      .then((text) =>
+        setBufs((prev) => {
+          const buf = prev[path];
+          if (!buf || buf.draft !== buf.saved) return prev;
+          if (buf.draft === text) return prev;
+          return { ...prev, [path]: { draft: text, saved: text, loading: false, error: null } };
+        }),
+      )
+      .catch(() => {
+        /* file may have been deleted; leave the buffer as-is */
+      });
+  }, []);
 
   const close = useCallback((path: string) => {
     loaded.current.delete(path);
@@ -188,5 +209,5 @@ export function useEditorTabs(): EditorTabsApi {
       }
     : null;
 
-  return { tabs, activePath, active, isDirty, open, activate, close, saveAll, replaceAll };
+  return { tabs, activePath, active, isDirty, open, activate, close, reload, saveAll, replaceAll };
 }

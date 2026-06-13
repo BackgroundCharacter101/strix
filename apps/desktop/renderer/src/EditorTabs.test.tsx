@@ -14,6 +14,7 @@ function api(overrides: Partial<EditorTabsApi> = {}): EditorTabsApi {
     open: vi.fn(),
     activate: vi.fn(),
     close: vi.fn(),
+    reload: vi.fn(),
     saveAll: vi.fn(),
     replaceAll: vi.fn(),
     ...overrides,

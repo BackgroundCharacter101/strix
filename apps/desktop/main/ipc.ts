@@ -32,6 +32,7 @@ import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
 import { installServer, uninstallServer } from './languageServers.js';
 import { startStaticServer, stopStaticServer, staticServerInfo } from './staticServer.js';
+import { startWatching } from './watcher.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
@@ -46,6 +47,10 @@ export function registerIpcHandlers(): void {
   );
   ipcMain.handle('file:rename', (_event, from: string, to: string) => renameEntry(from, to));
   ipcMain.handle('file:remove', (_event, targetPath: string) => removeEntry(targetPath));
+  // Watch the workspace for external changes → push debounced paths to renderer.
+  ipcMain.on('fs:watch', (event, root: string) => {
+    startWatching(root, (paths) => event.sender.send('fs:changed', paths));
+  });
   ipcMain.handle('workspace:root', () => getRoot());
   ipcMain.handle('workspace:open', (event) =>
     openFolderDialog(BrowserWindow.fromWebContents(event.sender)),
