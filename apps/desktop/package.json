@@ -15,7 +15,8 @@
         "dev:renderer": "cd renderer && vite",
         "dev": "npm run dev:renderer",
         "package": "npm run build:app && electron-builder --win",
-        "package:dir": "npm run build:app && electron-builder --dir"
+        "package:dir": "npm run build:app && electron-builder --dir",
+        "package:linux": "npm run build:app && electron-builder --linux"
     },
     "build": {
         "appId": "com.strix.ide",
@@ -62,7 +63,17 @@
             "oneClick": false,
             "allowToChangeInstallationDirectory": true,
             "perMachine": false
-        }
+        },
+        "linux": {
+            "target": [
+                "AppImage"
+            ],
+            "category": "Development",
+            "icon": "build/icon.png",
+            "maintainer": "Strix Team <team@strix.dev>",
+            "description": "AI-native desktop IDE with self-hosted FreeLLMAPI"
+        },
+        "appImage": {}
     },
     "dependencies": {
         "@xterm/addon-fit": "^0.10.0",
