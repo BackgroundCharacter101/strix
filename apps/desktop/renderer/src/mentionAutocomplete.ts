@@ -3,6 +3,8 @@
 // caret offset, decide whether the user is typing an `@mention`, rank candidate
 // file paths, and compute the text/caret after accepting one.
 
+import { extractMentions } from './repoContext';
+
 export interface ActiveMention {
   // The text typed after '@' and before the caret (may be '').
   query: string;
@@ -57,4 +59,37 @@ export function applyMention(
   const insert = `@${chosen} `;
   const next = text.slice(0, active.start) + insert + text.slice(active.end);
   return { text: next, caret: active.start + insert.length };
+}
+
+export interface PinnedFile {
+  // The raw `@mention` token as written in the text (sans '@').
+  mention: string;
+  // The workspace path it resolves to.
+  path: string;
+}
+
+// Which `@mentions` in the text resolve to real workspace files (full path,
+// path suffix, or basename match), in mention order and de-duped by path.
+// Drives the pinned-context chips above the composer.
+export function pinnedFiles(text: string, paths: string[]): PinnedFile[] {
+  const out: PinnedFile[] = [];
+  for (const raw of extractMentions(text)) {
+    const m = raw.toLowerCase();
+    const hit = paths.find((p) => {
+      const lp = p.toLowerCase();
+      return lp === m || lp.endsWith('/' + m) || lp.split('/').pop() === m;
+    });
+    if (hit && !out.some((f) => f.path === hit)) out.push({ mention: raw, path: hit });
+  }
+  return out;
+}
+
+// Remove the first `@mention` token from the text (plus one trailing space, if
+// present). Used when the user removes a pinned chip.
+export function removeMention(text: string, mention: string): string {
+  const esc = mention.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Match '@mention' only when followed by end/whitespace (not @auth.tsx for
+  // @auth.ts); swallow a single trailing space so we don't leave a gap.
+  const re = new RegExp('@' + esc + '(?=$|\\s)\\s?');
+  return text.replace(re, '');
 }

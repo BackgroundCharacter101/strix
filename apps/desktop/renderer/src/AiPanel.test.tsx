@@ -365,6 +365,31 @@ describe('AiPanel', () => {
     expect(screen.queryByRole('option', { name: 'src/auth.ts' })).not.toBeInTheDocument();
   });
 
+  it('shows a pinned chip for a resolved @mention and unpins it on click', async () => {
+    window.strix = makeStrixApi({
+      fs: {
+        tree: vi.fn(async () => ({
+          name: '',
+          path: '/ws',
+          type: 'directory' as const,
+          children: [{ name: 'auth.ts', path: '/ws/auth.ts', type: 'file' as const }],
+        })),
+      },
+    });
+    const tree = window.strix.fs.tree as ReturnType<typeof vi.fn>;
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" />);
+    const box = screen.getByLabelText('Ask AI') as HTMLTextAreaElement;
+    await waitFor(() => expect(tree).toHaveBeenCalled());
+
+    fireEvent.change(box, { target: { value: 'explain @auth.ts please' } });
+    const chip = await within(screen.getByLabelText('pinned files')).findByText('auth.ts');
+    expect(chip).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'unpin auth.ts' }));
+    expect(box.value).toBe('explain please');
+    expect(screen.queryByLabelText('pinned files')).not.toBeInTheDocument();
+  });
+
   it('flattens a workspace tree into an indented listing', () => {
     const out = flattenTree({
       name: 'root',

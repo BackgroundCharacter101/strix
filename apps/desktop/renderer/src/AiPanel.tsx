@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   runTask,
   complete,
@@ -18,7 +18,13 @@ import {
   type RepoFile,
   type RankedFile,
 } from './repoContext';
-import { activeMention, rankMentionCandidates, applyMention } from './mentionAutocomplete';
+import {
+  activeMention,
+  rankMentionCandidates,
+  applyMention,
+  pinnedFiles,
+  removeMention,
+} from './mentionAutocomplete';
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
@@ -416,6 +422,10 @@ export function AiPanel({
       }
     });
   };
+
+  // Files the current `@mentions` resolve to — shown as removable chips so the
+  // user can see (and unpin) the extra context they're sending.
+  const pinned = useMemo(() => pinnedFiles(input, allPaths), [input, allPaths]);
 
   // Persist to the current project's key (via the ref, so switching workspaces
   // doesn't write the old conversation into the new project).
@@ -1353,6 +1363,24 @@ export function AiPanel({
       )}
 
       <div className="ai-composer">
+        {pinned.length > 0 && (
+          <div className="ai-pinned" aria-label="pinned files">
+            {pinned.map((f) => (
+              <span key={f.path} className="ai-chip ai-pin-chip" title={f.path}>
+                <span className="ai-chip-icon">@</span>
+                <span className="ai-chip-name">{f.path}</span>
+                <button
+                  type="button"
+                  className="ai-chip-x"
+                  aria-label={`unpin ${f.path}`}
+                  onClick={() => setInput((t) => removeMention(t, f.mention))}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
         {attachments.length > 0 && (
           <div className="ai-attachments" aria-label="attachments">
             {attachments.map((a, i) => (

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { activeMention, rankMentionCandidates, applyMention } from './mentionAutocomplete';
+import {
+  activeMention,
+  rankMentionCandidates,
+  applyMention,
+  pinnedFiles,
+  removeMention,
+} from './mentionAutocomplete';
 
 describe('activeMention', () => {
   it('detects a mention being typed at the caret', () => {
@@ -79,5 +85,40 @@ describe('applyMention', () => {
     const r = applyMention(text, active, 'a.ts');
     expect(r.text).toBe('context @a.ts ');
     expect(r.caret).toBe(r.text.length);
+  });
+});
+
+describe('pinnedFiles', () => {
+  const paths = ['src/auth.ts', 'src/ui/button.tsx', 'README.md'];
+
+  it('resolves @mentions to workspace paths (full, suffix, basename)', () => {
+    expect(pinnedFiles('use @src/auth.ts and @button.tsx', paths)).toEqual([
+      { mention: 'src/auth.ts', path: 'src/auth.ts' },
+      { mention: 'button.tsx', path: 'src/ui/button.tsx' },
+    ]);
+  });
+
+  it('ignores unresolved mentions and de-dupes by path', () => {
+    expect(pinnedFiles('@nope.ts @auth.ts @auth.ts', paths)).toEqual([
+      { mention: 'auth.ts', path: 'src/auth.ts' },
+    ]);
+  });
+
+  it('is empty when there are no mentions', () => {
+    expect(pinnedFiles('just a question', paths)).toEqual([]);
+  });
+});
+
+describe('removeMention', () => {
+  it('removes the token and its trailing space', () => {
+    expect(removeMention('use @src/auth.ts now', 'src/auth.ts')).toBe('use now');
+  });
+
+  it('removes a token at the end', () => {
+    expect(removeMention('context @a.ts', 'a.ts')).toBe('context ');
+  });
+
+  it('does not remove a longer token with the same prefix', () => {
+    expect(removeMention('@auth.tsx stays', 'auth.ts')).toBe('@auth.tsx stays');
   });
 });

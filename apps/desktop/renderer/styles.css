@@ -3103,10 +3103,23 @@ kbd {
 }
 
 /* Attachment chips above the composer. */
-.ai-attachments {
+.ai-attachments,
+.ai-pinned {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+/* Pinned @file chips: accented + monospace path so they read as context. */
+.ai-pin-chip {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--accent-soft, var(--selection));
+}
+.ai-pin-chip .ai-chip-icon {
+  color: var(--accent);
+  font-weight: 600;
+}
+.ai-pin-chip .ai-chip-name {
+  font-family: var(--font-mono, monospace);
 }
 .ai-chip {
   display: inline-flex;
