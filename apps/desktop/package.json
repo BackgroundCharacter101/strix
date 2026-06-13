@@ -58,7 +58,13 @@
                     "!**/*.exe",
                     "!**/*.map",
                     "!**/*.ts",
-                    "!**/__tests__/**"
+                    "!**/__tests__/**",
+                    "!**/{test,tests,example,examples,docs,doc,.github,.bin}/**",
+                    "!**/*.md",
+                    "!**/*.markdown",
+                    "!**/*.flow",
+                    "!**/{LICENSE,LICENCE,COPYING,CHANGELOG,README,AUTHORS,NOTICE}*",
+                    "!**/.{editorconfig,eslintrc,prettierrc,npmignore,travis.yml}*"
                 ]
             }
         ],

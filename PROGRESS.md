@@ -175,7 +175,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 275 tests / 49 files.**
+  **`npm test`** (vitest) — **all green: 284 tests / 51 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
