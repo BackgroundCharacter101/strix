@@ -923,6 +923,29 @@ body {
 .search-toggle:hover {
   color: var(--text);
 }
+/* Match-case / whole-word toggles */
+.search-opt {
+  flex: 0 0 auto;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 4px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.search-opt:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.search-opt.active {
+  color: var(--text);
+  background: var(--accent-soft, var(--surface-2));
+  border-color: var(--accent, var(--border));
+}
 .search-replace-row {
   margin-bottom: var(--space-1);
 }

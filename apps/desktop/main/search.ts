@@ -13,22 +13,50 @@ export interface ReplaceResult {
   changed: string[];
 }
 
+export interface MatchOptions {
+  caseSensitive?: boolean;
+  wholeWord?: boolean;
+}
+
 // Escape a literal string for use in a RegExp.
 export function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Replace every case-insensitive occurrence of `query` with `replacement`.
+// Build a RegExp for a LITERAL query honouring case/whole-word options.
+export function buildSearchRegExp(query: string, opts: MatchOptions = {}, global = false): RegExp {
+  const esc = escapeRegExp(query);
+  const body = opts.wholeWord ? `\\b${esc}\\b` : esc;
+  return new RegExp(body, `${global ? 'g' : ''}${opts.caseSensitive ? '' : 'i'}`);
+}
+
+// Whether a line matches the query under the given options (pure → tested).
+export function lineMatches(line: string, query: string, opts: MatchOptions = {}): boolean {
+  if (!query) return false;
+  return buildSearchRegExp(query, opts).test(line);
+}
+
+// Replace every occurrence of `query` with `replacement` under the options.
 // Returns the new text and how many occurrences were replaced (pure → tested).
+export function replaceAll(
+  text: string,
+  query: string,
+  replacement: string,
+  opts: MatchOptions = {},
+): { text: string; count: number } {
+  if (!query) return { text, count: 0 };
+  const re = buildSearchRegExp(query, opts, true);
+  const count = (text.match(re) ?? []).length;
+  return { text: count ? text.replace(re, () => replacement) : text, count };
+}
+
+// Back-compat alias (case-insensitive, substring).
 export function replaceAllCaseInsensitive(
   text: string,
   query: string,
   replacement: string,
 ): { text: string; count: number } {
-  if (!query) return { text, count: 0 };
-  const re = new RegExp(escapeRegExp(query), 'gi');
-  const count = (text.match(re) ?? []).length;
-  return { text: count ? text.replace(re, () => replacement) : text, count };
+  return replaceAll(text, query, replacement);
 }
 
 const IGNORE = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'out', '.turbo']);
@@ -37,10 +65,14 @@ const MAX_FILE_BYTES = 1_000_000;
 // A NUL byte is a strong signal the file is binary, not text.
 const NUL = String.fromCharCode(0);
 
-// Plain (case-insensitive substring) search across the workspace. Skips ignored
-// dirs, oversized files, and anything that looks binary.
-export async function searchInFiles(root: string, query: string): Promise<SearchMatch[]> {
-  const needle = query.trim().toLowerCase();
+// Literal search across the workspace honouring case/whole-word options. Skips
+// ignored dirs, oversized files, and anything that looks binary.
+export async function searchInFiles(
+  root: string,
+  query: string,
+  opts: MatchOptions = {},
+): Promise<SearchMatch[]> {
+  const needle = query.trim();
   if (!needle) return [];
   const results: SearchMatch[] = [];
 
@@ -70,7 +102,7 @@ export async function searchInFiles(root: string, query: string): Promise<Search
         if (text.includes(NUL)) continue;
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; i++) {
-          if (lines[i].toLowerCase().includes(needle)) {
+          if (lineMatches(lines[i], needle, opts)) {
             results.push({ path: full, line: i + 1, text: lines[i].trim().slice(0, 200) });
             if (results.length >= MAX_RESULTS) return;
           }
@@ -83,13 +115,15 @@ export async function searchInFiles(root: string, query: string): Promise<Search
   return results;
 }
 
-// Replace `query` with `replacement` (case-insensitive) across all text files in
-// the workspace. Returns the changed file paths so the UI can react (the file
-// watcher also fires, live-reloading open tabs). Same ignore/size/binary rules.
+// Replace `query` with `replacement` across all text files in the workspace,
+// honouring case/whole-word options. Returns the changed file paths so the UI
+// can react (the file watcher also fires, live-reloading open tabs). Same
+// ignore/size/binary rules.
 export async function replaceInFiles(
   root: string,
   query: string,
   replacement: string,
+  opts: MatchOptions = {},
 ): Promise<ReplaceResult> {
   if (!query.trim()) return { files: 0, occurrences: 0, changed: [] };
   const changed: string[] = [];
@@ -117,7 +151,7 @@ export async function replaceInFiles(
           continue;
         }
         if (text.includes(NUL)) continue;
-        const { text: updated, count } = replaceAllCaseInsensitive(text, query, replacement);
+        const { text: updated, count } = replaceAll(text, query, replacement, opts);
         if (count > 0 && updated !== text) {
           try {
             await fs.writeFile(full, updated, 'utf8');

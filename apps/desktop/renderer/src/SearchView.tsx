@@ -12,28 +12,33 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
   const [query, setQuery] = useState('');
   const [replacement, setReplacement] = useState('');
   const [showReplace, setShowReplace] = useState(false);
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [wholeWord, setWholeWord] = useState(false);
   const [results, setResults] = useState<SearchMatch[]>([]);
   const [busy, setBusy] = useState(false);
   const [replacing, setReplacing] = useState(false);
+
+  const opts = useMemo(() => ({ caseSensitive, wholeWord }), [caseSensitive, wholeWord]);
 
   const replaceAll = async () => {
     const q = query.trim();
     if (!q || replacing) return;
     const fileCount = new Set(results.map((m) => m.path)).size;
+    const how = `${caseSensitive ? 'case-sensitive' : 'case-insensitive'}${wholeWord ? ', whole-word' : ''}`;
     const ok = window.confirm(
-      `Replace all case-insensitive occurrences of "${q}" with "${replacement}" across ${fileCount} file(s)?\n\nThis writes to disk. Use Git or Undo (Ctrl+Z per file) to revert.`,
+      `Replace all ${how} occurrences of "${q}" with "${replacement}" across ${fileCount} file(s)?\n\nThis writes to disk. Use Git or Undo (Ctrl+Z per file) to revert.`,
     );
     if (!ok) return;
     setReplacing(true);
     try {
-      const res = await window.strix.search.replace(q, replacement);
+      const res = await window.strix.search.replace(q, replacement, opts);
       showToast(
         `Replaced ${res.occurrences} occurrence(s) in ${res.files} file(s)`,
         'success',
         4000,
       );
       // Re-run the search to refresh the (now-fewer) matches.
-      const next = await window.strix.search.find(q);
+      const next = await window.strix.search.find(q, opts);
       setResults(next);
     } catch (e) {
       showToast(`Replace failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 6000);
@@ -42,7 +47,7 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
     }
   };
 
-  // Debounced search as the user types.
+  // Debounced search as the user types (or when match options change).
   useEffect(() => {
     const q = query.trim();
     if (!q) {
@@ -52,12 +57,12 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
     setBusy(true);
     const handle = window.setTimeout(() => {
       window.strix.search
-        .find(q)
+        .find(q, opts)
         .then(setResults)
         .finally(() => setBusy(false));
     }, 250);
     return () => window.clearTimeout(handle);
-  }, [query]);
+  }, [query, opts]);
 
   // Group matches by file, preserving discovery order.
   const groups = useMemo(() => {
@@ -90,6 +95,26 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <button
+          type="button"
+          className={`search-opt${caseSensitive ? ' active' : ''}`}
+          aria-label="Match case"
+          aria-pressed={caseSensitive}
+          title="Match Case"
+          onClick={() => setCaseSensitive((v) => !v)}
+        >
+          Aa
+        </button>
+        <button
+          type="button"
+          className={`search-opt${wholeWord ? ' active' : ''}`}
+          aria-label="Match whole word"
+          aria-pressed={wholeWord}
+          title="Match Whole Word"
+          onClick={() => setWholeWord((v) => !v)}
+        >
+          ab
+        </button>
       </div>
       {showReplace && (
         <div className="search-row search-replace-row">

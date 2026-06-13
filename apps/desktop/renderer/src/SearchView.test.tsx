@@ -7,7 +7,7 @@ import { SearchView } from './SearchView';
 import { makeStrixApi } from '../test-utils';
 import type { SearchMatch } from '../../main/search';
 
-const find = vi.fn<[string], Promise<SearchMatch[]>>();
+const find = vi.fn<[string, unknown?], Promise<SearchMatch[]>>();
 
 beforeEach(() => {
   find.mockReset();
@@ -26,12 +26,33 @@ describe('SearchView', () => {
 
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'x' } });
 
-    await waitFor(() => expect(find).toHaveBeenCalledWith('x'));
+    await waitFor(() =>
+      expect(find).toHaveBeenCalledWith('x', { caseSensitive: false, wholeWord: false }),
+    );
     expect(await screen.findByText('const x = 1;')).toBeInTheDocument();
     expect(screen.getByText(/3 results in 2 files/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('return x;'));
     expect(onOpen).toHaveBeenCalledWith('/ws/a.ts', 9);
+  });
+
+  it('re-queries with match options when toggles are clicked', async () => {
+    find.mockResolvedValue([]);
+    render(<SearchView onOpen={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'x' } });
+    await waitFor(() =>
+      expect(find).toHaveBeenCalledWith('x', { caseSensitive: false, wholeWord: false }),
+    );
+
+    fireEvent.click(screen.getByLabelText('Match case'));
+    await waitFor(() =>
+      expect(find).toHaveBeenCalledWith('x', { caseSensitive: true, wholeWord: false }),
+    );
+
+    fireEvent.click(screen.getByLabelText('Match whole word'));
+    await waitFor(() =>
+      expect(find).toHaveBeenCalledWith('x', { caseSensitive: true, wholeWord: true }),
+    );
   });
 
   it('does not query for an empty string', () => {

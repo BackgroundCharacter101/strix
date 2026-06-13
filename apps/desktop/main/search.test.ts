@@ -2,7 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { searchInFiles, replaceInFiles, replaceAllCaseInsensitive, escapeRegExp } from './search';
+import {
+  searchInFiles,
+  replaceInFiles,
+  replaceAllCaseInsensitive,
+  replaceAll,
+  escapeRegExp,
+  buildSearchRegExp,
+  lineMatches,
+} from './search';
 
 let tmp: string;
 
@@ -41,6 +49,40 @@ describe('searchInFiles', () => {
     await write('a.ts', 'anything');
     expect(await searchInFiles(tmp, '   ')).toEqual([]);
   });
+
+  it('honours case-sensitive matching', async () => {
+    await write('a.ts', 'Needle\nneedle');
+    const results = await searchInFiles(tmp, 'needle', { caseSensitive: true });
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({ line: 2 });
+  });
+
+  it('honours whole-word matching', async () => {
+    await write('a.ts', 'cat\nconcatenate\nthe cat sat');
+    const results = await searchInFiles(tmp, 'cat', { wholeWord: true });
+    expect(results.map((r) => r.line)).toEqual([1, 3]);
+  });
+});
+
+describe('buildSearchRegExp / lineMatches', () => {
+  it('matches case-insensitively by default', () => {
+    expect(lineMatches('The CAT', 'cat')).toBe(true);
+  });
+  it('respects caseSensitive', () => {
+    expect(lineMatches('The CAT', 'cat', { caseSensitive: true })).toBe(false);
+    expect(lineMatches('The cat', 'cat', { caseSensitive: true })).toBe(true);
+  });
+  it('respects wholeWord', () => {
+    expect(lineMatches('concatenate', 'cat', { wholeWord: true })).toBe(false);
+    expect(lineMatches('the cat sat', 'cat', { wholeWord: true })).toBe(true);
+  });
+  it('treats the query literally', () => {
+    expect(buildSearchRegExp('a.b').test('axb')).toBe(false);
+    expect(buildSearchRegExp('a.b').test('a.b')).toBe(true);
+  });
+  it('returns false for an empty query', () => {
+    expect(lineMatches('anything', '')).toBe(false);
+  });
 });
 
 describe('escapeRegExp', () => {
@@ -66,6 +108,17 @@ describe('replaceAllCaseInsensitive', () => {
   });
 });
 
+describe('replaceAll with options', () => {
+  it('replaces only matching case when caseSensitive', () => {
+    const r = replaceAll('Foo foo', 'foo', 'x', { caseSensitive: true });
+    expect(r).toEqual({ text: 'Foo x', count: 1 });
+  });
+  it('replaces only whole words when wholeWord', () => {
+    const r = replaceAll('cat concatenate cat', 'cat', 'dog', { wholeWord: true });
+    expect(r).toEqual({ text: 'dog concatenate dog', count: 2 });
+  });
+});
+
 describe('replaceInFiles', () => {
   it('rewrites matching files and skips ignored dirs', async () => {
     await write('src/a.ts', 'const color = "red"; // color');
@@ -83,5 +136,12 @@ describe('replaceInFiles', () => {
   it('no-ops on an empty query', async () => {
     await write('a.ts', 'x');
     expect(await replaceInFiles(tmp, '  ', 'y')).toEqual({ files: 0, occurrences: 0, changed: [] });
+  });
+
+  it('honours case-sensitive and whole-word options', async () => {
+    await write('a.ts', 'Cat cat concatenate');
+    const res = await replaceInFiles(tmp, 'cat', 'dog', { caseSensitive: true, wholeWord: true });
+    expect(res.occurrences).toBe(1);
+    expect(await fs.readFile(path.join(tmp, 'a.ts'), 'utf8')).toBe('Cat dog concatenate');
   });
 });
