@@ -1,4 +1,5 @@
 import { ipcMain, shell } from 'electron';
+import * as os from 'os';
 import {
   buildFileTree,
   readFileContents,
@@ -121,8 +122,10 @@ export function registerIpcHandlers(): void {
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>
+    // Never fall back to process.cwd() (the install dir for a packaged build).
+    // Prefer the open workspace, else the user's home directory.
     terminals.create(
-      opts,
+      { ...opts, cwd: opts.cwd || getRoot() || os.homedir() },
       (id, data) => event.sender.send('terminal:data', { id, data }),
       (id, exitCode) => event.sender.send('terminal:exit', { id, exitCode }),
     ),

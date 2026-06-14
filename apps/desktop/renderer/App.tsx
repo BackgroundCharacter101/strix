@@ -1036,7 +1036,16 @@ export default function App() {
                       onOpenToSide={(node) => openToSide(node.path)}
                     />
                   ) : (
-                    <p className="muted">Opening workspace…</p>
+                    <div className="explorer-empty">
+                      <p className="muted">No folder open.</p>
+                      <button
+                        type="button"
+                        className="explorer-open-btn"
+                        onClick={() => void openFolder()}
+                      >
+                        Open Folder
+                      </button>
+                    </div>
                   )}
                 </aside>
                 <div className="resizer resizer-x" onPointerDown={sidebar.onPointerDown} />
