@@ -67,6 +67,9 @@ if (action === 'build') {
     console.error(`Unknown action "${action}". Use: build | start | win | linux | mac | dir`);
     process.exit(2);
   }
+  // Bundle FreeLLMAPI to a single ESM file so the installer ships ~a handful of
+  // files instead of its ~33k node_modules tree. extraResources ships .bundle.
+  run('node', ['scripts/bundle-ai.mjs'], root);
   run(
     'npx',
     [

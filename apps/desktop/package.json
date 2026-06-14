@@ -44,27 +44,13 @@
         ],
         "extraResources": [
             {
-                "from": "../../freellmapi",
-                "to": "freellmapi",
+                "from": "../../freellmapi/.bundle",
+                "to": "freellmapi/.bundle",
                 "filter": [
-                    "package.json",
-                    "shared/**/*",
-                    "server/package.json",
-                    "server/dist/**/*",
-                    "client/dist/**/*",
-                    "server/node_modules/**/*",
-                    "node_modules/**/*",
-                    "!**/node_modules/{vitest,@vitest,vite,vite-node,rollup,@rollup,tsx,esbuild,@esbuild,@esbuild-kit,drizzle-kit,typescript,@types}/**",
-                    "!**/*.exe",
+                    "**/*",
                     "!**/*.map",
                     "!**/*.ts",
-                    "!**/__tests__/**",
-                    "!**/{test,tests,example,examples,docs,doc,.github,.bin}/**",
-                    "!**/*.md",
-                    "!**/*.markdown",
-                    "!**/*.flow",
-                    "!**/{LICENSE,LICENCE,COPYING,CHANGELOG,README,AUTHORS,NOTICE}*",
-                    "!**/.{editorconfig,eslintrc,prettierrc,npmignore,travis.yml}*"
+                    "!**/*.md"
                 ]
             }
         ],

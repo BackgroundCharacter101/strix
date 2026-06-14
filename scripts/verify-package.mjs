@@ -79,8 +79,14 @@ for (const ed of editions) {
     'node-pty unpacked (terminal works)',
   );
   check(
-    fs.existsSync(path.join(unpacked, 'resources/freellmapi/server/dist/index.js')),
-    'bundled FreeLLMAPI server present',
+    fs.existsSync(path.join(unpacked, 'resources/freellmapi/.bundle/index.mjs')),
+    'bundled FreeLLMAPI server present (.bundle/index.mjs)',
+  );
+  check(
+    fs.existsSync(
+      path.join(unpacked, 'resources/freellmapi/.bundle/node_modules/sql.js/dist/sql-wasm.wasm'),
+    ),
+    'sql.js wasm shipped alongside the bundle',
   );
 }
 

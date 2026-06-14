@@ -24,3 +24,6 @@ Thumbs.db
 
 # ruflo daemon pid
 pid
+
+# FreeLLMAPI single-file bundle (build artifact)
+freellmapi/.bundle/

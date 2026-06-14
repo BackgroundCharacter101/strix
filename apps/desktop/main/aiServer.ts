@@ -28,11 +28,18 @@ export interface AiServerOptions {
 // Resolve the vendored FreeLLMAPI server. Dev layout:
 // <root>/apps/desktop/dist/main → <root>/freellmapi (4 levels up).
 // Packaged: baseDir = process.resourcesPath → <resources>/freellmapi.
+//
+// Packaged builds ship the single-file bundle (freellmapi/.bundle/index.mjs,
+// produced by scripts/bundle-ai.mjs) instead of the full server tree, so prefer
+// it when present. cwd is the bundle dir so its node_modules/sql.js resolves.
 export function aiServerPaths(mainDir: string, baseDir?: string): AiServerPaths {
   const root = baseDir ?? path.resolve(mainDir, '../../../..');
-  const dir = path.join(root, 'freellmapi');
-  const entry = path.join(dir, 'server', 'dist', 'index.js');
-  return { dir, entry };
+  const freellmapi = path.join(root, 'freellmapi');
+  const bundleEntry = path.join(freellmapi, '.bundle', 'index.mjs');
+  if (existsSync(bundleEntry)) {
+    return { dir: path.join(freellmapi, '.bundle'), entry: bundleEntry };
+  }
+  return { dir: freellmapi, entry: path.join(freellmapi, 'server', 'dist', 'index.js') };
 }
 
 // Launch the FreeLLMAPI proxy as a child process so the AI "just works"
