@@ -2537,20 +2537,24 @@ kbd {
 }
 
 .welcome-logo {
-  font-size: 52px;
+  font-size: 54px;
   font-weight: 700;
-  letter-spacing: 2px;
-  /* amber wordmark — the signature */
-  background: linear-gradient(180deg, var(--amber-400), var(--amber-600));
+  letter-spacing: -1px;
+  /* Wordmark follows the active accent (violet by default). */
+  background: linear-gradient(
+    180deg,
+    var(--accent-hover),
+    color-mix(in srgb, var(--accent) 80%, #000)
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .welcome-tagline {
-  margin: 4px 0 20px;
+  margin: 6px 0 28px;
   font-size: 13px;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
   color: var(--text-muted);
 }
 
@@ -3575,15 +3579,20 @@ button {
   background: var(--accent);
   color: var(--accent-ink);
   border: none;
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 12px;
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease, opacity 0.12s ease,
+    box-shadow 0.12s ease, transform 0.06s ease;
 }
 
 button:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+button:active:not(:disabled) {
+  transform: translateY(0.5px);
 }
 
 button:disabled {
@@ -3597,10 +3606,18 @@ select {
   background: var(--bg-input);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 5px 8px;
+  border-radius: 7px;
+  padding: 6px 10px;
   font-family: var(--font-ui);
   font-size: 13px;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+textarea:focus,
+input:focus,
+select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* Theme the native dropdown: dark control + a custom chevron. */
