@@ -31,6 +31,7 @@ import {
   ExtensionsIcon,
   FilesIcon,
   GearIcon,
+  OutlineIcon,
   ProblemsIcon,
   RunIcon,
   SearchIcon,
@@ -38,6 +39,7 @@ import {
   SparkleIcon,
   TerminalIcon,
 } from './src/icons';
+import { OutlineView } from './src/OutlineView';
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED } from './src/edition';
@@ -50,7 +52,7 @@ export default function App() {
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
   const [sidebarView, setSidebarView] = useState<
-    'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems'
+    'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline'
   >(
     'explorer',
   );
@@ -575,7 +577,7 @@ export default function App() {
   }, []);
 
   const selectView = (
-    view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems',
+    view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline',
   ) => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
@@ -684,6 +686,7 @@ export default function App() {
     { id: 'file.newFolder', label: 'File: New Folder…', detail: '', run: newFolderAtRoot },
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
+    { id: 'view.outline', label: 'Go to Symbol (Outline)', detail: '', run: () => selectView('outline') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.run', label: 'View: Run & Serve', detail: '', run: () => selectView('run') },
     { id: 'view.problems', label: 'View: Problems', detail: '', run: () => selectView('problems') },
@@ -924,6 +927,15 @@ export default function App() {
           </button>
           <button
             type="button"
+            aria-label="Outline"
+            aria-pressed={showSidebar && sidebarView === 'outline'}
+            title="Outline (Go to Symbol)"
+            onClick={() => selectView('outline')}
+          >
+            <OutlineIcon />
+          </button>
+          <button
+            type="button"
             className="activity-with-badge"
             aria-label="Source Control"
             aria-pressed={showSidebar && sidebarView === 'scm'}
@@ -1013,6 +1025,14 @@ export default function App() {
                     <SearchView onOpen={openAtLine} />
                   ) : sidebarView === 'problems' ? (
                     <ProblemsView byPath={problemsByPath} onOpen={openAtLine} />
+                  ) : sidebarView === 'outline' ? (
+                    <OutlineView
+                      path={activeTabs.activePath}
+                      content={activeTabs.active?.draft ?? ''}
+                      onJump={(line) =>
+                        activeTabs.activePath && openAtLine(activeTabs.activePath, line)
+                      }
+                    />
                   ) : sidebarView === 'scm' ? (
                     <SourceControlView
                       rootPath={root}
