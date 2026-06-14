@@ -93,19 +93,20 @@
      SEMANTIC TOKENS — the only ones component styles should reference.
      ======================================================================= */
 
-  /* Surfaces — deep near-black ("owl eyes in the dark"). */
-  --bg: #0e0e10;
-  --bg-elevated: #161618;
-  --bg-titlebar: #090909;
-  --bg-activity: #101012;
-  --bg-input: #1b1b1e;
-  --bg-hover: #202024;
+  /* Surfaces — cool, layered near-black with clear elevation steps (modern
+     editor depth: titlebar deepest → bg → panels → elevated/inputs). */
+  --bg: #0c0d11;
+  --bg-elevated: #16171d;
+  --bg-titlebar: #0a0b0e;
+  --bg-activity: #0c0d11;
+  --bg-input: #181920;
+  --bg-hover: #1c1e26;
 
-  /* Lines & text */
-  --border: #2a2a2e;
-  --text: var(--gray-100);
-  --text-muted: var(--gray-250);
-  --icon-muted: var(--gray-300);
+  /* Lines & text — softer hairline borders, brighter primary text. */
+  --border: #23252e;
+  --text: #e7e8ee;
+  --text-muted: #9a9cab;
+  --icon-muted: #6e7180;
 
   /* Brand / interactive — Strix amber */
   --accent: var(--amber-500);

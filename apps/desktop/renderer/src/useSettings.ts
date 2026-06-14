@@ -64,7 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   wordWrap: false,
   minimap: false,
   theme: 'dark',
-  accent: 'amber',
+  accent: 'violet',
   iconTheme: 'material',
   fontFamily: '',
   lineNumbers: 'on',
