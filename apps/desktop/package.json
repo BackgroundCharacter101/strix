@@ -20,10 +20,10 @@
         "build:competition": "node ../../scripts/edition.mjs competition build",
         "package:m1": "node ../../scripts/edition.mjs m1 win",
         "package:competition": "node ../../scripts/edition.mjs competition win",
-        "package": "npm run build:app && electron-builder --win",
-        "package:linux": "npm run build:app && electron-builder --linux",
-        "package:mac": "npm run build:app && electron-builder --mac",
-        "package:dir": "npm run build:app && electron-builder --dir"
+        "package": "node ../../scripts/edition.mjs m1 win",
+        "package:linux": "node ../../scripts/edition.mjs m1 linux",
+        "package:mac": "node ../../scripts/edition.mjs m1 mac",
+        "package:dir": "node ../../scripts/edition.mjs m1 dir"
     },
     "build": {
         "appId": "com.strix.ide",
