@@ -95,13 +95,37 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 const KEY = 'strix.settings';
+// One-time migrations keyed by a stored version, so theme refreshes reach
+// existing installs (not just fresh ones) without wiping user choices.
+const MIGRATION_KEY = 'strix.settings.migration';
+const CURRENT_MIGRATION = 1;
+
+function migrate(stored: Partial<Settings>): Partial<Settings> {
+  let done = 0;
+  try {
+    done = Number(localStorage.getItem(MIGRATION_KEY) ?? '0') || 0;
+  } catch {
+    /* ignore */
+  }
+  const next = { ...stored };
+  // v1: adopt the modern violet accent for installs still on the old amber
+  // default (pre-release brand refresh).
+  if (done < 1 && next.accent === 'amber') next.accent = 'violet';
+  try {
+    localStorage.setItem(MIGRATION_KEY, String(CURRENT_MIGRATION));
+  } catch {
+    /* ignore */
+  }
+  return next;
+}
 
 // Persisted user settings. Applies the theme to the document root so tokens.css
 // can re-skin via [data-theme].
 export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
   const [settings, setSettings] = useState<Settings>(() => {
     try {
-      return { ...DEFAULT_SETTINGS, ...(JSON.parse(localStorage.getItem(KEY) ?? '{}') as object) };
+      const stored = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Settings>;
+      return { ...DEFAULT_SETTINGS, ...migrate(stored) };
     } catch {
       return DEFAULT_SETTINGS;
     }

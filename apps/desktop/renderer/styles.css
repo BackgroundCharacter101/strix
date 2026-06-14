@@ -3699,3 +3699,65 @@ a:focus-visible,
 :root[data-glass='true'] .settings-overlay {
   background: rgba(0, 0, 0, 0.5);
 }
+
+/* ===================== Floating workbench (modern) =====================
+   Each region (activity bar, sidebar, editor, AI pane, terminal) floats as a
+   rounded card on a darker app canvas, separated by small gaps — the modern
+   "panels float" layout. Resizers live in the gaps (transparent until hover). */
+:root {
+  --bg-app: #06070a;
+  --panel-radius: 11px;
+}
+.app,
+.app-body {
+  background: var(--bg-app);
+}
+.app-body {
+  padding: 7px;
+  gap: 7px;
+}
+.app-main {
+  gap: 7px;
+}
+.activity-bar,
+.sidebar,
+.editor-pane,
+.ai-pane,
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--panel-radius);
+  overflow: hidden;
+}
+.activity-bar {
+  flex-basis: 46px;
+  background: var(--bg-elevated);
+  padding-top: 8px;
+  gap: 4px;
+}
+.sidebar {
+  background: var(--bg-elevated);
+}
+.editor-pane {
+  background: var(--bg);
+}
+.ai-pane {
+  background: var(--bg-elevated);
+}
+.panel {
+  background: var(--bg);
+}
+/* Resizers become invisible spacers inside the gaps. */
+.resizer {
+  background: transparent;
+  flex-basis: 2px;
+}
+.resizer-y {
+  height: 2px;
+}
+.resizer:hover {
+  background: var(--accent);
+}
+/* Sidebar keeps its own scroll; the radius clips content cleanly. */
+.sidebar {
+  overflow: auto;
+}
