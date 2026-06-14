@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { StrixApi } from './bridge';
+import type { SearchMatch } from './search';
 
 const api: StrixApi = {
   fs: {
@@ -91,6 +92,18 @@ const api: StrixApi = {
     find: (query, opts) => ipcRenderer.invoke('search:find', query, opts),
     replace: (query, replacement, opts) =>
       ipcRenderer.invoke('search:replace', query, replacement, opts),
+    start: (id, query, opts) => ipcRenderer.send('search:start', { id, query, opts }),
+    cancel: () => ipcRenderer.send('search:cancel'),
+    onMatch: (cb) => {
+      const h = (_e: unknown, payload: { id: number; matches: SearchMatch[] }) => cb(payload);
+      ipcRenderer.on('search:match', h);
+      return () => ipcRenderer.removeListener('search:match', h);
+    },
+    onDone: (cb) => {
+      const h = (_e: unknown, payload: { id: number }) => cb(payload);
+      ipcRenderer.on('search:done', h);
+      return () => ipcRenderer.removeListener('search:done', h);
+    },
   },
   menu: {
     onCommand: (cb) => {

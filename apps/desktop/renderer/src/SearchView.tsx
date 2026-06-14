@@ -47,19 +47,37 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
     }
   };
 
-  // Debounced search as the user types (or when match options change).
+  // Subscribe once to streaming search results, tagged by search id so late
+  // events from a superseded query are ignored.
+  const searchId = React.useRef(0);
+  useEffect(() => {
+    const offMatch = window.strix.search.onMatch(({ id, matches }) => {
+      if (id !== searchId.current) return;
+      setResults((prev) => [...prev, ...matches]);
+    });
+    const offDone = window.strix.search.onDone(({ id }) => {
+      if (id === searchId.current) setBusy(false);
+    });
+    return () => {
+      offMatch();
+      offDone();
+    };
+  }, []);
+
+  // Debounced streaming search as the user types (or when match options change).
   useEffect(() => {
     const q = query.trim();
+    searchId.current += 1; // invalidate any in-flight search
+    setResults([]);
     if (!q) {
-      setResults([]);
+      window.strix.search.cancel();
+      setBusy(false);
       return;
     }
     setBusy(true);
+    const id = searchId.current;
     const handle = window.setTimeout(() => {
-      window.strix.search
-        .find(q, opts)
-        .then(setResults)
-        .finally(() => setBusy(false));
+      window.strix.search.start(id, q, opts);
     }, 250);
     return () => window.clearTimeout(handle);
   }, [query, opts]);

@@ -115,6 +115,73 @@ export async function searchInFiles(
   return results;
 }
 
+// Streaming variant: invokes `onMatches` with batches of results as the walk
+// finds them (so the UI fills progressively on big repos) and aborts early when
+// `isCancelled()` returns true (e.g. the query changed). Same ignore/size/binary
+// rules + MAX_RESULTS cap as searchInFiles.
+export async function searchInFilesStream(
+  root: string,
+  query: string,
+  onMatches: (batch: SearchMatch[]) => void,
+  opts: MatchOptions = {},
+  isCancelled: () => boolean = () => false,
+  batchSize = 25,
+): Promise<void> {
+  const needle = query.trim();
+  if (!needle) return;
+  let count = 0;
+  let batch: SearchMatch[] = [];
+  const flush = () => {
+    if (batch.length) {
+      onMatches(batch);
+      batch = [];
+    }
+  };
+
+  async function walk(dir: string): Promise<void> {
+    if (isCancelled() || count >= MAX_RESULTS) return;
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (isCancelled() || count >= MAX_RESULTS) return;
+      if (IGNORE.has(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full);
+      } else if (entry.isFile()) {
+        let text: string;
+        try {
+          const stat = await fs.stat(full);
+          if (stat.size > MAX_FILE_BYTES) continue;
+          text = await fs.readFile(full, 'utf8');
+        } catch {
+          continue;
+        }
+        if (text.includes(NUL)) continue;
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          if (lineMatches(lines[i], needle, opts)) {
+            batch.push({ path: full, line: i + 1, text: lines[i].trim().slice(0, 200) });
+            count += 1;
+            if (batch.length >= batchSize) flush();
+            if (count >= MAX_RESULTS) {
+              flush();
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  await walk(root);
+  if (!isCancelled()) flush();
+}
+
 // Replace `query` with `replacement` across all text files in the workspace,
 // honouring case/whole-word options. Returns the changed file paths so the UI
 // can react (the file watcher also fires, live-reloading open tabs). Same

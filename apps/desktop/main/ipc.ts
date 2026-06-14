@@ -32,7 +32,12 @@ import {
   newProjectDialog,
 } from './workspace.js';
 import { BrowserWindow } from 'electron';
-import { searchInFiles, replaceInFiles, type MatchOptions } from './search.js';
+import {
+  searchInFiles,
+  searchInFilesStream,
+  replaceInFiles,
+  type MatchOptions,
+} from './search.js';
 import { popupMenu } from './menu.js';
 import { TerminalManager, execCommand, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
@@ -74,6 +79,29 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('search:find', (_event, query: string, opts?: MatchOptions) =>
     searchInFiles(getRoot(), query, opts),
   );
+  // Streaming search: results arrive in batches and a newer query (or cancel)
+  // aborts the in-flight walk so we don't waste CPU on superseded searches.
+  let searchToken = 0;
+  ipcMain.on(
+    'search:start',
+    (event, { id, query, opts }: { id: number; query: string; opts?: MatchOptions }) => {
+      searchToken = id;
+      void searchInFilesStream(
+        getRoot(),
+        query,
+        (matches) => {
+          if (searchToken === id) event.sender.send('search:match', { id, matches });
+        },
+        opts,
+        () => searchToken !== id,
+      ).finally(() => {
+        if (searchToken === id) event.sender.send('search:done', { id });
+      });
+    },
+  );
+  ipcMain.on('search:cancel', () => {
+    searchToken += 1;
+  });
   ipcMain.handle('search:replace', (_event, query: string, replacement: string, opts?: MatchOptions) =>
     replaceInFiles(getRoot(), query, replacement, opts),
   );

@@ -4,12 +4,14 @@ import * as os from 'os';
 import * as path from 'path';
 import {
   searchInFiles,
+  searchInFilesStream,
   replaceInFiles,
   replaceAllCaseInsensitive,
   replaceAll,
   escapeRegExp,
   buildSearchRegExp,
   lineMatches,
+  type SearchMatch,
 } from './search';
 
 let tmp: string;
@@ -82,6 +84,40 @@ describe('buildSearchRegExp / lineMatches', () => {
   });
   it('returns false for an empty query', () => {
     expect(lineMatches('anything', '')).toBe(false);
+  });
+});
+
+describe('searchInFilesStream', () => {
+  it('streams matches in batches and honours options', async () => {
+    await write('a.ts', 'Needle\nneedle\nother');
+    const got: SearchMatch[] = [];
+    await searchInFilesStream(tmp, 'needle', (b) => got.push(...b), {}, () => false, 1);
+    expect(got).toHaveLength(2);
+    expect(got.map((m) => m.line).sort()).toEqual([1, 2]);
+  });
+
+  it('stops early when cancelled', async () => {
+    for (let i = 0; i < 20; i++) await write(`f${i}.ts`, 'token');
+    let batches = 0;
+    // Cancel after the first batch arrives.
+    await searchInFilesStream(
+      tmp,
+      'token',
+      () => {
+        batches += 1;
+      },
+      {},
+      () => batches >= 1,
+      1,
+    );
+    expect(batches).toBe(1);
+  });
+
+  it('emits nothing for an empty query', async () => {
+    await write('a.ts', 'anything');
+    const got: SearchMatch[] = [];
+    await searchInFilesStream(tmp, '  ', (b) => got.push(...b));
+    expect(got).toEqual([]);
   });
 });
 

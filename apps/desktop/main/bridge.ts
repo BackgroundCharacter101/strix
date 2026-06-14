@@ -130,6 +130,13 @@ export interface StrixSearchApi {
   find(query: string, opts?: MatchOptions): Promise<SearchMatch[]>;
   // Replace query → replacement across the workspace under the same options.
   replace(query: string, replacement: string, opts?: MatchOptions): Promise<ReplaceResult>;
+  // Streaming search: start a walk (results arrive via onMatch, end via onDone);
+  // a newer start or cancel() aborts the in-flight walk. id tags each search so
+  // the renderer can ignore late events from a superseded query.
+  start(id: number, query: string, opts?: MatchOptions): void;
+  cancel(): void;
+  onMatch(cb: (payload: { id: number; matches: SearchMatch[] }) => void): () => void;
+  onDone(cb: (payload: { id: number }) => void): () => void;
 }
 
 export interface StrixMenuApi {
