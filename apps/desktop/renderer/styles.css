@@ -3761,3 +3761,37 @@ a:focus-visible,
 .sidebar {
   overflow: auto;
 }
+
+/* Rounded tab pills + activity icons (match the floating-workbench look). */
+.editor-tabs {
+  background: transparent;
+  border-bottom: none;
+  padding: 6px 6px 2px;
+  gap: 4px;
+}
+.editor-tab {
+  border-right: none;
+}
+.editor-tab button[role='tab'] {
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+.editor-tab[data-active='true'] button[role='tab'] {
+  background: var(--bg-hover);
+  box-shadow: none;
+}
+.editor-tab button[role='tab']:hover {
+  background: color-mix(in srgb, var(--bg-hover) 60%, transparent);
+}
+.activity-bar button {
+  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+}
+.activity-bar button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.activity-bar button[aria-pressed='true']::before {
+  display: none;
+}

@@ -38,14 +38,15 @@ AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyVersion}
 AppPublisher=Strix
-DefaultDirName={localappdata}\Programs\{#MyAppName}
+DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 DisableDirPage=no
 ; Inno 6 hides the Welcome page by default; show it so the glass art appears.
 DisableWelcomePage=no
-; Per-user install: no UAC prompt, mirrors the previous electron-builder config.
-PrivilegesRequired=lowest
+; Per-machine install into Program Files (asks for UAC elevation). Users without
+; admin can still fall back to a per-user install via the dialog.
+PrivilegesRequired=admin
 PrivilegesRequiredOverridesAllowed=dialog
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
