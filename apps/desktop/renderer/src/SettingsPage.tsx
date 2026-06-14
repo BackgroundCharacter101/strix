@@ -306,6 +306,18 @@ export function SettingsPage({
               onChange={(e) => onChange({ reduceMotion: e.target.checked })}
             />
           </Row>
+          <Row
+            query={query}
+            label="Liquid Glass"
+            desc="Frosted translucent blur on menus, dialogs, and side panels."
+          >
+            <input
+              type="checkbox"
+              aria-label="Liquid Glass"
+              checked={settings.liquidGlass}
+              onChange={(e) => onChange({ liquidGlass: e.target.checked })}
+            />
+          </Row>
         </section>
         )}
 

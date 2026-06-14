@@ -3645,3 +3645,62 @@ a:focus-visible,
   outline-offset: -1px;
   border-radius: 3px;
 }
+
+/* ============================ Liquid Glass ==============================
+   Opt-in (Settings → Liquid Glass → data-glass='true'). Real frosted blur via
+   backdrop-filter (Chromium/Electron). Floating surfaces sit over the editor,
+   so the blur is genuine; side panels get a translucent tint + subtle blur.
+   Chrome only — never the editor text. */
+:root[data-glass='true'] {
+  --glass-blur: blur(20px) saturate(1.5);
+  --glass-edge: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* A soft backdrop so translucent panels reveal depth (not just flat bg). */
+:root[data-glass='true'] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 18% 12%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
+    radial-gradient(55% 45% at 88% 80%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 72%);
+}
+
+/* Floating surfaces — clearly over content, so blur really reads as glass. */
+:root[data-glass='true'] .palette,
+:root[data-glass='true'] .dialog,
+:root[data-glass='true'] .about-dialog,
+:root[data-glass='true'] .shortcuts-dialog,
+:root[data-glass='true'] .context-menu,
+:root[data-glass='true'] .titlebar-menu,
+:root[data-glass='true'] .ai-mention-menu,
+:root[data-glass='true'] .toast {
+  background: color-mix(in srgb, var(--bg-elevated) 62%, transparent) !important;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Side panels / bars — translucent tint + lighter blur over the backdrop. */
+:root[data-glass='true'] .sidebar,
+:root[data-glass='true'] .ai-pane,
+:root[data-glass='true'] .titlebar,
+:root[data-glass='true'] .statusbar,
+:root[data-glass='true'] .activity-bar {
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+
+/* Let the panel translucency show: drop the opaque app/editor backdrop a touch.
+   The editor surface itself stays solid for text legibility. */
+:root[data-glass='true'] .sidebar {
+  border-right: var(--glass-edge);
+}
+:root[data-glass='true'] .ai-pane {
+  border-left: var(--glass-edge);
+}

@@ -42,6 +42,8 @@ DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 DisableDirPage=no
+; Inno 6 hides the Welcome page by default; show it so the glass art appears.
+DisableWelcomePage=no
 ; Per-user install: no UAC prompt, mirrors the previous electron-builder config.
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog

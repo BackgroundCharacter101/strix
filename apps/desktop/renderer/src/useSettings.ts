@@ -28,6 +28,8 @@ export interface Settings {
   density: 'comfortable' | 'compact';
   // Disable non-essential UI animations (accessibility / low-power).
   reduceMotion: boolean;
+  // Liquid Glass: frosted translucent blur on floating surfaces + side panels.
+  liquidGlass: boolean;
   // Format the document with the language formatter on every save.
   formatOnSave: boolean;
   // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
@@ -77,6 +79,7 @@ export const DEFAULT_SETTINGS: Settings = {
   scrollBeyondLastLine: false,
   density: 'comfortable',
   reduceMotion: false,
+  liquidGlass: false,
   formatOnSave: false,
   autoSave: true,
   autoSaveSeconds: 60,
@@ -115,6 +118,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
     document.documentElement.dataset.mode = settings.mode;
     document.documentElement.dataset.density = settings.density;
     document.documentElement.dataset.reduceMotion = String(settings.reduceMotion);
+    document.documentElement.dataset.glass = String(settings.liquidGlass);
     setIconTheme(settings.iconTheme);
   }, [settings]);
 

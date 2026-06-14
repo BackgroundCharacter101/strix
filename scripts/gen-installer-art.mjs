@@ -94,6 +94,7 @@ function writeBmp(file, w, h) {
   console.log(`[art] wrote ${path.relative(root, file)} (${w}x${h})`);
 }
 
-// Inno modern wizard: large left panel + small top-right header strip.
-writeBmp(path.join(buildDir, 'installerSidebar.bmp'), 164, 314);
+// Inno modern wizard: the large left panel is 164x314 at classic scale but the
+// modern style fills 164x410 — use that so the welcome/finish art isn't cropped.
+writeBmp(path.join(buildDir, 'installerSidebar.bmp'), 164, 410);
 writeBmp(path.join(buildDir, 'installerHeader.bmp'), 150, 57);
