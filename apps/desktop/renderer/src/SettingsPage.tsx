@@ -487,6 +487,18 @@ export function SettingsPage({
           </Row>
           <Row
             query={query}
+            label="Reopen last folder on startup"
+            desc="Open the most recent folder (and its tabs) on launch instead of the welcome screen."
+          >
+            <input
+              type="checkbox"
+              aria-label="Reopen last folder on startup"
+              checked={settings.restoreLastFolder}
+              onChange={(e) => onChange({ restoreLastFolder: e.target.checked })}
+            />
+          </Row>
+          <Row
+            query={query}
             label="Auto save interval"
             desc="Seconds between auto-saves (min 5)."
           >

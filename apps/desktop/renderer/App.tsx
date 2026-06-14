@@ -190,6 +190,11 @@ export default function App() {
   // re-creating on every file change.
   const recentFilesRef = useRef<string[]>(recentFiles);
   recentFilesRef.current = recentFiles;
+  // Mirrors for the mount-only startup-restore effect (avoids stale closures).
+  const prefsRef = useRef(settings);
+  prefsRef.current = settings;
+  const recentsRef = useRef(recents);
+  recentsRef.current = recents;
 
   // Auto-save: periodically write dirty buffers in both groups. The ref always
   // points at the latest saveAll, so the interval needn't be recreated on edits.
@@ -415,9 +420,15 @@ export default function App() {
   const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600, persistKey: 'strix.size.terminal' });
 
   useEffect(() => {
-    // Empty root → no workspace open → show the welcome screen (not the app's
-    // own install directory).
-    window.strix.workspace.root().then((r) => setRoot(r || null));
+    // Empty root → no workspace open. Optionally reopen the most-recent folder
+    // (its tabs restore via the per-folder session), else show the welcome
+    // screen (not the app's own install directory).
+    window.strix.workspace.root().then((r) => {
+      if (r) setRoot(r);
+      else if (prefsRef.current.restoreLastFolder && recentsRef.current[0])
+        setRoot(recentsRef.current[0]);
+      else setRoot(null);
+    });
   }, []);
 
   // Watch the open workspace for changes made outside the editor.

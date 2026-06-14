@@ -35,6 +35,9 @@ export interface Settings {
   autoSaveSeconds: number;
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
+  // Reopen the most-recently-used folder (and its tabs) automatically on launch
+  // instead of showing the welcome screen.
+  restoreLastFolder: boolean;
   // Agent: apply file changes immediately, skipping the review/confirm modal.
   agentAutoApply: boolean;
   // FreeBuff connection (self-hosted / full access). Injected as env vars into
@@ -78,6 +81,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSave: true,
   autoSaveSeconds: 60,
   aiServerUrl: '',
+  restoreLastFolder: false,
   agentAutoApply: false,
   freebuffProxyUrl: '',
   freebuffBackendUrl: '',
