@@ -17,6 +17,7 @@
 // STRIX_EDITION env var, which both configs read to set the __STRIX_EDITION__
 // compile-time define. See apps/desktop/renderer/src/edition.ts.
 import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import * as path from 'node:path';
 
@@ -62,7 +63,7 @@ if (action === 'build') {
 } else if (action === 'start') {
   run('npx', ['electron', '.'], desktop);
 } else {
-  const targetFlag = { win: '--win', linux: '--linux', mac: '--mac', dir: '--dir' }[action];
+  const targetFlag = { win: '--dir', linux: '--linux', mac: '--mac', dir: '--dir' }[action];
   if (!targetFlag) {
     console.error(`Unknown action "${action}". Use: build | start | win | linux | mac | dir`);
     process.exit(2);
@@ -70,6 +71,9 @@ if (action === 'build') {
   // Bundle FreeLLMAPI to a single ESM file so the installer ships ~a handful of
   // files instead of its ~33k node_modules tree. extraResources ships .bundle.
   run('node', ['scripts/bundle-ai.mjs'], root);
+  // electron-builder builds the app payload. For Windows we use --dir (the
+  // win-unpacked folder) and wrap it with our Inno Setup installer below; linux/
+  // mac still produce their native installers directly.
   run(
     'npx',
     [
@@ -82,9 +86,60 @@ if (action === 'build') {
     desktop,
   );
   console.log(`\n[edition:${edition}] packaged "${productName}" → apps/desktop/${outDir}`);
-  // Verify the Windows package didn't regress (asar/CJS entry/import.meta/node-pty).
-  // win-unpacked layout is produced by the win/dir targets.
+  // Verify the Windows payload didn't regress (asar/CJS entry/import.meta/node-pty).
   if (action === 'win' || action === 'dir') {
     run('node', ['scripts/verify-package.mjs', edition], root);
   }
+  // Build the Windows installer from the win-unpacked payload via Inno Setup.
+  if (action === 'win') {
+    buildInnoInstaller();
+  }
+}
+
+// Compile the Inno Setup installer for this edition from win-unpacked.
+function buildInnoInstaller() {
+  const iscc = findISCC();
+  if (!iscc) {
+    console.error(
+      '[edition] ISCC.exe (Inno Setup) not found. Install it:\n' +
+        '  winget install JRSoftware.InnoSetup',
+    );
+    process.exit(1);
+  }
+  const version = JSON.parse(
+    readFileSync(path.join(desktop, 'package.json'), 'utf8'),
+  ).version;
+  const edDir = path.join(desktop, 'release', edition);
+  const defs = {
+    MyAppName: productName,
+    MyExe: `${productName}.exe`,
+    MyVersion: version,
+    MyEdition: edition,
+    MySrcDir: path.join(edDir, 'win-unpacked'),
+    MyIcon: path.join(edDir, '.icon-ico', 'icon.ico'),
+    MyOutDir: edDir,
+    MyOutBase: `${productName} Setup ${version}`,
+    MyLicense: path.join(desktop, 'build', 'license.txt'),
+    MySidebar: path.join(desktop, 'build', 'installerSidebar.bmp'),
+    MyHeader: path.join(desktop, 'build', 'installerHeader.bmp'),
+  };
+  const args = Object.entries(defs).map(([k, v]) => `/D${k}=${v}`);
+  args.push(path.join(desktop, 'build', 'installer.iss'));
+  // ISCC handles its own quoting of /D values; pass args unmodified.
+  console.log(`\n[edition:${edition}] ISCC ${defs.MyOutBase}.exe\n`);
+  const r = spawnSync(iscc, args, { cwd: desktop, env, stdio: 'inherit' });
+  if (r.status !== 0) {
+    console.error(`\n[edition:${edition}] Inno Setup failed (${r.status}).`);
+    process.exit(r.status ?? 1);
+  }
+  console.log(`\n[edition:${edition}] installer → apps/desktop/release/${edition}/${defs.MyOutBase}.exe`);
+}
+
+function findISCC() {
+  const candidates = [
+    path.join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Inno Setup 6', 'ISCC.exe'),
+    'C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe',
+    'C:\\Program Files\\Inno Setup 6\\ISCC.exe',
+  ];
+  return candidates.find((p) => p && existsSync(p));
 }
