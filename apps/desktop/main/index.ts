@@ -178,28 +178,33 @@ if (!gotLock) {
             logError('createWindow failed:', e);
         }
         try {
-            registerIpcHandlers();
+            // Lazy AI-server boot: spawn the bundled FreeLLMAPI only on the first
+            // real AI action (renderer calls ai:ensure), so app launch stays fast.
+            // Packaged builds have no system `node`: run FreeLLMAPI via the Electron
+            // binary as Node, from the extraResources copy. startAiServer is
+            // idempotent, so repeated ai:ensure calls are safe.
+            const ensureAiServer = () => {
+                try {
+                    startAiServer(
+                        __dirname,
+                        {
+                            nodeExec: app.isPackaged ? process.execPath : 'node',
+                            runAsNode: app.isPackaged,
+                            baseDir: app.isPackaged ? process.resourcesPath : undefined,
+                            // Persist the server's DB in the per-user data dir (the
+                            // install dir is read-only once packaged).
+                            dataDir: app.isPackaged ? app.getPath('userData') : undefined,
+                        },
+                        log,
+                    );
+                } catch (e) {
+                    logError('startAiServer failed:', e);
+                }
+            };
+            registerIpcHandlers(ensureAiServer);
             log('ipc handlers registered');
         } catch (e) {
             logError('registerIpcHandlers failed:', e);
-        }
-        try {
-            // Packaged builds have no system `node`: run the bundled FreeLLMAPI via
-            // the Electron binary as Node, from the extraResources copy.
-            startAiServer(
-                __dirname,
-                {
-                    nodeExec: app.isPackaged ? process.execPath : 'node',
-                    runAsNode: app.isPackaged,
-                    baseDir: app.isPackaged ? process.resourcesPath : undefined,
-                    // Persist the bundled server's DB in the per-user data dir (the
-                    // install dir is read-only once packaged).
-                    dataDir: app.isPackaged ? app.getPath('userData') : undefined,
-                },
-                log,
-            );
-        } catch (e) {
-            logError('startAiServer failed:', e);
         }
     }).catch((e) => logError('whenReady failed:', e));
 }

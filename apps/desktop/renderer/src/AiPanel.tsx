@@ -327,13 +327,38 @@ export function AiPanel({
   // even right after a workspace switch).
   const histKeyRef = useRef(historyKeyFor(workspaceKey));
 
+  // Lazily boot the local AI server on the first real action so app launch is
+  // fast. Flipping serverReady re-runs the config/model effect once it's up.
+  const [serverReady, setServerReady] = useState(false);
+  const ensureAi = async () => {
+    await window.strix.ai.ensure(aiServerUrl || undefined);
+    if (!serverReady) setServerReady(true);
+  };
+
   // Point the AI client at the FreeLLMAPI server (local or a shared host) and
-  // load its model list. Re-runs if the server URL changes in Settings.
+  // load its model list. Re-runs if the server URL changes in Settings, or once
+  // the lazily-started server comes up. The server needs a moment to boot, so
+  // retry the model list a few times before settling on just ['auto'].
   useEffect(() => {
     const url = aiServerUrl || undefined;
-    window.strix.ai.config(url).then(configureAi);
-    window.strix.ai.models(url).then(setModels);
-  }, [aiServerUrl]);
+    let cancelled = false;
+    window.strix.ai.config(url).then((c) => !cancelled && configureAi(c));
+    let attempts = 0;
+    const load = () => {
+      window.strix.ai.models(url).then((m) => {
+        if (cancelled) return;
+        setModels(m);
+        if (m.length <= 1 && serverReady && attempts < 4) {
+          attempts += 1;
+          window.setTimeout(load, 1000);
+        }
+      });
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [aiServerUrl, serverReady]);
 
   // Detect whether any provider key is configured, so we can prompt the user to
   // add one. Re-checks when the server changes and when the window regains focus
@@ -450,6 +475,7 @@ export function AiPanel({
   const stop = () => abortRef.current?.abort();
 
   const run = async (task: TaskType) => {
+    await ensureAi();
     setBusy(true);
     setStreaming('');
     setRoutedVia(null);
@@ -529,6 +555,7 @@ export function AiPanel({
   // Run Explain/Fix on a selected snippet (from the editor's floating toolbar).
   // The request + response are appended to the conversation thread.
   const runSelection = async (kind: 'explain' | 'fix', selection: string) => {
+    await ensureAi();
     setBusy(true);
     setStreaming('');
     setRoutedVia(null);
@@ -575,6 +602,7 @@ export function AiPanel({
 
   // Fix (§8.4) / Refactor (§8.6): ask for the full updated file, show a diff.
   const propose = async (task: TaskType) => {
+    await ensureAi();
     setBusy(true);
     setProposal(null);
     const controller = new AbortController();
@@ -613,6 +641,7 @@ export function AiPanel({
       }
     }
     if (lastUser === -1 || busy) return;
+    await ensureAi();
     const userMessage = history[lastUser].content;
     const prior = history.slice(0, lastUser);
     setHistory(history.slice(0, lastUser + 1));
@@ -704,6 +733,7 @@ export function AiPanel({
       showToast('Open or create a project first, then ask me to build it.', 'info', 6000);
       return;
     }
+    await ensureAi();
     // Record the request in the thread (like a chat turn) and clear the box.
     const priorHistory = history;
     const atts = attachments;

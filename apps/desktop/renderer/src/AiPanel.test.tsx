@@ -79,6 +79,8 @@ describe('AiPanel', () => {
       expect(screen.getByLabelText('AI conversation')).toHaveTextContent('Hello'),
     );
     expect(screen.getByText(/Routed via:/)).toHaveTextContent('groq/llama-3.3-70b');
+    // Lazy boot: the local AI server is ensured before the first action.
+    expect(window.strix.ai.ensure).toHaveBeenCalled();
 
     expect(runTask).toHaveBeenCalledWith(
       'chat',

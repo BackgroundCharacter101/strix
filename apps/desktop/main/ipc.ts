@@ -43,7 +43,7 @@ import { startWatching } from './watcher.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
-export function registerIpcHandlers(): void {
+export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void {
   ipcMain.handle('file:read', (_event, filePath: string) => readFileContents(filePath));
   ipcMain.handle('file:write', (_event, filePath: string, content: string) =>
     writeFileContents(filePath, content),
@@ -174,6 +174,14 @@ export function registerIpcHandlers(): void {
     const body = (await res.json()) as { apiKey: string };
     return body.apiKey;
   };
+
+  // Lazy boot: the renderer calls this right before the first real AI action
+  // (chat/explain/fix/scaffold) when using the local server, so app launch
+  // stays fast and the FreeLLMAPI child only spawns when actually needed.
+  // No-op when a shared host URL is configured.
+  ipcMain.handle('ai:ensure', (_event, url?: string) => {
+    if (!url || !url.trim()) ensureAiServer();
+  });
 
   ipcMain.handle('ai:config', async (_event, url?: string) => {
     const base = baseFrom(url);

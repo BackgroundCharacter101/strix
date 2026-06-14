@@ -94,6 +94,9 @@ export interface AiProviderKey {
 }
 
 export interface StrixAiApi {
+  // Lazily boot the local FreeLLMAPI server (no-op when a shared host url is
+  // set). Call before the first real AI action so app launch stays fast.
+  ensure(url?: string): Promise<void>;
   // Optional url points at a shared FreeLLMAPI host (else the local default).
   config(url?: string): Promise<{ baseURL: string; apiKey: string }>;
   models(url?: string): Promise<string[]>;

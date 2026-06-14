@@ -72,6 +72,7 @@ const api: StrixApi = {
     uninstallServer: (id) => ipcRenderer.invoke('lsp:uninstallServer', id),
   },
   ai: {
+    ensure: (url) => ipcRenderer.invoke('ai:ensure', url),
     config: (url) => ipcRenderer.invoke('ai:config', url),
     models: (url) => ipcRenderer.invoke('ai:models', url),
     listKeys: (url) => ipcRenderer.invoke('ai:listKeys', url),

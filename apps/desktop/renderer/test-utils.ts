@@ -79,6 +79,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       uninstallServer: vi.fn(async () => ({ ok: true, output: '' })),
     },
     ai: {
+      ensure: vi.fn(async (): Promise<void> => {}),
       config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: 'test-key' })),
       models: vi.fn(async (): Promise<string[]> => ['auto']),
       listKeys: vi.fn(async () => []),
