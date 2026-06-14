@@ -3751,16 +3751,82 @@ a:focus-visible,
   box-shadow: var(--glass-rim), var(--glass-glow);
 }
 
-/* Primary action buttons + the search/composer inputs become glass pills. */
+/* Action buttons become frosted-glass capsules (the reference pill). Scoped to
+   real action buttons (not the all:unset list rows / ghost buttons). */
+:root[data-glass='true'] .welcome-actions button,
+:root[data-glass='true'] .explorer-open-btn,
 :root[data-glass='true'] .ai-primary-btn,
 :root[data-glass='true'] .ai-agent-btn,
+:root[data-glass='true'] .ai-config-btn,
+:root[data-glass='true'] .ai-file-actions button,
+:root[data-glass='true'] .search-replace-all,
+:root[data-glass='true'] .dialog-actions button,
+:root[data-glass='true'] .about-dialog button,
+:root[data-glass='true'] .shortcuts-dialog button {
+  position: relative;
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #f4f0ff !important;
+  backdrop-filter: blur(14px) saturate(1.7);
+  -webkit-backdrop-filter: blur(14px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.25), 0 6px 22px rgba(80, 20, 160, 0.32) !important;
+  overflow: hidden;
+}
+/* Wet-glass top sheen over the upper half of each pill. */
+:root[data-glass='true'] .welcome-actions button::before,
+:root[data-glass='true'] .ai-primary-btn::before,
+:root[data-glass='true'] .ai-agent-btn::before,
+:root[data-glass='true'] .ai-file-actions button::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 50% 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+  pointer-events: none;
+}
+:root[data-glass='true'] .welcome-actions button:hover:not(:disabled),
+:root[data-glass='true'] .ai-primary-btn:hover:not(:disabled),
+:root[data-glass='true'] .ai-agent-btn:hover:not(:disabled),
+:root[data-glass='true'] .ai-file-actions button:hover:not(:disabled),
+:root[data-glass='true'] .dialog-actions button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.25), 0 8px 28px rgba(120, 40, 220, 0.45) !important;
+}
+
+/* Inputs become frosted glass too. */
 :root[data-glass='true'] .search-input,
-:root[data-glass='true'] .ai-composer textarea {
+:root[data-glass='true'] input,
+:root[data-glass='true'] select,
+:root[data-glass='true'] textarea {
   background: rgba(255, 255, 255, 0.06) !important;
   backdrop-filter: blur(12px) saturate(1.4);
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Activity-bar icons: glass rounded squares; active/hover glow. */
+:root[data-glass='true'] .activity-bar button {
+  border-radius: 12px !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+:root[data-glass='true'] .activity-bar button:hover,
+:root[data-glass='true'] .activity-bar button[aria-pressed='true'] {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 16px rgba(120, 40, 220, 0.4);
+}
+
+/* Editor tabs as subtle glass; active tab brighter. */
+:root[data-glass='true'] .editor-tab button {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+:root[data-glass='true'] .editor-tab[data-active='true'] button,
+:root[data-glass='true'] .editor-tab button[aria-selected='true'] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* Keep the code surface solid + readable (Monaco fills the editor group). */
