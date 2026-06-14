@@ -3647,29 +3647,95 @@ a:focus-visible,
 }
 
 /* ============================ Liquid Glass ==============================
-   Opt-in (Settings → Liquid Glass → data-glass='true'). Real frosted blur via
-   backdrop-filter (Chromium/Electron). Floating surfaces sit over the editor,
-   so the blur is genuine; side panels get a translucent tint + subtle blur.
-   Chrome only — never the editor text. */
+   Opt-in (Settings → Liquid Glass → data-glass='true'). A vivid purple/magenta/
+   blue gradient backdrop (drifting blurred blobs) shows through a transparent
+   app shell; panels + floating surfaces become translucent frosted glass with
+   bright specular edges and a soft glow. The code editor keeps a solid surface
+   for legibility — the glass is the shell around it. */
 :root[data-glass='true'] {
-  --glass-blur: blur(20px) saturate(1.5);
-  --glass-edge: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
-  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --glass-fill: color-mix(in srgb, #1a1030 55%, transparent);
+  --glass-fill-strong: color-mix(in srgb, #241640 66%, transparent);
+  --glass-blur: blur(26px) saturate(1.7);
+  /* Bright top/left specular rim + faint full outline. */
+  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 1px 0 0 rgba(255, 255, 255, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --glass-glow: 0 12px 48px rgba(90, 30, 170, 0.32);
 }
 
-/* A soft backdrop so translucent panels reveal depth (not just flat bg). */
-:root[data-glass='true'] body::before {
+/* Dark base so the colour blobs pop. */
+:root[data-glass='true'] body {
+  background: #0a0612;
+}
+
+/* Two large drifting, heavily-blurred blobs = the flowing "liquid" backdrop.
+   Animated via transform (GPU) so it stays cheap. */
+:root[data-glass='true'] body::before,
+:root[data-glass='true'] body::after {
   content: '';
   position: fixed;
-  inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(60% 50% at 18% 12%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%),
-    radial-gradient(55% 45% at 88% 80%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 72%);
+  width: 80vw;
+  height: 80vw;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+  opacity: 0.7;
+}
+:root[data-glass='true'] body::before {
+  top: -20vw;
+  left: -10vw;
+  background: radial-gradient(circle, #7c3aed 0%, #4c1d95 45%, transparent 70%);
+  animation: glass-drift-a 26s ease-in-out infinite alternate;
+}
+:root[data-glass='true'] body::after {
+  bottom: -25vw;
+  right: -10vw;
+  background: radial-gradient(circle, #d946ef 0%, #3b82f6 50%, transparent 72%);
+  animation: glass-drift-b 32s ease-in-out infinite alternate;
+}
+@keyframes glass-drift-a {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(18vw, 12vh) scale(1.25); }
+}
+@keyframes glass-drift-b {
+  from { transform: translate(0, 0) scale(1.1); }
+  to { transform: translate(-16vw, -10vh) scale(1); }
+}
+/* Respect reduced-motion: freeze the backdrop. */
+:root[data-glass='true'][data-reduce-motion='true'] body::before,
+:root[data-glass='true'][data-reduce-motion='true'] body::after {
+  animation: none;
 }
 
-/* Floating surfaces — clearly over content, so blur really reads as glass. */
+/* Transparent shell so the backdrop shows through behind the glass panels. */
+:root[data-glass='true'] .app,
+:root[data-glass='true'] .app-body,
+:root[data-glass='true'] .app-main,
+:root[data-glass='true'] .editor-pane,
+:root[data-glass='true'] .editor-groups,
+:root[data-glass='true'] .editor-group,
+:root[data-glass='true'] .welcome {
+  background: transparent !important;
+}
+
+/* Side panels / bars — frosted glass over the backdrop. */
+:root[data-glass='true'] .sidebar,
+:root[data-glass='true'] .ai-pane,
+:root[data-glass='true'] .panel,
+:root[data-glass='true'] .titlebar,
+:root[data-glass='true'] .statusbar,
+:root[data-glass='true'] .activity-bar,
+:root[data-glass='true'] .editor-tabs {
+  background: var(--glass-fill) !important;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+:root[data-glass='true'] .sidebar { box-shadow: var(--glass-rim); }
+:root[data-glass='true'] .ai-pane { box-shadow: var(--glass-rim); }
+
+/* Floating surfaces — brighter glass capsules with rim + glow. */
 :root[data-glass='true'] .palette,
 :root[data-glass='true'] .dialog,
 :root[data-glass='true'] .about-dialog,
@@ -3678,29 +3744,27 @@ a:focus-visible,
 :root[data-glass='true'] .titlebar-menu,
 :root[data-glass='true'] .ai-mention-menu,
 :root[data-glass='true'] .toast {
-  background: color-mix(in srgb, var(--bg-elevated) 62%, transparent) !important;
+  background: var(--glass-fill-strong) !important;
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: var(--glass-edge);
-  box-shadow: var(--glass-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--glass-rim), var(--glass-glow);
 }
 
-/* Side panels / bars — translucent tint + lighter blur over the backdrop. */
-:root[data-glass='true'] .sidebar,
-:root[data-glass='true'] .ai-pane,
-:root[data-glass='true'] .titlebar,
-:root[data-glass='true'] .statusbar,
-:root[data-glass='true'] .activity-bar {
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  backdrop-filter: blur(14px) saturate(1.3);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+/* Primary action buttons + the search/composer inputs become glass pills. */
+:root[data-glass='true'] .ai-primary-btn,
+:root[data-glass='true'] .ai-agent-btn,
+:root[data-glass='true'] .search-input,
+:root[data-glass='true'] .ai-composer textarea {
+  background: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-/* Let the panel translucency show: drop the opaque app/editor backdrop a touch.
-   The editor surface itself stays solid for text legibility. */
-:root[data-glass='true'] .sidebar {
-  border-right: var(--glass-edge);
-}
-:root[data-glass='true'] .ai-pane {
-  border-left: var(--glass-edge);
+/* Keep the code surface solid + readable (Monaco fills the editor group). */
+:root[data-glass='true'] .monaco-editor,
+:root[data-glass='true'] .monaco-editor .overflow-guard {
+  background: color-mix(in srgb, #0c0816 88%, transparent) !important;
 }

@@ -32,14 +32,14 @@ function pixel(x, y, w, h) {
   const v = y / h;
   // Base diagonal gradient: deep purple (top-left) → near-black (bottom-right).
   const t = (u * 0.45 + v * 0.85) / 1.3;
-  let r = lerp(26, 5, t);
-  let g = lerp(10, 2, t);
-  let b = lerp(46, 9, t);
-  // Purple/magenta glow blobs for the "liquid" pools.
+  let r = lerp(30, 6, t);
+  let g = lerp(12, 3, t);
+  let b = lerp(58, 14, t);
+  // Vivid purple/magenta/blue glow pools (matches the IDE Liquid Glass theme).
   const blobs = [
-    [w * 0.2, h * 0.18, w * 0.7, [120, 60, 200], 0.5],
-    [w * 0.85, h * 0.62, w * 0.8, [150, 50, 170], 0.42],
-    [w * 0.5, h * 0.95, w * 0.6, [80, 30, 150], 0.4],
+    [w * 0.18, h * 0.16, w * 0.75, [124, 58, 237], 0.85], // purple #7c3aed
+    [w * 0.9, h * 0.55, w * 0.85, [217, 70, 239], 0.7], // magenta #d946ef
+    [w * 0.45, h * 0.92, w * 0.7, [59, 130, 246], 0.6], // blue #3b82f6
   ];
   for (const [cx, cy, rad, [br, bg, bb], amt] of blobs) {
     const k = glow(x, y, cx, cy, rad) * amt;
