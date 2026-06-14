@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { FileNode } from '../../main/fs';
 import { useFileTree } from './useFileTree';
 import { FileGlyph, FolderGlyph } from './icons';
@@ -77,23 +77,50 @@ export function FolderIcon({ open, name }: { open?: boolean; name: string }) {
   return <FolderGlyph open={open} />;
 }
 
-interface TreeNodeProps {
+export interface FlatRow {
   node: FileNode;
+  depth: number;
+}
+
+// Flatten the tree into the rows that are currently *visible* (a folder's
+// children only when it's expanded). Pure → unit-tested; drives virtualization
+// so we render only the rows in (or near) the viewport, not the whole tree.
+export function flattenVisible(
+  root: FileNode,
+  expanded: Set<string>,
+  depth = 0,
+  out: FlatRow[] = [],
+): FlatRow[] {
+  out.push({ node: root, depth });
+  if (root.type === 'directory' && expanded.has(root.path) && root.children) {
+    for (const child of root.children) flattenVisible(child, expanded, depth + 1, out);
+  }
+  return out;
+}
+
+interface TreeRowProps {
+  row: FlatRow;
   expanded: Set<string>;
   activePath?: string | null;
   onToggle: (path: string) => void;
   onSelectFile?: (node: FileNode) => void;
   onContext: (node: FileNode, e: React.MouseEvent) => void;
+  style: React.CSSProperties;
 }
 
-function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContext }: TreeNodeProps) {
+// One flat tree row. Indentation comes from depth (inline padding) instead of
+// nested <ul>s, so a row can be rendered in isolation by the virtual window.
+function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext, style }: TreeRowProps) {
+  const { node, depth } = row;
+  const indent = { paddingLeft: 8 + depth * 12 };
   if (node.type === 'file') {
     const active = node.path === activePath;
     return (
-      <li data-type="file">
+      <li data-type="file" style={style}>
         <button
           type="button"
           className="tree-row tree-file"
+          style={indent}
           data-active={active}
           aria-current={active ? 'true' : undefined}
           // Drag a file onto an editor group to open it / split there.
@@ -114,10 +141,11 @@ function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContex
 
   const isOpen = expanded.has(node.path);
   return (
-    <li data-type="directory">
+    <li data-type="directory" style={style}>
       <button
         type="button"
         className="tree-row tree-folder"
+        style={indent}
         aria-expanded={isOpen}
         onClick={() => onToggle(node.path)}
         onContextMenu={(e) => onContext(node, e)}
@@ -128,24 +156,12 @@ function TreeNode({ node, expanded, activePath, onToggle, onSelectFile, onContex
         </span>
         <span className="tree-name">{node.name}</span>
       </button>
-      {isOpen && node.children && node.children.length > 0 && (
-        <ul>
-          {node.children.map((child) => (
-            <TreeNode
-              key={child.path}
-              node={child}
-              expanded={expanded}
-              activePath={activePath}
-              onToggle={onToggle}
-              onSelectFile={onSelectFile}
-              onContext={onContext}
-            />
-          ))}
-        </ul>
-      )}
     </li>
   );
 }
+
+const ROW_H = 24; // px per row; keep in sync with .tree-row height in styles.css
+const OVERSCAN = 8; // rows rendered above/below the viewport
 
 export interface FileTreeProps {
   rootPath: string;
@@ -161,6 +177,19 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set([rootPath]));
   const [menu, setMenu] = useState<Menu | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  // Virtual window: track scroll position + viewport height so we render only
+  // the visible rows. viewH=0 (e.g. jsdom / before layout) → render everything.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewH, setViewH] = useState(0);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setViewH(el.clientHeight));
+    ro.observe(el);
+    setViewH(el.clientHeight);
+    return () => ro.disconnect();
+  }, []);
 
   const toggle = (path: string) =>
     setExpanded((prev) => {
@@ -235,18 +264,40 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
         ? 'New folder name'
         : 'New file name';
 
+  const rows = flattenVisible(tree, expanded);
+  const total = rows.length;
+  const windowed = viewH > 0;
+  const start = windowed ? Math.max(0, Math.floor(scrollTop / ROW_H) - OVERSCAN) : 0;
+  const end = windowed ? Math.min(total, Math.ceil((scrollTop + viewH) / ROW_H) + OVERSCAN) : total;
+  const slice = rows.slice(start, end);
+
   return (
     <>
-      <ul aria-label="File tree" className="tree">
-        <TreeNode
-          node={tree}
-          expanded={expanded}
-          activePath={activePath}
-          onToggle={toggle}
-          onSelectFile={onSelectFile}
-          onContext={onContext}
-        />
-      </ul>
+      <div
+        className="tree-scroll"
+        ref={scrollRef}
+        onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+      >
+        <ul aria-label="File tree" className="tree" style={{ height: total * ROW_H }}>
+          {slice.map((row) => (
+            <TreeRow
+              key={row.node.path}
+              row={row}
+              expanded={expanded}
+              activePath={activePath}
+              onToggle={toggle}
+              onSelectFile={onSelectFile}
+              onContext={onContext}
+              style={{
+                position: 'absolute',
+                top: (start + slice.indexOf(row)) * ROW_H,
+                left: 0,
+                right: 0,
+              }}
+            />
+          ))}
+        </ul>
+      </div>
       {menu && (
         <ContextMenu
           x={menu.x}

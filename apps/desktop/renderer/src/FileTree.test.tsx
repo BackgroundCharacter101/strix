@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { FileTree, fileBadge } from './FileTree';
+import { FileTree, fileBadge, flattenVisible } from './FileTree';
 import { makeStrixApi } from '../test-utils';
 import type { FileNode } from '../../main/fs';
 
@@ -44,6 +44,29 @@ describe('fileBadge', () => {
     expect(fileBadge('a.ts')).toBe('TS');
     expect(fileBadge('a.py')).toBe('PY');
     expect(fileBadge('LICENSE')).toBe('·');
+  });
+});
+
+describe('flattenVisible', () => {
+  it('lists only the root + a collapsed root has no children', () => {
+    const rows = flattenVisible(sample, new Set());
+    expect(rows.map((r) => r.node.name)).toEqual(['root']);
+    expect(rows[0].depth).toBe(0);
+  });
+
+  it('includes children of expanded folders with correct depth', () => {
+    const rows = flattenVisible(sample, new Set(['/root', '/root/src']));
+    expect(rows.map((r) => [r.node.name, r.depth])).toEqual([
+      ['root', 0],
+      ['src', 1],
+      ['index.ts', 2],
+      ['readme.md', 1],
+    ]);
+  });
+
+  it('stops at a collapsed subfolder', () => {
+    const rows = flattenVisible(sample, new Set(['/root']));
+    expect(rows.map((r) => r.node.name)).toEqual(['root', 'src', 'readme.md']);
   });
 });
 

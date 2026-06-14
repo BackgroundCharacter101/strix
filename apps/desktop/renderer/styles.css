@@ -872,8 +872,21 @@ body {
   color: var(--text-muted);
 }
 
+/* Virtualized file tree: the scroll viewport, with absolutely-positioned rows
+   laid out inside a spacer-height <ul> so only visible rows are in the DOM. */
+.tree-scroll {
+  height: 100%;
+  overflow: auto;
+}
 .sidebar .tree {
+  position: relative;
+  margin: 0;
   padding: 2px 0 8px;
+  list-style: none;
+}
+.sidebar .tree > li {
+  height: 24px;
+  box-sizing: border-box;
 }
 
 /* Subtle fade when switching sidebar views / opening the editor welcome. */
