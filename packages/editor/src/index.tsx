@@ -10,6 +10,7 @@ export interface CursorPosition {
 export interface EditorOptions {
   fontSize?: number;
   tabSize?: number;
+  insertSpaces?: boolean;
   wordWrap?: boolean;
   minimap?: boolean;
   fontFamily?: string;
@@ -116,6 +117,7 @@ export function CodeEditor({
       inlineSuggest: { enabled: true },
       fontSize: editorOptions?.fontSize ?? 13,
       tabSize: editorOptions?.tabSize ?? 2,
+      insertSpaces: editorOptions?.insertSpaces ?? true,
       wordWrap: editorOptions?.wordWrap ? 'on' : 'off',
       fontFamily: editorOptions?.fontFamily || MODERN_OPTIONS.fontFamily,
       lineNumbers: editorOptions?.lineNumbers ?? 'on',

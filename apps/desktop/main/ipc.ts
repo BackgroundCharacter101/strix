@@ -203,6 +203,24 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
     return body.apiKey;
   };
 
+  // Boot the local server (if not using a shared host) and wait until it's
+  // actually accepting requests. Settings actions (add/list keys) can happen
+  // before any chat, when the lazily-started server isn't up yet — without this
+  // the fetch hits a dead port and fails with "fetch failed".
+  const ensureServerReady = async (url?: string): Promise<void> => {
+    if (url && url.trim()) return; // shared host — not ours to start
+    ensureAiServer();
+    for (let i = 0; i < 50; i++) {
+      try {
+        const res = await fetch(`${defaultBase}/api/settings/api-key`);
+        if (res.ok) return;
+      } catch {
+        /* server still coming up */
+      }
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  };
+
   // Lazy boot: the renderer calls this right before the first real AI action
   // (chat/explain/fix/scaffold) when using the local server, so app launch
   // stays fast and the FreeLLMAPI child only spawns when actually needed.
@@ -250,6 +268,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   // --- AI provider keys: add/list/delete FreeLLMAPI keys from the IDE ---
   ipcMain.handle('ai:listKeys', async (_event, url?: string) => {
     try {
+      await ensureServerReady(url);
       const res = await fetch(`${baseFrom(url)}/api/keys`);
       if (!res.ok) return [];
       return await res.json();
@@ -260,6 +279,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
 
   ipcMain.handle('ai:addKey', async (_event, platform: string, key: string, url?: string) => {
     try {
+      await ensureServerReady(url);
       const res = await fetch(`${baseFrom(url)}/api/keys`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,6 +295,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
 
   ipcMain.handle('ai:deleteKey', async (_event, id: number, url?: string) => {
     try {
+      await ensureServerReady(url);
       const res = await fetch(`${baseFrom(url)}/api/keys/${id}`, { method: 'DELETE' });
       return { ok: res.ok };
     } catch {

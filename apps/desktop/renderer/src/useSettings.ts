@@ -6,6 +6,8 @@ import { setIconTheme, type IconTheme } from './iconTheme';
 export interface Settings {
   fontSize: number;
   tabSize: number;
+  // Indent with spaces (true) or real tab characters (false).
+  insertSpaces: boolean;
   wordWrap: boolean;
   minimap: boolean;
   theme: ThemeId;
@@ -61,6 +63,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   fontSize: 13,
   tabSize: 2,
+  insertSpaces: true,
   wordWrap: false,
   minimap: false,
   theme: 'dark',

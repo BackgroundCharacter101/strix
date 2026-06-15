@@ -353,6 +353,18 @@ export function SettingsPage({
               onChange={(e) => onChange({ tabSize: Number(e.target.value) || 2 })}
             />
           </Row>
+          <Row
+            query={query}
+            label="Indent using spaces"
+            desc="Insert spaces when pressing Tab (off = real tab characters)."
+          >
+            <input
+              type="checkbox"
+              aria-label="Indent using spaces"
+              checked={settings.insertSpaces}
+              onChange={(e) => onChange({ insertSpaces: e.target.checked })}
+            />
+          </Row>
           <Row query={query} label="Word wrap" desc="Wrap long lines instead of scrolling.">
             <input
               type="checkbox"

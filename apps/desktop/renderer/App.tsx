@@ -32,7 +32,6 @@ import {
   FilesIcon,
   GearIcon,
   OutlineIcon,
-  ProblemsIcon,
   RunIcon,
   SearchIcon,
   SourceControlIcon,
@@ -768,10 +767,6 @@ export default function App() {
 
   const gitStatus = useGitStatus(root);
   const changedCount = gitStatus?.isRepo ? gitStatus.files.length : 0;
-  const problemTotal = useMemo(
-    () => Object.values(problemsByPath).reduce((n, items) => n + items.length, 0),
-    [problemsByPath],
-  );
 
   zenRef.current = zen;
   settingsRef.current = settingsOpen;
@@ -855,6 +850,7 @@ export default function App() {
   const editorOptions = {
     fontSize: settings.fontSize,
     tabSize: settings.tabSize,
+    insertSpaces: settings.insertSpaces,
     wordWrap: settings.wordWrap,
     minimap: settings.minimap,
     fontFamily: settings.fontFamily || undefined,
@@ -964,17 +960,6 @@ export default function App() {
             onClick={() => selectView('run')}
           >
             <RunIcon />
-          </button>
-          <button
-            type="button"
-            className="activity-with-badge"
-            aria-label="Problems"
-            aria-pressed={showSidebar && sidebarView === 'problems'}
-            title={`Problems${problemTotal ? ` — ${problemTotal}` : ''}`}
-            onClick={() => selectView('problems')}
-          >
-            <ProblemsIcon />
-            {problemTotal > 0 && <span className="activity-badge">{problemTotal}</span>}
           </button>
           <button
             type="button"
