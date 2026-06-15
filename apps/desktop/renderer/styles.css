@@ -3670,12 +3670,12 @@ a:focus-visible,
    shell stays the clean modern dark theme. Dark frosted fill (not washed-out),
    a faint specular top rim, soft elevation, and a whisper of accent glow. */
 :root[data-glass='true'] {
-  --glass-fill: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
-  --glass-blur: blur(22px) saturate(1.25);
-  --glass-border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
-  --glass-elev: 0 16px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+  --glass-fill: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
+  --glass-blur: blur(34px) saturate(1.7);
+  --glass-border: 1px solid color-mix(in srgb, #ffffff 20%, transparent);
+  --glass-elev: 0 20px 56px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 :root[data-glass='true'] .palette,
@@ -3707,8 +3707,9 @@ a:focus-visible,
 :root[data-glass='true'] .app,
 :root[data-glass='true'] .app-body {
   background:
-    radial-gradient(75% 60% at 12% -5%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
-    radial-gradient(65% 65% at 105% 105%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
+    radial-gradient(80% 65% at 10% -8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 60%),
+    radial-gradient(70% 70% at 108% 108%, color-mix(in srgb, #d946ef 30%, transparent), transparent 62%),
+    radial-gradient(60% 60% at 95% 0%, color-mix(in srgb, #3b82f6 22%, transparent), transparent 60%),
     var(--bg-app);
 }
 :root[data-glass='true'] .activity-bar,
@@ -3716,11 +3717,13 @@ a:focus-visible,
 :root[data-glass='true'] .ai-pane,
 :root[data-glass='true'] .panel,
 :root[data-glass='true'] .editor-pane {
-  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent) !important;
-  backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
-  border-color: rgba(255, 255, 255, 0.13);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, var(--bg-elevated) 40%, transparent) !important;
+  backdrop-filter: blur(34px) saturate(1.7);
+  -webkit-backdrop-filter: blur(34px) saturate(1.7);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 40px color-mix(in srgb, var(--accent) 6%, transparent);
 }
 :root[data-glass='true'] .editor-tabs {
   background: transparent;
