@@ -3700,6 +3700,36 @@ a:focus-visible,
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* Glass ON also frosts the floating shell panels over a faintly accent-lit
+   canvas — so the toggle visibly transforms the whole UI, not just overlays.
+   The code editor + terminal content stay solid (Monaco/xterm fill their pane);
+   the chrome around them turns to frosted glass. */
+:root[data-glass='true'] .app,
+:root[data-glass='true'] .app-body {
+  background:
+    radial-gradient(75% 60% at 12% -5%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+    radial-gradient(65% 65% at 105% 105%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%),
+    var(--bg-app);
+}
+:root[data-glass='true'] .activity-bar,
+:root[data-glass='true'] .sidebar,
+:root[data-glass='true'] .ai-pane,
+:root[data-glass='true'] .panel,
+:root[data-glass='true'] .editor-pane {
+  background: color-mix(in srgb, var(--bg-elevated) 55%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+:root[data-glass='true'] .editor-tabs {
+  background: transparent;
+}
+/* Tab pills + composer/search inputs pick up a subtle glass tint too. */
+:root[data-glass='true'] .editor-tab[data-active='true'] button[role='tab'] {
+  background: color-mix(in srgb, #ffffff 14%, transparent);
+}
+
 /* ===================== Floating workbench (modern) =====================
    Each region (activity bar, sidebar, editor, AI pane, terminal) floats as a
    rounded card on a darker app canvas, separated by small gaps — the modern
