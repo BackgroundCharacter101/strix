@@ -41,11 +41,20 @@ export interface Settings {
   keybindings: Record<string, string>;
   // Format the document with the language formatter on every save.
   formatOnSave: boolean;
+  // On-save text hygiene.
+  trimTrailingWhitespace: boolean;
+  insertFinalNewline: boolean;
+  eol: 'keep' | 'lf' | 'crlf';
   // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
   autoSave: boolean;
   autoSaveSeconds: number;
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
+  // AI tuning. Default model seeds the picker; temperature 0–2; maxTokens 0 =
+  // provider default (applies to free-form tasks, not autocomplete/scaffold).
+  aiDefaultModel: string;
+  aiTemperature: number;
+  aiMaxTokens: number;
   // Reopen the most-recently-used folder (and its tabs) automatically on launch
   // instead of showing the welcome screen.
   restoreLastFolder: boolean;
@@ -99,9 +108,15 @@ export const DEFAULT_SETTINGS: Settings = {
   terminalShell: '',
   keybindings: {},
   formatOnSave: false,
+  trimTrailingWhitespace: false,
+  insertFinalNewline: false,
+  eol: 'keep',
   autoSave: true,
   autoSaveSeconds: 60,
   aiServerUrl: '',
+  aiDefaultModel: 'auto',
+  aiTemperature: 0.7,
+  aiMaxTokens: 0,
   restoreLastFolder: false,
   githubClientId: '',
   agentAutoApply: false,

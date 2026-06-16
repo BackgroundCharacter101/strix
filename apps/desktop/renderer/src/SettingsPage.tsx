@@ -506,6 +506,41 @@ export function SettingsPage({
               onChange={(e) => onChange({ formatOnSave: e.target.checked })}
             />
           </Row>
+          <Row
+            query={query}
+            label="Trim trailing whitespace on save"
+            desc="Remove spaces/tabs at the end of each line when saving."
+          >
+            <input
+              type="checkbox"
+              aria-label="Trim trailing whitespace on save"
+              checked={settings.trimTrailingWhitespace}
+              onChange={(e) => onChange({ trimTrailingWhitespace: e.target.checked })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Insert final newline on save"
+            desc="Ensure files end with a single newline."
+          >
+            <input
+              type="checkbox"
+              aria-label="Insert final newline on save"
+              checked={settings.insertFinalNewline}
+              onChange={(e) => onChange({ insertFinalNewline: e.target.checked })}
+            />
+          </Row>
+          <Row query={query} label="End of line" desc="Line endings written on save.">
+            <select
+              aria-label="End of line"
+              value={settings.eol}
+              onChange={(e) => onChange({ eol: e.target.value as 'keep' | 'lf' | 'crlf' })}
+            >
+              <option value="keep">Keep as-is</option>
+              <option value="lf">LF (\n)</option>
+              <option value="crlf">CRLF (\r\n)</option>
+            </select>
+          </Row>
           <Row query={query} label="Auto save" desc="Periodically write unsaved changes to disk.">
             <input
               type="checkbox"
@@ -676,6 +711,52 @@ export function SettingsPage({
               placeholder="http://localhost:3001"
               value={settings.aiServerUrl}
               onChange={(e) => onChange({ aiServerUrl: e.target.value })}
+            />
+          </Row>
+
+          <Row
+            query={query}
+            label="Default model"
+            desc="Model selected by default in the AI panel. 'auto' lets the router pick."
+          >
+            <input
+              type="text"
+              aria-label="Default model"
+              placeholder="auto"
+              value={settings.aiDefaultModel}
+              onChange={(e) => onChange({ aiDefaultModel: e.target.value || 'auto' })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Temperature"
+            desc="Creativity vs. determinism (0 = focused, 2 = wild). 0.7 is a good default."
+          >
+            <input
+              type="number"
+              aria-label="Temperature"
+              min={0}
+              max={2}
+              step={0.1}
+              value={settings.aiTemperature}
+              onChange={(e) =>
+                onChange({ aiTemperature: Math.min(2, Math.max(0, Number(e.target.value) || 0)) })
+              }
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Max response tokens"
+            desc="Cap the AI's response length for chat/explain/fix (0 = provider default)."
+          >
+            <input
+              type="number"
+              aria-label="Max response tokens"
+              min={0}
+              max={32000}
+              step={256}
+              value={settings.aiMaxTokens}
+              onChange={(e) => onChange({ aiMaxTokens: Math.max(0, Number(e.target.value) || 0) })}
             />
           </Row>
 

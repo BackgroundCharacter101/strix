@@ -252,6 +252,9 @@ export function AiPanel({
   onAskFreebuff,
   selectionRequest,
   aiServerUrl,
+  aiDefaultModel = 'auto',
+  aiTemperature = 0.7,
+  aiMaxTokens = 0,
   mode = 'normal',
   securityStance = 'balanced',
   onSecurityStanceChange,
@@ -289,6 +292,10 @@ export function AiPanel({
   selectionRequest?: { nonce: number; kind: 'explain' | 'fix'; selection: string };
   // Shared FreeLLMAPI host URL (blank = local server).
   aiServerUrl?: string;
+  // AI tuning (from Settings): default model + sampling temperature + max tokens.
+  aiDefaultModel?: string;
+  aiTemperature?: number;
+  aiMaxTokens?: number;
   // Workbench mode; 'cybersec' switches the AI to a security-expert persona.
   mode?: 'normal' | 'cybersec';
   // Security-expert stance (only meaningful in cybersec mode).
@@ -308,7 +315,15 @@ export function AiPanel({
   const [allPaths, setAllPaths] = useState<string[]>([]);
   const [mentionItems, setMentionItems] = useState<string[]>([]);
   const [mentionIndex, setMentionIndex] = useState(0);
-  const [model, setModel] = useState('auto');
+  const [model, setModel] = useState(aiDefaultModel);
+  // Merge the per-session model with the tuned temperature/maxTokens for every
+  // AI call (one place so all actions honour Settings → AI).
+  const tuned = (signal: AbortSignal) => ({
+    model,
+    temperature: aiTemperature,
+    maxTokens: aiMaxTokens,
+    signal,
+  });
   const [models, setModels] = useState<string[]>(['auto']);
   const [history, setHistory] = useState<ChatMessage[]>(() =>
     loadHistory(historyKeyFor(workspaceKey)),
@@ -533,7 +548,7 @@ export function AiPanel({
           },
           onDone: (via) => setRoutedVia(via),
         },
-        { model, signal: controller.signal },
+        tuned(controller.signal),
       );
     } catch {
       // Keep whatever streamed so far. Surface real failures (not a manual Stop).
@@ -592,7 +607,7 @@ export function AiPanel({
           },
           onDone: (via) => setRoutedVia(via),
         },
-        { model, signal: controller.signal },
+        tuned(controller.signal),
       );
     } catch {
       if (!controller.signal.aborted) {
@@ -631,7 +646,7 @@ export function AiPanel({
           },
           onDone: (via) => setRoutedVia(via),
         },
-        { model, signal: controller.signal },
+        tuned(controller.signal),
       );
     } catch {
       if (!controller.signal.aborted) {
@@ -672,7 +687,7 @@ export function AiPanel({
           securityStance,
           securityPersonaText,
         },
-        { model, signal: controller.signal },
+        tuned(controller.signal),
       );
       if (suggested.trim()) setProposal({ original: fileContent, suggested });
     } catch {
@@ -716,7 +731,7 @@ export function AiPanel({
           },
           onDone: (via) => setRoutedVia(via),
         },
-        { model, signal: controller.signal },
+        tuned(controller.signal),
       );
     } catch {
       if (!controller.signal.aborted) {

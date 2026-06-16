@@ -44,6 +44,7 @@ import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID } from './src/edition';
 import { buildKeymap, eventAccelerator } from './src/keybindings';
+import { applySaveTransforms } from './src/saveTransforms';
 import { buildFreebuffEnv } from './src/freebuffEnv';
 
 export default function App() {
@@ -317,16 +318,21 @@ export default function App() {
   const saveActive = async () => {
     const t = activeTabs.active;
     if (!t) return;
+    let text = t.draft;
     if (settings.formatOnSave && formatRef.current) {
       try {
         const formatted = await formatRef.current();
-        await t.save(formatted ?? undefined);
-        return;
+        if (typeof formatted === 'string') text = formatted;
       } catch {
-        /* fall back to a plain save below */
+        /* keep the current draft */
       }
     }
-    await t.save();
+    text = applySaveTransforms(text, {
+      trimTrailingWhitespace: settings.trimTrailingWhitespace,
+      insertFinalNewline: settings.insertFinalNewline,
+      eol: settings.eol,
+    });
+    await t.save(text);
   };
 
   // Cycle the editor layout 1 → 2 → 3 → 1 group(s). Each step opens the active
@@ -1120,6 +1126,9 @@ export default function App() {
                     onAskFreebuff={askFreebuff}
                     selectionRequest={selectionReq}
                     aiServerUrl={settings.aiServerUrl}
+                    aiDefaultModel={settings.aiDefaultModel}
+                    aiTemperature={settings.aiTemperature}
+                    aiMaxTokens={settings.aiMaxTokens}
                     mode={CYBERSEC_ENABLED ? settings.mode : 'normal'}
                     securityStance={settings.securityStance}
                     onSecurityStanceChange={(s) => updateSettings({ securityStance: s })}
