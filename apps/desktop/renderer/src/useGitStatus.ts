@@ -19,6 +19,20 @@ export function useGitStatusState(rootPath: string | null): GitStatusState {
 
   useEffect(reload, [reload]);
 
+  // Keep the status fresh so the activity-bar badge clears after a commit and
+  // reflects external git changes: poll lightly + refresh when the window
+  // regains focus (e.g. after committing in a terminal).
+  useEffect(() => {
+    if (!rootPath) return;
+    const id = window.setInterval(reload, 4000);
+    const onFocus = () => reload();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [rootPath, reload]);
+
   return { status, reload };
 }
 
