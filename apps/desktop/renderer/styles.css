@@ -3938,3 +3938,45 @@ a:focus-visible,
   margin-top: var(--space-2);
   font-size: var(--text-xs);
 }
+
+/* Cybersec: 'Audit project' button sits with the stance buttons. */
+.ai-audit-btn {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--text);
+}
+.ai-audit-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* Keyboard-shortcut editor rows in Settings. */
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.key-cap {
+  all: unset;
+  min-width: 120px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text);
+  cursor: pointer;
+}
+.key-cap:hover {
+  border-color: var(--accent);
+}
+.key-cap.is-recording {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}

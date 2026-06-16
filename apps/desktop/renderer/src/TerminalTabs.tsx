@@ -55,6 +55,8 @@ export function TerminalTabs({
   freebuffEnv,
   fontSize,
   fontFamily,
+  cursorStyle,
+  shell,
 }: {
   cwd?: string;
   // Env injected into a FreeBuff session (self-hosted / full-access backend).
@@ -73,6 +75,8 @@ export function TerminalTabs({
   // Terminal font, following the editor settings.
   fontSize?: number;
   fontFamily?: string;
+  cursorStyle?: 'block' | 'underline' | 'bar';
+  shell?: string;
 }) {
   const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0 }]);
   const [active, setActive] = useState(0);
@@ -231,6 +235,8 @@ export function TerminalTabs({
               notice={tab.notice}
               fontSize={fontSize}
               fontFamily={fontFamily}
+              cursorStyle={cursorStyle}
+              shell={shell}
             />
           </div>
         ))}

@@ -23,9 +23,22 @@ export interface TerminalProps {
   // Font, following the editor settings.
   fontSize?: number;
   fontFamily?: string;
+  cursorStyle?: 'block' | 'underline' | 'bar';
+  // Shell override for the PTY (blank = platform default).
+  shell?: string;
 }
 
-export function Terminal({ cwd, bootCommand, seed, env, notice, fontSize, fontFamily }: TerminalProps) {
+export function Terminal({
+  cwd,
+  bootCommand,
+  seed,
+  env,
+  notice,
+  fontSize,
+  fontFamily,
+  cursorStyle,
+  shell,
+}: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -69,6 +82,7 @@ export function Terminal({ cwd, bootCommand, seed, env, notice, fontSize, fontFa
       scrollback: 5000,
       fontSize: fontSize ?? 13,
       fontFamily: fontFamily || 'Cascadia Code, Consolas, monospace',
+      cursorStyle: cursorStyle ?? 'block',
       // On Windows node-pty uses ConPTY, which has its own reflow/wrapping
       // behaviour; telling xterm about it fixes redraw artifacts on resize.
       ...(isWindows ? { windowsPty: { backend: 'conpty' as const } } : {}),
@@ -132,7 +146,9 @@ export function Terminal({ cwd, bootCommand, seed, env, notice, fontSize, fontFa
 
     // Spawn in the latest cwd (cwdRef may have advanced before the session was
     // ready, e.g. a folder was opened during launch).
-    window.strix.terminal.create({ cols: term.cols, rows: term.rows, cwd: cwdRef.current, env }).then((id) => {
+    window.strix.terminal
+      .create({ cols: term.cols, rows: term.rows, cwd: cwdRef.current, env, shell })
+      .then((id) => {
       if (disposed) {
         window.strix.terminal.kill(id);
         return;
@@ -217,8 +233,9 @@ export function Terminal({ cwd, bootCommand, seed, env, notice, fontSize, fontFa
     if (!term) return;
     term.options.fontSize = fontSize ?? 13;
     term.options.fontFamily = fontFamily || 'Cascadia Code, Consolas, monospace';
+    term.options.cursorStyle = cursorStyle ?? 'block';
     fitRef.current?.fit();
-  }, [fontSize, fontFamily]);
+  }, [fontSize, fontFamily, cursorStyle]);
 
   return <div className="terminal-host" aria-label="terminal" ref={containerRef} />;
 }

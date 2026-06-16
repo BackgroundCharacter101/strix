@@ -43,6 +43,7 @@ import { OutlineView } from './src/OutlineView';
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID } from './src/edition';
+import { buildKeymap, eventAccelerator } from './src/keybindings';
 import { buildFreebuffEnv } from './src/freebuffEnv';
 
 export default function App() {
@@ -472,7 +473,8 @@ export default function App() {
     });
   }, [root]);
 
-  // Global keyboard shortcuts (VS Code-style).
+  // Global keyboard shortcuts (VS Code-style), remappable via Settings.
+  const keymap = useMemo(() => buildKeymap(settings.keybindings), [settings.keybindings]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // Esc exits Zen mode.
@@ -517,22 +519,22 @@ export default function App() {
         }, 1500);
         return;
       }
-      switch (e.key.toLowerCase()) {
-        case 's':
-          e.preventDefault();
+      // Remappable shortcuts: match the pressed accelerator to a command.
+      const cmd = keymap.get(eventAccelerator(e));
+      if (!cmd) return;
+      e.preventDefault();
+      switch (cmd) {
+        case 'save':
           void saveActive();
           break;
-        case 'b':
-          e.preventDefault();
+        case 'toggleSidebar':
           setShowSidebar((v) => !v);
           break;
-        case '`':
-          e.preventDefault();
+        case 'toggleTerminal':
           setShowTerminal((v) => !v);
           break;
-        case 'w':
+        case 'closeTab':
           if (activeTabs.activePath) {
-            e.preventDefault();
             const p = activeTabs.activePath;
             const name = p.split(/[\\/]/).pop();
             if (!activeTabs.isDirty(p) || window.confirm(`Discard unsaved changes to ${name}?`)) {
@@ -540,34 +542,27 @@ export default function App() {
             }
           }
           break;
-        case '\\':
-          e.preventDefault();
+        case 'splitEditor':
           cycleSplit();
           break;
-        case 'p':
-          e.preventDefault();
-          if (e.shiftKey) {
-            setPalette('commands');
-          } else {
-            void openQuickFiles();
-          }
+        case 'commandPalette':
+          setPalette('commands');
           break;
-        case 'o':
-          e.preventDefault();
+        case 'quickOpen':
+          void openQuickFiles();
+          break;
+        case 'openFile':
           void openFile();
           break;
-        case 'f':
-          if (e.shiftKey) {
-            e.preventDefault();
-            setSidebarView('search');
-            setShowSidebar(true);
-          }
+        case 'search':
+          setSidebarView('search');
+          setShowSidebar(true);
           break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [tabs, openQuickFiles, openFile]);
+  }, [tabs, openQuickFiles, openFile, keymap]);
 
   // Native application menu → run the matching command (via a ref so this
   // subscription is set up once but always calls the latest handler).
@@ -1160,8 +1155,10 @@ export default function App() {
                   cwd={root ?? undefined}
                   launch={claudeLaunch}
                   freebuffEnv={freebuffEnv}
-                  fontSize={settings.fontSize}
-                  fontFamily={settings.fontFamily || undefined}
+                  fontSize={settings.terminalFontSize || settings.fontSize}
+                  fontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
+                  cursorStyle={settings.terminalCursorStyle}
+                  shell={settings.terminalShell || undefined}
                 />
               </section>
             </>

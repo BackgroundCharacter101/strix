@@ -32,6 +32,13 @@ export interface Settings {
   reduceMotion: boolean;
   // Liquid Glass: frosted translucent blur on floating surfaces + side panels.
   liquidGlass: boolean;
+  // Terminal: 0/blank = inherit the editor font. cursor + shell are explicit.
+  terminalFontSize: number;
+  terminalFontFamily: string;
+  terminalCursorStyle: 'block' | 'underline' | 'bar';
+  terminalShell: string;
+  // Keyboard shortcut overrides: command id → accelerator (e.g. "Ctrl+B").
+  keybindings: Record<string, string>;
   // Format the document with the language formatter on every save.
   formatOnSave: boolean;
   // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
@@ -86,6 +93,11 @@ export const DEFAULT_SETTINGS: Settings = {
   density: 'comfortable',
   reduceMotion: false,
   liquidGlass: false,
+  terminalFontSize: 0,
+  terminalFontFamily: '',
+  terminalCursorStyle: 'block',
+  terminalShell: '',
+  keybindings: {},
   formatOnSave: false,
   autoSave: true,
   autoSaveSeconds: 60,

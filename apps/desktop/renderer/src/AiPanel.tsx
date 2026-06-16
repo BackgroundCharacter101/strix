@@ -552,6 +552,60 @@ export function AiPanel({
     }
   };
 
+  // Cybersec: security-audit the WHOLE project (not just the open file). Streams
+  // a findings report into the thread.
+  const auditProject = async () => {
+    if (busy) return;
+    if (!workspaceKey) {
+      showToast('Open a project folder first.', 'info');
+      return;
+    }
+    await ensureAi();
+    setBusy(true);
+    setStreaming('');
+    setRoutedVia(null);
+    setHistory((h) => [...h, { role: 'user', content: '🛡️ Security audit — whole project' }]);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    let acc = '';
+    try {
+      const project = await gatherProjectFiles(workspaceKey, {
+        maxFiles: 60,
+        maxBytes: 200_000,
+        maxFileBytes: 16_000,
+      });
+      await runTask(
+        'vuln_check',
+        {
+          filePath: '',
+          fileContent: project,
+          userMessage:
+            'Perform a security audit across this entire project. Group concrete findings by severity (Critical / High / Medium / Low); for each give the file path, the issue, why it is exploitable, and a fix. Cover injection, authentication/authorization, hard-coded secrets, unsafe deserialization, path traversal, SSRF, XSS, crypto misuse, and risky dependencies. End with a short prioritized remediation checklist.',
+          securityMode: true,
+          securityStance,
+          securityPersonaText,
+        },
+        {
+          onToken: (token) => {
+            acc += token;
+            setStreaming(acc);
+          },
+          onDone: (via) => setRoutedVia(via),
+        },
+        { model, signal: controller.signal },
+      );
+    } catch {
+      if (!controller.signal.aborted) {
+        showToast('Audit failed — check the AI server / your key.', 'error', 6000);
+      }
+    } finally {
+      setBusy(false);
+      abortRef.current = null;
+    }
+    setHistory((h) => [...h, { role: 'assistant', content: acc }]);
+    setStreaming('');
+  };
+
   // Run Explain/Fix on a selected snippet (from the editor's floating toolbar).
   // The request + response are appended to the conversation thread.
   const runSelection = async (kind: 'explain' | 'fix', selection: string) => {
@@ -1174,6 +1228,15 @@ export function AiPanel({
               {s === 'offensive' ? '🗡 Offensive' : s === 'defensive' ? '🛡 Defensive' : '⚖ Balanced'}
             </button>
           ))}
+          <button
+            type="button"
+            className="ai-audit-btn"
+            title="Security-audit the whole project"
+            disabled={busy || !workspaceKey}
+            onClick={() => void auditProject()}
+          >
+            🛡 Audit project
+          </button>
         </div>
       )}
 

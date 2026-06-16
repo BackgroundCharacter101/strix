@@ -6,6 +6,7 @@ import { THEMES, ACCENTS } from './themes';
 import { SaveIcon, CloseIcon } from './icons';
 import { showToast } from './toast';
 import { CYBERSEC_ENABLED } from './edition';
+import { KEY_COMMANDS, resolveKey, eventAccelerator } from './keybindings';
 
 // FreeLLMAPI providers the user can add a key for (ids match the server).
 const KEY_PLATFORMS: { id: string; label: string }[] = [
@@ -121,11 +122,13 @@ function ProviderKeys({ serverUrl }: { serverUrl?: string }) {
   );
 }
 
-type SectionId = 'appearance' | 'editor' | 'ai' | 'security';
+type SectionId = 'appearance' | 'editor' | 'terminal' | 'keys' | 'ai' | 'security';
 
 const SECTIONS: { id: SectionId; title: string }[] = [
   { id: 'appearance', title: 'Appearance' },
   { id: 'editor', title: 'Editor' },
+  { id: 'terminal', title: 'Terminal' },
+  { id: 'keys', title: 'Keyboard' },
   { id: 'ai', title: 'AI' },
   // Security AI persona configures Cybersec mode — Competition edition only.
   ...(CYBERSEC_ENABLED ? [{ id: 'security' as SectionId, title: 'Security AI' }] : []),
@@ -173,6 +176,8 @@ export function SettingsPage({
 }) {
   const [query, setQuery] = useState('');
   const [activeSection, setActiveSection] = useState<SectionId>(initialSection);
+  // The shortcut row currently capturing a new key combo (command id), if any.
+  const [recordingKey, setRecordingKey] = useState<string | null>(null);
   const searching = query.trim() !== '';
   // While searching, show every section so matches surface; otherwise show only
   // the selected one (a clean, tabbed full-screen layout).
@@ -535,6 +540,124 @@ export function SettingsPage({
                 onChange({ autoSaveSeconds: Math.max(5, Number(e.target.value) || 60) })
               }
             />
+          </Row>
+        </section>
+        )}
+
+        {showSection('terminal') && (
+        <section className="set-section">
+          <h3>Terminal</h3>
+          <Row
+            query={query}
+            label="Font size"
+            desc="Terminal font size in pixels (0 = follow the editor font size)."
+          >
+            <input
+              type="number"
+              aria-label="Terminal font size"
+              min={0}
+              max={32}
+              value={settings.terminalFontSize}
+              onChange={(e) => onChange({ terminalFontSize: Number(e.target.value) || 0 })}
+            />
+          </Row>
+          <Row
+            query={query}
+            label="Font family"
+            desc="Terminal font. Blank = follow the editor font."
+          >
+            <input
+              type="text"
+              aria-label="Terminal font family"
+              placeholder="Cascadia Code, Consolas, monospace"
+              value={settings.terminalFontFamily}
+              onChange={(e) => onChange({ terminalFontFamily: e.target.value })}
+            />
+          </Row>
+          <Row query={query} label="Cursor style" desc="Shape of the terminal cursor.">
+            <select
+              aria-label="Terminal cursor style"
+              value={settings.terminalCursorStyle}
+              onChange={(e) =>
+                onChange({
+                  terminalCursorStyle: e.target.value as 'block' | 'underline' | 'bar',
+                })
+              }
+            >
+              <option value="block">Block</option>
+              <option value="bar">Bar</option>
+              <option value="underline">Underline</option>
+            </select>
+          </Row>
+          <Row
+            query={query}
+            label="Shell"
+            desc="Executable for new terminals (e.g. powershell.exe, pwsh.exe, cmd.exe, bash). Blank = system default. Reopen the terminal to apply."
+          >
+            <input
+              type="text"
+              aria-label="Terminal shell"
+              placeholder="powershell.exe"
+              value={settings.terminalShell}
+              onChange={(e) => onChange({ terminalShell: e.target.value })}
+            />
+          </Row>
+        </section>
+        )}
+
+        {showSection('keys') && (
+        <section className="set-section">
+          <h3>Keyboard shortcuts</h3>
+          {KEY_COMMANDS.map((cmd) => {
+            const current = resolveKey(cmd.id, settings.keybindings);
+            const overridden = !!settings.keybindings[cmd.id];
+            return (
+              <Row key={cmd.id} query={query} label={cmd.label} desc={`Default: ${cmd.defaultKey}`}>
+                <div className="key-row">
+                  <button
+                    type="button"
+                    className={`key-cap${recordingKey === cmd.id ? ' is-recording' : ''}`}
+                    aria-label={`Change shortcut for ${cmd.label}`}
+                    onClick={() => setRecordingKey(cmd.id)}
+                    onBlur={() => setRecordingKey((r) => (r === cmd.id ? null : r))}
+                    onKeyDown={(e) => {
+                      if (recordingKey !== cmd.id) return;
+                      e.preventDefault();
+                      if (e.key === 'Escape') {
+                        setRecordingKey(null);
+                        return;
+                      }
+                      // Ignore lone modifier presses; wait for a real key.
+                      if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+                      const accel = eventAccelerator(e);
+                      onChange({ keybindings: { ...settings.keybindings, [cmd.id]: accel } });
+                      setRecordingKey(null);
+                    }}
+                  >
+                    {recordingKey === cmd.id ? 'Press keys…' : current}
+                  </button>
+                  {overridden && (
+                    <button
+                      type="button"
+                      className="scm-link"
+                      aria-label={`Reset ${cmd.label} shortcut`}
+                      onClick={() => {
+                        const next = { ...settings.keybindings };
+                        delete next[cmd.id];
+                        onChange({ keybindings: next });
+                      }}
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </Row>
+            );
+          })}
+          <Row query={query} label="Reset all shortcuts" desc="Restore every shortcut to its default.">
+            <button type="button" onClick={() => onChange({ keybindings: {} })}>
+              Reset all
+            </button>
           </Row>
         </section>
         )}
