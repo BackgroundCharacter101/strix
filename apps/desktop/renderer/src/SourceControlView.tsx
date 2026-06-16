@@ -72,7 +72,20 @@ export function SourceControlView({
   const stageAll = () => void guard(() => window.strix.git.stageAll(rootPath!));
   const commit = () =>
     void guard(async () => {
-      await window.strix.git.commit(rootPath!, message.trim());
+      const msg = message.trim();
+      if (!msg) {
+        showToast('Enter a commit message first.', 'info');
+        return;
+      }
+      // Like VS Code: if nothing is staged, stage everything and commit it.
+      if (staged.length === 0) {
+        if (unstaged.length === 0) {
+          showToast('Nothing to commit.', 'info');
+          return;
+        }
+        await window.strix.git.stageAll(rootPath!);
+      }
+      await window.strix.git.commit(rootPath!, msg);
       setMessage('');
       showToast('Changes committed', 'success');
     });
@@ -119,11 +132,19 @@ export function SourceControlView({
     if (!rootPath) return;
     setAiBusy(true);
     try {
-      const diff = (await window.strix.git.diffStaged(rootPath)).slice(0, 12_000);
+      let diff = (await window.strix.git.diffStaged(rootPath)).slice(0, 12_000);
       if (!diff.trim()) {
-        showToast('Stage some changes first to draft a message.', 'info');
+        // Nothing staged — stage everything so we can describe it (the commit
+        // will use the same staged changes).
+        await window.strix.git.stageAll(rootPath);
+        reloadGit();
+        diff = (await window.strix.git.diffStaged(rootPath)).slice(0, 12_000);
+      }
+      if (!diff.trim()) {
+        showToast('No changes to describe.', 'info');
         return;
       }
+      await window.strix.ai.ensure(aiServerUrl || undefined);
       configureAi(await window.strix.ai.config(aiServerUrl || undefined));
       const reply = await complete('chat', {
         filePath: '',
