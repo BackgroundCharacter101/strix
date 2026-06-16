@@ -1220,6 +1220,7 @@ export default function App() {
       {cloneOpen && (
         <CloneDialog
           clientId={settings.githubClientId}
+          onSetClientId={(id) => updateSettings({ githubClientId: id })}
           onClone={(url) => void cloneRepo(url)}
           onCancel={() => setCloneOpen(false)}
         />

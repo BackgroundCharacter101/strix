@@ -5,12 +5,16 @@ import { showToast } from './toast';
 // Clone dialog with optional GitHub account connection: connect a token once,
 // then pick/search your repos instead of pasting a URL. A manual URL field
 // stays available for any other repo.
+const REG_URL = 'https://github.com/settings/applications/new';
+
 export function CloneDialog({
   clientId,
+  onSetClientId,
   onClone,
   onCancel,
 }: {
   clientId: string;
+  onSetClientId: (id: string) => void;
   onClone: (url: string) => void;
   onCancel: () => void;
 }) {
@@ -23,19 +27,25 @@ export function CloneDialog({
   const [busy, setBusy] = useState(false);
   const [showToken, setShowToken] = useState(false);
   const [device, setDevice] = useState<{ userCode: string; uri: string } | null>(null);
+  const [setup, setSetup] = useState(false);
+  const [clientInput, setClientInput] = useState('');
 
-  const signIn = async () => {
+  const signIn = async (idArg?: string) => {
     if (busy) return;
-    if (!clientId.trim()) {
-      showToast('Add a GitHub client ID in Settings → AI to enable browser sign-in.', 'info', 7000);
+    const id = (idArg ?? clientId).trim();
+    if (!id) {
+      // First-time: no OAuth App yet. Open the registration page + let the user
+      // paste the resulting Client ID right here.
+      setSetup(true);
+      void window.strix.win.openExternal(REG_URL);
       return;
     }
     setBusy(true);
     try {
-      const d = await window.strix.github.deviceStart(clientId);
+      const d = await window.strix.github.deviceStart(id);
       setDevice({ userCode: d.userCode, uri: d.verificationUri });
       await window.strix.win.openExternal(d.verificationUri);
-      const res = await window.strix.github.deviceWait(clientId, d.deviceCode, d.interval);
+      const res = await window.strix.github.deviceWait(id, d.deviceCode, d.interval);
       if (res.ok) {
         setLogin(res.login ?? null);
         await loadRepos();
@@ -49,6 +59,14 @@ export function CloneDialog({
       setBusy(false);
       setDevice(null);
     }
+  };
+
+  const saveAndSignIn = () => {
+    const id = clientInput.trim();
+    if (!id) return;
+    onSetClientId(id);
+    setSetup(false);
+    void signIn(id);
   };
 
   const loadRepos = async () => {
@@ -156,7 +174,43 @@ export function CloneDialog({
           </>
         ) : (
           <div className="clone-connect">
-            {device ? (
+            {setup ? (
+              <>
+                <p className="clone-hint">
+                  One-time setup. A GitHub page opened to <strong>register an OAuth App</strong>:
+                  <br />
+                  1. Name it (e.g. Strix), set any homepage URL, click <strong>Register</strong>.
+                  <br />
+                  2. On the app page, tick <strong>Enable Device Flow</strong>.
+                  <br />
+                  3. Copy the <strong>Client ID</strong> and paste it below.
+                </p>
+                <input
+                  className="dialog-input"
+                  aria-label="GitHub client ID"
+                  placeholder="Client ID (e.g. Iv1.xxxx or Ov23xxxx)"
+                  value={clientInput}
+                  autoFocus
+                  onChange={(e) => setClientInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && saveAndSignIn()}
+                />
+                <button
+                  type="button"
+                  className="clone-connect-btn"
+                  disabled={clientInput.trim().length === 0}
+                  onClick={saveAndSignIn}
+                >
+                  Save &amp; sign in
+                </button>
+                <button
+                  type="button"
+                  className="scm-link clone-token-toggle"
+                  onClick={() => void window.strix.win.openExternal(REG_URL)}
+                >
+                  Reopen the registration page
+                </button>
+              </>
+            ) : device ? (
               <p className="clone-hint">
                 In the browser, enter this code: <strong className="clone-code">{device.userCode}</strong>
                 <br />
@@ -169,15 +223,17 @@ export function CloneDialog({
                   : 'Sign in to pick your repositories by name and clone private repos.'}
               </p>
             )}
-            <button
-              type="button"
-              className="clone-connect-btn"
-              disabled={busy || loading}
-              onClick={() => void signIn()}
-            >
-              {busy ? 'Waiting for GitHub…' : 'Sign in with GitHub'}
-            </button>
-            {!busy && (
+            {!setup && (
+              <button
+                type="button"
+                className="clone-connect-btn"
+                disabled={busy || loading}
+                onClick={() => void signIn()}
+              >
+                {busy ? 'Waiting for GitHub…' : 'Sign in with GitHub'}
+              </button>
+            )}
+            {!busy && !setup && (
               <button
                 type="button"
                 className="scm-link clone-token-toggle"
@@ -186,7 +242,7 @@ export function CloneDialog({
                 {showToken ? 'Hide token option' : 'Use a token instead'}
               </button>
             )}
-            {showToken && !busy && (
+            {showToken && !busy && !setup && (
               <>
                 <input
                   className="dialog-input"
