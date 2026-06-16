@@ -31,3 +31,11 @@ export const CYBERSEC_ENABLED = IS_COMPETITION;
 
 /** Human-readable edition name (About dialog / window title). */
 export const EDITION_LABEL = IS_COMPETITION ? 'M1 Competition' : 'M1';
+
+/**
+ * Default GitHub OAuth App client ID for browser "Sign in with GitHub"
+ * (Device Flow). Public/shareable. Fill this once with a registered OAuth App
+ * (Device Flow enabled) and the whole team gets one-click sign-in with no
+ * setup. Empty = users register/paste their own in the Clone dialog.
+ */
+export const GITHUB_CLIENT_ID = '';

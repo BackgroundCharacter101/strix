@@ -42,7 +42,7 @@ import {
 import { OutlineView } from './src/OutlineView';
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
-import { CLAUDE_ENABLED, CYBERSEC_ENABLED } from './src/edition';
+import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID } from './src/edition';
 import { buildFreebuffEnv } from './src/freebuffEnv';
 
 export default function App() {
@@ -1219,7 +1219,7 @@ export default function App() {
       )}
       {cloneOpen && (
         <CloneDialog
-          clientId={settings.githubClientId}
+          clientId={settings.githubClientId || GITHUB_CLIENT_ID}
           onSetClientId={(id) => updateSettings({ githubClientId: id })}
           onClone={(url) => void cloneRepo(url)}
           onCancel={() => setCloneOpen(false)}
