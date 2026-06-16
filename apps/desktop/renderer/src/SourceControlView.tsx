@@ -93,15 +93,19 @@ export function SourceControlView({
     });
   };
 
-  const sync = (dir: 'pull' | 'push') => {
+  const sync = (dir: 'pull' | 'push' | 'sync') => {
     if (!rootPath || syncBusy) return;
     setSyncBusy(true);
     void (async () => {
       try {
+        const api = window.strix.git;
         const res = await (dir === 'pull'
-          ? window.strix.git.pull(rootPath)
-          : window.strix.git.push(rootPath));
-        showToast(`${dir === 'pull' ? 'Pull' : 'Push'}: ${res.output}`, res.ok ? 'success' : 'error', res.ok ? 3500 : 9000);
+          ? api.pull(rootPath)
+          : dir === 'push'
+            ? api.push(rootPath)
+            : api.sync(rootPath));
+        const label = dir === 'pull' ? 'Pull' : dir === 'push' ? 'Push' : 'Sync';
+        showToast(`${label}: ${res.output}`, res.ok ? 'success' : 'error', res.ok ? 3500 : 9000);
         reload();
         reloadGit();
       } finally {
@@ -229,6 +233,15 @@ export function SourceControlView({
           onClick={() => sync('push')}
         >
           ↑ Push
+        </button>
+        <button
+          type="button"
+          className="scm-sync-btn scm-sync-primary"
+          title="Sync — pull then push (publishes the branch if it has no upstream)"
+          disabled={syncBusy}
+          onClick={() => sync('sync')}
+        >
+          {syncBusy ? '…' : '⟲ Sync'}
         </button>
       </div>
       <div className="scm-newbranch">

@@ -39,6 +39,7 @@ const api: StrixApi = {
     log: (rootPath, depth) => ipcRenderer.invoke('git:log', rootPath, depth),
     pull: (rootPath) => ipcRenderer.invoke('git:pull', rootPath),
     push: (rootPath) => ipcRenderer.invoke('git:push', rootPath),
+    sync: (rootPath) => ipcRenderer.invoke('git:sync', rootPath),
   },
   terminal: {
     create: (opts) => ipcRenderer.invoke('terminal:create', opts),

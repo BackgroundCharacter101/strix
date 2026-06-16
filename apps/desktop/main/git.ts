@@ -195,8 +195,30 @@ export async function push(rootPath: string): Promise<{ ok: boolean; output: str
     const { stdout, stderr } = await execFileAsync('git', ['push'], { cwd: dir, timeout: 120_000 });
     return { ok: true, output: `${stdout}${stderr}`.trim() || 'Pushed.' };
   } catch (e) {
-    return { ok: false, output: e instanceof Error ? e.message : String(e) };
+    const msg = e instanceof Error ? e.message : String(e);
+    // No upstream yet → publish the branch (set upstream) like VS Code does.
+    if (/no upstream|set-upstream|has no upstream branch/i.test(msg)) {
+      try {
+        const { stdout, stderr } = await execFileAsync('git', ['push', '-u', 'origin', 'HEAD'], {
+          cwd: dir,
+          timeout: 120_000,
+        });
+        return { ok: true, output: `${stdout}${stderr}`.trim() || 'Published branch.' };
+      } catch (e2) {
+        return { ok: false, output: e2 instanceof Error ? e2.message : String(e2) };
+      }
+    }
+    return { ok: false, output: msg };
   }
+}
+
+// Sync = pull then push (VS Code's circular-arrows action). A pull failure when
+// there's no upstream yet is fine — push then publishes the branch.
+export async function sync(rootPath: string): Promise<{ ok: boolean; output: string }> {
+  const pulled = await pull(rootPath);
+  const pushed = await push(rootPath);
+  const output = [pulled.output, pushed.output].filter(Boolean).join('\n');
+  return { ok: pushed.ok, output };
 }
 
 // The committed (HEAD) content of a file, for diffing against the working copy.

@@ -1979,6 +1979,16 @@ kbd {
   border-color: var(--accent);
   color: var(--accent);
 }
+.scm-sync-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.scm-sync-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-ink);
+}
 .scm-newbranch {
   display: flex;
   align-items: center;

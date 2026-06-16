@@ -58,6 +58,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       log: vi.fn(async () => []),
       pull: vi.fn(async () => ({ ok: true, output: '' })),
       push: vi.fn(async () => ({ ok: true, output: '' })),
+      sync: vi.fn(async () => ({ ok: true, output: '' })),
     },
     terminal: {
       create: vi.fn(async (): Promise<string> => 'term-1'),

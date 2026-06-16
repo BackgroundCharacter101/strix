@@ -55,6 +55,8 @@ export interface StrixGitApi {
   log(rootPath: string, depth?: number): Promise<GitLogEntry[]>;
   pull(rootPath: string): Promise<{ ok: boolean; output: string }>;
   push(rootPath: string): Promise<{ ok: boolean; output: string }>;
+  // Sync = pull then push (publishes the branch if it has no upstream yet).
+  sync(rootPath: string): Promise<{ ok: boolean; output: string }>;
 }
 
 export interface StrixTerminalApi {

@@ -23,6 +23,7 @@ import {
   gitLog,
   pull,
   push,
+  sync,
 } from './git.js';
 import {
   getRoot,
@@ -147,6 +148,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('git:log', (_event, root: string, depth?: number) => gitLog(root, depth));
   ipcMain.handle('git:pull', (_event, root: string) => pull(root));
   ipcMain.handle('git:push', (_event, root: string) => push(root));
+  ipcMain.handle('git:sync', (_event, root: string) => sync(root));
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>
