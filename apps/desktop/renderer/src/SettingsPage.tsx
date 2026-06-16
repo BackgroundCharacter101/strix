@@ -558,6 +558,20 @@ export function SettingsPage({
 
           <Row
             query={query}
+            label="GitHub client ID"
+            desc='For "Sign in with GitHub" (browser). Register a free OAuth App at github.com/settings/applications/new with Device Flow enabled, then paste its Client ID here. Shareable across the team.'
+          >
+            <input
+              type="text"
+              aria-label="GitHub client ID"
+              placeholder="Iv1.xxxxxxxxxxxxxxxx"
+              value={settings.githubClientId}
+              onChange={(e) => onChange({ githubClientId: e.target.value })}
+            />
+          </Row>
+
+          <Row
+            query={query}
             label="Apply AI changes without confirming"
             desc="Hands-off agent: write file changes immediately, skipping the review/diff modal."
           >

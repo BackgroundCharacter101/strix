@@ -41,6 +41,14 @@ export interface GithubRepo {
   updatedAt: string;
 }
 
+export interface GithubDeviceStart {
+  deviceCode: string;
+  userCode: string;
+  verificationUri: string;
+  interval: number;
+  expiresIn: number;
+}
+
 export interface StrixGithubApi {
   // The connected account (null when no/invalid token).
   user(): Promise<{ login: string; avatarUrl: string } | null>;
@@ -49,6 +57,13 @@ export interface StrixGithubApi {
   disconnect(): Promise<void>;
   // The connected user's repos (most-recently-updated first).
   repos(): Promise<GithubRepo[]>;
+  // OAuth Device Flow: start → show userCode + open verificationUri → wait.
+  deviceStart(clientId: string): Promise<GithubDeviceStart>;
+  deviceWait(
+    clientId: string,
+    deviceCode: string,
+    interval: number,
+  ): Promise<{ ok: boolean; login?: string; error?: string }>;
 }
 
 export interface StrixGitApi {

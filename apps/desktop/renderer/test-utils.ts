@@ -40,6 +40,14 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       connect: vi.fn(async () => ({ ok: false, error: 'no token' })),
       disconnect: vi.fn(async () => {}),
       repos: vi.fn(async () => []),
+      deviceStart: vi.fn(async () => ({
+        deviceCode: '',
+        userCode: 'XXXX-XXXX',
+        verificationUri: 'https://github.com/login/device',
+        interval: 5,
+        expiresIn: 900,
+      })),
+      deviceWait: vi.fn(async () => ({ ok: false, error: 'no client id' })),
     },
     workspace: {
       root: vi.fn(async (): Promise<string> => '/'),

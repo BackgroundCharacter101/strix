@@ -42,6 +42,9 @@ export interface Settings {
   // Reopen the most-recently-used folder (and its tabs) automatically on launch
   // instead of showing the welcome screen.
   restoreLastFolder: boolean;
+  // GitHub OAuth App client ID for browser "Sign in with GitHub" (Device Flow).
+  // Public/shareable; blank disables browser sign-in (token paste still works).
+  githubClientId: string;
   // Agent: apply file changes immediately, skipping the review/confirm modal.
   agentAutoApply: boolean;
   // FreeBuff connection (self-hosted / full access). Injected as env vars into
@@ -88,6 +91,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSaveSeconds: 60,
   aiServerUrl: '',
   restoreLastFolder: false,
+  githubClientId: '',
   agentAutoApply: false,
   freebuffProxyUrl: '',
   freebuffBackendUrl: '',

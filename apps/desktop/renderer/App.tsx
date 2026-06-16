@@ -1218,7 +1218,11 @@ export default function App() {
         />
       )}
       {cloneOpen && (
-        <CloneDialog onClone={(url) => void cloneRepo(url)} onCancel={() => setCloneOpen(false)} />
+        <CloneDialog
+          clientId={settings.githubClientId}
+          onClone={(url) => void cloneRepo(url)}
+          onCancel={() => setCloneOpen(false)}
+        />
       )}
       {namePrompt && (
         <PromptDialog

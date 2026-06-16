@@ -37,6 +37,8 @@ import {
   connect as githubConnect,
   clearToken as clearGithubToken,
   listRepos as listGithubRepos,
+  deviceStart as githubDeviceStart,
+  deviceWait as githubDeviceWait,
 } from './github.js';
 import { BrowserWindow } from 'electron';
 import {
@@ -86,6 +88,10 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('github:connect', (_event, token: string) => githubConnect(token));
   ipcMain.handle('github:disconnect', () => clearGithubToken());
   ipcMain.handle('github:repos', () => listGithubRepos());
+  ipcMain.handle('github:deviceStart', (_event, clientId: string) => githubDeviceStart(clientId));
+  ipcMain.handle('github:deviceWait', (_event, clientId: string, code: string, interval: number) =>
+    githubDeviceWait(clientId, code, interval),
+  );
   ipcMain.handle('workspace:newProject', (event, name: string) =>
     newProjectDialog(BrowserWindow.fromWebContents(event.sender), name),
   );

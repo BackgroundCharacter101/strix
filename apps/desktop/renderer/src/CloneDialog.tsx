@@ -6,9 +6,11 @@ import { showToast } from './toast';
 // then pick/search your repos instead of pasting a URL. A manual URL field
 // stays available for any other repo.
 export function CloneDialog({
+  clientId,
   onClone,
   onCancel,
 }: {
+  clientId: string;
   onClone: (url: string) => void;
   onCancel: () => void;
 }) {
@@ -19,6 +21,35 @@ export function CloneDialog({
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [showToken, setShowToken] = useState(false);
+  const [device, setDevice] = useState<{ userCode: string; uri: string } | null>(null);
+
+  const signIn = async () => {
+    if (busy) return;
+    if (!clientId.trim()) {
+      showToast('Add a GitHub client ID in Settings → AI to enable browser sign-in.', 'info', 7000);
+      return;
+    }
+    setBusy(true);
+    try {
+      const d = await window.strix.github.deviceStart(clientId);
+      setDevice({ userCode: d.userCode, uri: d.verificationUri });
+      await window.strix.win.openExternal(d.verificationUri);
+      const res = await window.strix.github.deviceWait(clientId, d.deviceCode, d.interval);
+      if (res.ok) {
+        setLogin(res.login ?? null);
+        await loadRepos();
+        showToast(`Connected to GitHub as ${res.login}`, 'success');
+      } else {
+        showToast(res.error ?? 'Sign-in failed.', 'error', 7000);
+      }
+    } catch (e) {
+      showToast(`GitHub: ${e instanceof Error ? e.message : String(e)}`, 'error', 6000);
+    } finally {
+      setBusy(false);
+      setDevice(null);
+    }
+  };
 
   const loadRepos = async () => {
     try {
@@ -125,28 +156,57 @@ export function CloneDialog({
           </>
         ) : (
           <div className="clone-connect">
-            <p className="clone-hint">
-              {loading
-                ? 'Checking GitHub connection…'
-                : 'Connect your GitHub account to pick repos by name. Create a token with the "repo" scope at github.com/settings/tokens.'}
-            </p>
-            <input
-              className="dialog-input"
-              type="password"
-              aria-label="GitHub token"
-              placeholder="GitHub Personal Access Token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && void connect()}
-            />
+            {device ? (
+              <p className="clone-hint">
+                In the browser, enter this code: <strong className="clone-code">{device.userCode}</strong>
+                <br />
+                Waiting for authorization… (a tab opened at {device.uri})
+              </p>
+            ) : (
+              <p className="clone-hint">
+                {loading
+                  ? 'Checking GitHub connection…'
+                  : 'Sign in to pick your repositories by name and clone private repos.'}
+              </p>
+            )}
             <button
               type="button"
               className="clone-connect-btn"
-              disabled={busy || token.trim().length === 0}
-              onClick={() => void connect()}
+              disabled={busy || loading}
+              onClick={() => void signIn()}
             >
-              {busy ? 'Connecting…' : 'Connect GitHub'}
+              {busy ? 'Waiting for GitHub…' : 'Sign in with GitHub'}
             </button>
+            {!busy && (
+              <button
+                type="button"
+                className="scm-link clone-token-toggle"
+                onClick={() => setShowToken((v) => !v)}
+              >
+                {showToken ? 'Hide token option' : 'Use a token instead'}
+              </button>
+            )}
+            {showToken && !busy && (
+              <>
+                <input
+                  className="dialog-input"
+                  type="password"
+                  aria-label="GitHub token"
+                  placeholder="GitHub Personal Access Token (repo scope)"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && void connect()}
+                />
+                <button
+                  type="button"
+                  className="clone-connect-btn"
+                  disabled={token.trim().length === 0}
+                  onClick={() => void connect()}
+                >
+                  Connect with token
+                </button>
+              </>
+            )}
           </div>
         )}
 

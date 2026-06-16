@@ -98,6 +98,92 @@ export async function listRepos(): Promise<GithubRepo[]> {
   return out;
 }
 
+// ---- OAuth Device Flow (VS Code-style "Sign in with GitHub") --------------
+// Needs a registered GitHub OAuth App client_id (with Device Flow enabled). The
+// client_id is public/shareable; the user sets it once in Settings.
+
+export interface DeviceStart {
+  deviceCode: string;
+  userCode: string;
+  verificationUri: string;
+  interval: number;
+  expiresIn: number;
+}
+
+const deviceHeaders = {
+  Accept: 'application/json',
+  'Content-Type': 'application/json',
+  'User-Agent': 'Strix-IDE',
+};
+
+// Step 1: request a device + user code. The user enters userCode at
+// verificationUri (we open it in their browser).
+export async function deviceStart(clientId: string): Promise<DeviceStart> {
+  if (!clientId.trim()) throw new Error('No GitHub client ID configured.');
+  const res = await fetch('https://github.com/login/device/code', {
+    method: 'POST',
+    headers: deviceHeaders,
+    body: JSON.stringify({ client_id: clientId.trim(), scope: 'repo' }),
+  });
+  if (!res.ok) throw new Error(`GitHub device-code error (HTTP ${res.status})`);
+  const b = (await res.json()) as {
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    interval?: number;
+    expires_in?: number;
+  };
+  return {
+    deviceCode: b.device_code,
+    userCode: b.user_code,
+    verificationUri: b.verification_uri,
+    interval: b.interval ?? 5,
+    expiresIn: b.expires_in ?? 900,
+  };
+}
+
+// Step 2: poll until the user authorizes (or it times out). Stores the token.
+export async function deviceWait(
+  clientId: string,
+  deviceCode: string,
+  interval: number,
+): Promise<{ ok: boolean; login?: string; error?: string }> {
+  const deadline = Date.now() + 15 * 60 * 1000;
+  let waitMs = Math.max(interval, 5) * 1000;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, waitMs));
+    let b: { access_token?: string; error?: string; error_description?: string };
+    try {
+      const res = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: deviceHeaders,
+        body: JSON.stringify({
+          client_id: clientId.trim(),
+          device_code: deviceCode,
+          grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+        }),
+      });
+      b = (await res.json()) as typeof b;
+    } catch {
+      continue; // transient network blip — keep polling
+    }
+    if (b.access_token) {
+      await setToken(b.access_token);
+      const u = await getUser();
+      return { ok: true, login: u?.login };
+    }
+    if (b.error === 'authorization_pending') continue;
+    if (b.error === 'slow_down') {
+      waitMs += 5000;
+      continue;
+    }
+    if (b.error === 'expired_token') return { ok: false, error: 'The code expired — try again.' };
+    if (b.error === 'access_denied') return { ok: false, error: 'Sign-in was cancelled.' };
+    return { ok: false, error: b.error_description ?? b.error ?? 'Sign-in failed.' };
+  }
+  return { ok: false, error: 'Timed out waiting for authorization.' };
+}
+
 // Connect: store + validate. Clears the token again if it doesn't authenticate.
 export async function connect(token: string): Promise<{ ok: boolean; login?: string; error?: string }> {
   await setToken(token);

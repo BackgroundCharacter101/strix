@@ -29,6 +29,9 @@ const api: StrixApi = {
     connect: (token) => ipcRenderer.invoke('github:connect', token),
     disconnect: () => ipcRenderer.invoke('github:disconnect'),
     repos: () => ipcRenderer.invoke('github:repos'),
+    deviceStart: (clientId) => ipcRenderer.invoke('github:deviceStart', clientId),
+    deviceWait: (clientId, code, interval) =>
+      ipcRenderer.invoke('github:deviceWait', clientId, code, interval),
   },
   git: {
     status: (rootPath) => ipcRenderer.invoke('git:status', rootPath),
