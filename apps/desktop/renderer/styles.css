@@ -3980,3 +3980,49 @@ a:focus-visible,
   color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
+
+/* ---- Project Map (Competition) ----------------------------------------- */
+.map-view { display: flex; flex-direction: column; height: 100%; }
+.map-empty { padding: 16px; }
+.map-tabs { display: flex; gap: 4px; padding: 8px 8px 4px; flex: 0 0 auto; }
+.map-tab {
+  all: unset; padding: 4px 12px; border-radius: var(--radius-md); cursor: pointer;
+  font-size: var(--text-sm); color: var(--text-muted);
+}
+.map-tab.is-active { background: var(--bg-hover); color: var(--text); }
+.map-scroll { flex: 1 1 auto; overflow: auto; padding: 4px 8px 12px; }
+.map-link { stroke: var(--border); stroke-width: 1; }
+.map-node:hover rect { fill: var(--bg-hover); }
+.map-label { fill: var(--text); font-size: 12px; font-family: var(--font-ui); }
+.map-label.is-dir { font-weight: 500; }
+.map-chevron { fill: var(--text-muted); font-size: 10px; }
+.map-arch { display: flex; flex-direction: column; gap: 10px; }
+.map-analyze {
+  align-self: flex-start; padding: 6px 14px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink); border: none; font-weight: 500; cursor: pointer;
+}
+.map-summary { font-size: var(--text-sm); color: var(--text); line-height: 1.5; margin: 0; }
+.map-modules { display: flex; flex-direction: column; gap: 8px; }
+.map-module {
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg-elevated); padding: 8px 10px;
+}
+.map-module-head { display: flex; align-items: center; gap: 8px; }
+.map-module-label { font-weight: 500; }
+.map-module-kind {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 6px;
+}
+.map-module-files { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.map-file-link {
+  all: unset; cursor: pointer; font-size: var(--text-xs); color: var(--link);
+  font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
+.map-file-link:hover { text-decoration: underline; }
+.map-edges { border-top: 1px solid var(--border); padding-top: 8px; }
+.map-edges-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 4px;
+}
+.map-edge { font-size: var(--text-xs); color: var(--text); padding: 1px 0; }
+.map-arrow { color: var(--accent); }
+.map-edge-label { color: var(--text-muted); }

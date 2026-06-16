@@ -32,6 +32,7 @@ import {
   ExtensionsIcon,
   FilesIcon,
   GearIcon,
+  MapIcon,
   OutlineIcon,
   RunIcon,
   SearchIcon,
@@ -42,7 +43,8 @@ import {
 import { OutlineView } from './src/OutlineView';
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
-import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID } from './src/edition';
+import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID, IS_COMPETITION } from './src/edition';
+import { ProjectMapView } from './src/ProjectMapView';
 import { buildKeymap, eventAccelerator } from './src/keybindings';
 import { applySaveTransforms } from './src/saveTransforms';
 import { buildFreebuffEnv } from './src/freebuffEnv';
@@ -54,7 +56,7 @@ export default function App() {
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
   const [sidebarView, setSidebarView] = useState<
-    'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline'
+    'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline' | 'projectmap'
   >(
     'explorer',
   );
@@ -589,7 +591,7 @@ export default function App() {
   }, []);
 
   const selectView = (
-    view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline',
+    view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline' | 'projectmap',
   ) => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
@@ -943,6 +945,17 @@ export default function App() {
           >
             <OutlineIcon />
           </button>
+          {IS_COMPETITION && (
+            <button
+              type="button"
+              aria-label="Project Map"
+              aria-pressed={showSidebar && sidebarView === 'projectmap'}
+              title="Project Map"
+              onClick={() => selectView('projectmap')}
+            >
+              <MapIcon />
+            </button>
+          )}
           <button
             type="button"
             className="activity-with-badge"
@@ -1017,10 +1030,18 @@ export default function App() {
                             ? 'Languages & Extensions'
                             : sidebarView === 'problems'
                               ? 'Problems'
-                              : 'Explorer'}
+                              : sidebarView === 'projectmap'
+                                ? 'Project Map'
+                                : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={openAtLine} />
+                  ) : sidebarView === 'projectmap' ? (
+                    <ProjectMapView
+                      rootPath={root}
+                      onOpen={(p) => activeTabs.open(p)}
+                      aiServerUrl={settings.aiServerUrl}
+                    />
                   ) : sidebarView === 'problems' ? (
                     <ProblemsView byPath={problemsByPath} onOpen={openAtLine} />
                   ) : sidebarView === 'outline' ? (

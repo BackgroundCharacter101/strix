@@ -59,6 +59,18 @@ export function FilesIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function MapIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="3" y="3" width="7" height="5" rx="1" />
+      <rect x="14" y="6" width="7" height="5" rx="1" />
+      <rect x="8" y="15" width="7" height="5" rx="1" />
+      <path d="M6.5 8v3.5h5" />
+      <path d="M17.5 11v1.5h-6V15" />
+    </svg>
+  );
+}
+
 export function OutlineIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>
