@@ -14,9 +14,10 @@ const __dirname = path.dirname(__filename);
 // with hot reload; otherwise the built renderer is loaded from disk.
 const DEV_URL = process.env.STRIX_DEV_URL;
 const BUILT_INDEX = path.join(__dirname, '../../renderer/dist/index.html');
-// Per-edition userData so M1 and M1 Competition don't share a single-instance
-// lock (a lingering process of one edition was blocking launches of the other).
-const USER_DATA_PATH = path.join(app.getPath('temp'), `strix-user-data-${EDITION}`);
+// Per-edition userData (so M1 and M1 Competition don't share a single-instance
+// lock) under the persistent AppData dir — NOT temp, which Windows clears and
+// which would wipe settings, AI keys, the GitHub token and recents.
+const USER_DATA_PATH = path.join(app.getPath('appData'), `Strix-${EDITION}`);
 app.setPath('userData', USER_DATA_PATH);
 
 // Crash-visible logging. A packaged GUI app has no console, so a startup error
