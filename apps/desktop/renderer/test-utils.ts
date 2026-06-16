@@ -6,6 +6,7 @@ import type { GitStatus } from '../main/git';
 interface StrixApiOverrides {
   fs?: Partial<StrixApi['fs']>;
   workspace?: Partial<StrixApi['workspace']>;
+  github?: Partial<StrixApi['github']>;
   git?: Partial<StrixApi['git']>;
   terminal?: Partial<StrixApi['terminal']>;
   lsp?: Partial<StrixApi['lsp']>;
@@ -33,6 +34,12 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       remove: vi.fn(async (): Promise<void> => {}),
       watch: vi.fn(),
       onChanged: vi.fn(() => () => {}),
+    },
+    github: {
+      user: vi.fn(async () => null),
+      connect: vi.fn(async () => ({ ok: false, error: 'no token' })),
+      disconnect: vi.fn(async () => {}),
+      repos: vi.fn(async () => []),
     },
     workspace: {
       root: vi.fn(async (): Promise<string> => '/'),
@@ -121,6 +128,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
   return {
     fs: { ...base.fs, ...overrides.fs },
     workspace: { ...base.workspace, ...overrides.workspace },
+    github: { ...base.github, ...overrides.github },
     git: { ...base.git, ...overrides.git },
     terminal: { ...base.terminal, ...overrides.terminal },
     lsp: { ...base.lsp, ...overrides.lsp },

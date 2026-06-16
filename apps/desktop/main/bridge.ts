@@ -32,6 +32,25 @@ export interface StrixWorkspaceApi {
   newProject(name: string): Promise<string | null>;
 }
 
+export interface GithubRepo {
+  name: string;
+  fullName: string;
+  cloneUrl: string;
+  private: boolean;
+  description: string;
+  updatedAt: string;
+}
+
+export interface StrixGithubApi {
+  // The connected account (null when no/invalid token).
+  user(): Promise<{ login: string; avatarUrl: string } | null>;
+  // Store + validate a Personal Access Token; returns the login on success.
+  connect(token: string): Promise<{ ok: boolean; login?: string; error?: string }>;
+  disconnect(): Promise<void>;
+  // The connected user's repos (most-recently-updated first).
+  repos(): Promise<GithubRepo[]>;
+}
+
 export interface StrixGitApi {
   status(rootPath: string): Promise<GitStatus>;
   fileHead(filePath: string): Promise<string>;
@@ -164,6 +183,7 @@ export interface StrixWindowApi {
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
+  github: StrixGithubApi;
   git: StrixGitApi;
   terminal: StrixTerminalApi;
   lsp: StrixLspApi;

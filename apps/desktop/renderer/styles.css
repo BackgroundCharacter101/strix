@@ -3839,3 +3839,90 @@ a:focus-visible,
 .activity-bar button[aria-pressed='true']::before {
   display: none;
 }
+
+/* ---- Clone dialog (GitHub repo picker) --------------------------------- */
+.clone-dialog {
+  width: 460px;
+  max-width: 90vw;
+}
+.clone-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+.clone-repos {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.clone-repo {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.clone-repos li:last-child .clone-repo {
+  border-bottom: none;
+}
+.clone-repo:hover {
+  background: var(--bg-hover);
+}
+.clone-repo-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+.clone-repo-desc {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clone-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+.clone-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+.clone-connect {
+  margin-bottom: var(--space-2);
+}
+.clone-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: 0 0 var(--space-2);
+  line-height: 1.5;
+}
+.clone-connect-btn {
+  width: 100%;
+}
+.clone-or {
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: var(--space-2) 0;
+}

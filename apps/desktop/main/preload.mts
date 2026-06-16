@@ -24,6 +24,12 @@ const api: StrixApi = {
     clone: (url) => ipcRenderer.invoke('workspace:clone', url),
     newProject: (name) => ipcRenderer.invoke('workspace:newProject', name),
   },
+  github: {
+    user: () => ipcRenderer.invoke('github:user'),
+    connect: (token) => ipcRenderer.invoke('github:connect', token),
+    disconnect: () => ipcRenderer.invoke('github:disconnect'),
+    repos: () => ipcRenderer.invoke('github:repos'),
+  },
   git: {
     status: (rootPath) => ipcRenderer.invoke('git:status', rootPath),
     fileHead: (filePath) => ipcRenderer.invoke('git:fileHead', filePath),

@@ -32,6 +32,12 @@ import {
   cloneRepo,
   newProjectDialog,
 } from './workspace.js';
+import {
+  getUser as githubUser,
+  connect as githubConnect,
+  clearToken as clearGithubToken,
+  listRepos as listGithubRepos,
+} from './github.js';
 import { BrowserWindow } from 'electron';
 import {
   searchInFiles,
@@ -74,6 +80,12 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('workspace:clone', (event, url: string) =>
     cloneRepo(BrowserWindow.fromWebContents(event.sender), url),
   );
+
+  // --- GitHub account (optional): connect a token to list/clone your repos ---
+  ipcMain.handle('github:user', () => githubUser());
+  ipcMain.handle('github:connect', (_event, token: string) => githubConnect(token));
+  ipcMain.handle('github:disconnect', () => clearGithubToken());
+  ipcMain.handle('github:repos', () => listGithubRepos());
   ipcMain.handle('workspace:newProject', (event, name: string) =>
     newProjectDialog(BrowserWindow.fromWebContents(event.sender), name),
   );

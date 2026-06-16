@@ -6,6 +6,7 @@ import { EditorTabs } from './src/EditorTabs';
 import { Breadcrumbs, relativeSegments } from './src/Breadcrumbs';
 import { Palette, type PaletteItem } from './src/Palette';
 import { PromptDialog } from './src/PromptDialog';
+import { CloneDialog } from './src/CloneDialog';
 import { SearchView } from './src/SearchView';
 import { SourceControlView } from './src/SourceControlView';
 import { ExtensionsView } from './src/ExtensionsView';
@@ -1217,12 +1218,7 @@ export default function App() {
         />
       )}
       {cloneOpen && (
-        <PromptDialog
-          title="Clone repository (git URL)"
-          confirmLabel="Clone"
-          onSubmit={(url) => void cloneRepo(url)}
-          onCancel={() => setCloneOpen(false)}
-        />
+        <CloneDialog onClone={(url) => void cloneRepo(url)} onCancel={() => setCloneOpen(false)} />
       )}
       {namePrompt && (
         <PromptDialog

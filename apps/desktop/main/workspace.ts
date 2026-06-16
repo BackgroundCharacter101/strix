@@ -4,6 +4,7 @@ import http from 'isomorphic-git/http/node';
 import * as fs from 'fs';
 import * as path from 'path';
 import { repoNameFromUrl } from './repoName.js';
+import { getToken } from './github.js';
 
 export { repoNameFromUrl };
 
@@ -57,7 +58,10 @@ export async function cloneRepo(win: BrowserWindow | null, url: string): Promise
   const parent = await pickDirectory(win, 'Choose a folder to clone into');
   if (!parent) return null;
   const dir = path.join(parent, repoNameFromUrl(url));
-  await git.clone({ fs, http, dir, url, singleBranch: true, depth: 1 });
+  // Use the connected GitHub token (if any) so private repos clone too.
+  const token = await getToken().catch(() => '');
+  const onAuth = token ? () => ({ username: 'x-access-token', password: token }) : undefined;
+  await git.clone({ fs, http, dir, url, singleBranch: true, depth: 1, onAuth });
   currentRoot = dir;
   return dir;
 }
