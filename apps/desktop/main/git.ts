@@ -189,6 +189,23 @@ export async function pull(rootPath: string): Promise<{ ok: boolean; output: str
   }
 }
 
+// Turn the noisiest git push failures into one-line human guidance.
+function friendlyPushError(msg: string): string {
+  if (/src refspec .* does not match any|does not match any/i.test(msg)) {
+    return 'Nothing to push yet — make a commit first (enter a message and click Commit).';
+  }
+  if (/no configured push destination|does not appear to be a git repository|no such remote/i.test(msg)) {
+    return 'No GitHub remote set for this folder. Add one with: git remote add origin <url>.';
+  }
+  if (/authentication failed|could not read Username|terminal prompts disabled|403/i.test(msg)) {
+    return 'GitHub authentication failed. Sign in (Clone → Sign in with GitHub) or check your credentials.';
+  }
+  if (/\[rejected\]|non-fast-forward|fetch first/i.test(msg)) {
+    return 'Remote has newer commits — Pull (or Sync) first, then push.';
+  }
+  return msg;
+}
+
 export async function push(rootPath: string): Promise<{ ok: boolean; output: string }> {
   const dir = await git.findRoot({ fs, filepath: rootPath });
   try {
@@ -205,20 +222,23 @@ export async function push(rootPath: string): Promise<{ ok: boolean; output: str
         });
         return { ok: true, output: `${stdout}${stderr}`.trim() || 'Published branch.' };
       } catch (e2) {
-        return { ok: false, output: e2 instanceof Error ? e2.message : String(e2) };
+        return { ok: false, output: friendlyPushError(e2 instanceof Error ? e2.message : String(e2)) };
       }
     }
-    return { ok: false, output: msg };
+    return { ok: false, output: friendlyPushError(msg) };
   }
 }
 
 // Sync = pull then push (VS Code's circular-arrows action). A pull failure when
-// there's no upstream yet is fine — push then publishes the branch.
+// there's no upstream yet is expected and benign — we only surface it if it's a
+// real problem; otherwise the push result is what matters.
 export async function sync(rootPath: string): Promise<{ ok: boolean; output: string }> {
   const pulled = await pull(rootPath);
   const pushed = await push(rootPath);
-  const output = [pulled.output, pushed.output].filter(Boolean).join('\n');
-  return { ok: pushed.ok, output };
+  const parts: string[] = [];
+  if (pulled.ok && pulled.output && pulled.output !== 'Up to date.') parts.push(pulled.output);
+  parts.push(pushed.output);
+  return { ok: pushed.ok, output: parts.join('\n') || (pushed.ok ? 'Synced.' : 'Sync failed.') };
 }
 
 // The committed (HEAD) content of a file, for diffing against the working copy.
