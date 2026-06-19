@@ -33,7 +33,6 @@ import {
   FilesIcon,
   GearIcon,
   MapIcon,
-  ThemeIcon,
   OutlineIcon,
   RunIcon,
   SearchIcon,
@@ -1007,14 +1006,6 @@ export default function App() {
           <button
             type="button"
             className="activity-bottom"
-            aria-label="Toggle light/dark theme"
-            title={settings.theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
-            onClick={() => updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' })}
-          >
-            <ThemeIcon />
-          </button>
-          <button
-            type="button"
             aria-label="Settings"
             title="Settings"
             onClick={() => setSettingsOpen(true)}

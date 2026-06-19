@@ -59,15 +59,6 @@ export function FilesIcon({ size = 20 }: IconProps) {
   );
 }
 
-export function ThemeIcon({ size = 20 }: IconProps) {
-  return (
-    <svg {...base(size)}>
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
 export function MapIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>
@@ -155,8 +146,8 @@ export function TerminalIcon({ size = 20 }: IconProps) {
 export function GearIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" />
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M19.4 13a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 0 1 0-4h.09a1.7 1.7 0 0 0 1.55-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 0 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z" />
     </svg>
   );
 }
