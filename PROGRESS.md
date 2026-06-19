@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-06-09
+> Last updated: 2026-06-17
 
 ---
 
@@ -19,8 +19,8 @@ formerly named **tabea**; the on-disk folder is still
   xterm.js, node-pty, isomorphic-git, OpenAI SDK → FreeLLMAPI. Vitest, ESLint
   (flat) + typescript-eslint, npm workspaces, Turborepo.
 - **GitHub:** `https://github.com/BackgroundCharacter101/strix` (private).
-  **120 commits ahead of origin/main** — user pushes manually (assistant `gh`
-  isn't authed).
+  Active branch **`feat/editions-m1`** (pushed; HEAD `90b7242`). `origin/main`
+  has diverged (other commits) — open a PR rather than force-pushing main.
 - **Design source of truth:** `ARCHITECTURE.md`. Agent roles: `AGENTS.md` +
   `.github/agents/strix-*.agent.md`.
 
@@ -636,19 +636,72 @@ strix/ (folder: tabea)
 - **LSP:** diagnostics + completion/hover/go-to-def/symbols done; **code actions /
   rename / find-references** still candidates. Live IntelliSense needs the matching
   server installed (Languages panel shows which).
-- **Source Control:** view is read-only; an integrated **commit box** (stage +
-  commit message) would be the next SCM step.
+- **Source Control:** ✅ done — stage/commit (auto-stages), Sync/publish,
+  generate-message, branch bar, history, create-PR.
 - **Editor:** split editors / side-by-side; breadcrumb dropdown navigation.
-- **Hardening:** upgrade Electron (1 high CVE) & DOMPurify; consider proxying AI
-  through main to keep the key out of the renderer bundle.
-- **Phase 7** (cybersec panels: hex viewer / CTF / vuln linter), **Phase 8**
-  (electron-builder installer — needs `node` bundled or `ELECTRON_RUN_AS_NODE`
-  for the FreeLLMAPI auto-start).
-- **Push to GitHub** to sync (120 commits ahead).
+- **Hardening:** consider proxying AI through main to keep the key out of the
+  renderer bundle (CSP + contextIsolation already in place; 0 prod vulns).
+- **Installer:** ✅ done — custom Inno Setup (per-machine, opt-in tasks, glass art).
+- **GitHub:** branch pushed. Open the **PR** into `main` (diverged). Optional:
+  bake the OAuth **client id** for zero-setup "Sign in with GitHub"; "publish to a
+  new repo" (create-repo) not yet built.
+- **Team test phase:** flagged before handoff — no code signing (SmartScreen
+  warns), no auto-update yet, no first-run onboarding. AI needs a provider key.
+- **Cybersec (Competition):** user wants **useful, non-CTF** features. Next ideas:
+  testing workbench (Test Explorer + AI generate/fix tests), dependency/CVE panel.
+  Project Map Phase 2: treemap + node-graph arrows.
 
 ---
 
 ## 11. Recent commit trail (newest first)
+
+### Major additions since 2026-06-09 (branch `feat/editions-m1`)
+
+**Packaging & install**
+- Custom **Inno Setup** installer replaces electron-builder NSIS (`e05cd0b`,
+  `973186e`): per-machine `C:\Program Files\Strix M1`, opt-in tasks (desktop
+  shortcut, add-to-PATH `strix` shim, "Open with Strix" context menu, launch),
+  glass wizard art (`85face6`). `scripts/edition.mjs` `win` = electron-builder
+  `--dir` → verify-package → ISCC.
+- **Lazy-start** + **single-file bundle** of FreeLLMAPI (`87b7813`, `5382e15`):
+  esbuild ESM bundle (`scripts/bundle-ai.mjs`) → 33k files → ~26; installer
+  ~161MB → ~112MB. `userData` moved off `%TEMP%` → persistent AppData (`94fc547`).
+
+**UI / theme**
+- **Modern clean-dark theme**, default accent **violet** (one-time migration),
+  refined tokens (`1ab1a66`, `e82b2ce`). **Floating-panel workbench** — regions
+  as rounded cards on a dark canvas, grabbable resizers (`82bbe24`, `a95beab`).
+- **Liquid Glass** opt-in theme (Settings → Appearance): frosted shell + overlays
+  (`b705610` → `676ad2a`). Note: CSS `backdrop-filter` only; no WebGL refraction.
+
+**Git / GitHub**
+- VS Code-style **Sync** (pull→push, auto-publish branch) + human-readable errors
+  (`40009d7`, `67ce32b`); **commit auto-stages** when nothing staged (`64ea6af`).
+- **Clone dialog**: connect a GitHub account → search/clone your repos; **browser
+  "Sign in with GitHub"** via OAuth **Device Flow** (`f6f0a37`, `5c12133`,
+  `a92f974`). Needs a registered OAuth-App **client id** → set in Settings → AI
+  or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
+
+**Features**
+- Outline / Go-to-Symbol (`7025762`), virtualized file tree + streaming search
+  (`4ae6d8b`, `f710fd6`), @file typeahead + pinned chips, Find&Replace case/word.
+- **Cybersec (Competition):** "Audit project" — repo-wide AI security review
+  (`3c24aa9`).
+- **Project Map (Competition, `1f3a9a3`):** activity-bar view — Structure (SVG
+  tree, language-coloured) + Architecture (AI module graph + summary). Gated by
+  `IS_COMPETITION`; pure core `projectMap.ts` tested.
+- **Settings:** Terminal (font/cursor/shell), **custom keybindings**, AI tuning
+  (default model/temperature/max-tokens), on-save hygiene (trim/final-newline/EOL),
+  reopen-last-folder, indent-with-spaces.
+- **Terminal shell picker** (▾ → PowerShell/CMD/pwsh/Git Bash) (`a95beab`).
+- **AI repo-wide gather** (`a95beab`): ranks every file by relevance so big
+  multi-folder projects are scanned correctly (was capped to early folders).
+
+**Status:** typecheck + lint clean, **358 tests** pass, 0 prod vulns. Both
+editions build to `Desktop\strix`. Problems tab removed from activity bar (still
+in Command Palette).
+
+---
 
 - `4718fda` Multi-language support — native registry + Languages panel
   (rust-analyzer/gopls LSP, ~25-lang highlighting, `lsp.hasServer`, `commandExists`)
