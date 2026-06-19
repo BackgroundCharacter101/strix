@@ -15,7 +15,17 @@ interface TabDesc {
   // Extra env for this session's PTY (FreeBuff → user's VPS/backend).
   env?: Record<string, string>;
   notice?: string;
+  // Per-tab shell override (from the new-terminal shell picker).
+  shell?: string;
 }
+
+// Shells offered by the new-terminal picker (Windows-first, like VS Code).
+const SHELL_CHOICES: { label: string; shell: string }[] = [
+  { label: 'PowerShell', shell: 'powershell.exe' },
+  { label: 'Command Prompt', shell: 'cmd.exe' },
+  { label: 'PowerShell 7 (pwsh)', shell: 'pwsh.exe' },
+  { label: 'Git Bash', shell: 'bash.exe' },
+];
 
 const CLAUDE_INSTALL =
   'Claude Code CLI not found on PATH.\r\n' +
@@ -80,12 +90,14 @@ export function TerminalTabs({
 }) {
   const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0 }]);
   const [active, setActive] = useState(0);
+  const [shellMenu, setShellMenu] = useState(false);
   const nextId = useRef(1);
 
-  const addShell = () => {
+  const addShell = (shellOverride?: string) => {
     const id = nextId.current++;
-    setTabs((prev) => [...prev, { id }]);
+    setTabs((prev) => [...prev, { id, shell: shellOverride }]);
     setActive(id);
+    setShellMenu(false);
   };
 
   const launchClaude = async (prompt?: string) => {
@@ -194,9 +206,33 @@ export function TerminalTabs({
             </span>
           );
         })}
-        <button type="button" aria-label="new terminal" onClick={addShell}>
+        <button type="button" aria-label="new terminal" onClick={() => addShell()}>
           +
         </button>
+        <span className="term-shell-picker">
+          <button
+            type="button"
+            aria-label="choose shell"
+            title="New terminal with a specific shell"
+            onClick={() => setShellMenu((v) => !v)}
+          >
+            ▾
+          </button>
+          {shellMenu && (
+            <div className="term-shell-menu" role="menu" onMouseLeave={() => setShellMenu(false)}>
+              {SHELL_CHOICES.map((s) => (
+                <button
+                  key={s.shell}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => addShell(s.shell)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </span>
         <button
           type="button"
           className="term-agent-btn term-freebuff-btn"
@@ -236,7 +272,7 @@ export function TerminalTabs({
               fontSize={fontSize}
               fontFamily={fontFamily}
               cursorStyle={cursorStyle}
-              shell={shell}
+              shell={tab.shell ?? shell}
             />
           </div>
         ))}

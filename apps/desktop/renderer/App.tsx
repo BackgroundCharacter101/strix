@@ -33,6 +33,7 @@ import {
   FilesIcon,
   GearIcon,
   MapIcon,
+  ThemeIcon,
   OutlineIcon,
   RunIcon,
   SearchIcon,
@@ -424,9 +425,9 @@ export default function App() {
     setPalette('files');
   }, [root]);
 
-  const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 500, persistKey: 'strix.size.sidebar' });
-  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 240, max: 1280, persistKey: 'strix.size.ai' });
-  const terminal = useResizable(260, { axis: 'y', direction: -1, min: 120, max: 600, persistKey: 'strix.size.terminal' });
+  const sidebar = useResizable(260, { axis: 'x', direction: 1, min: 150, max: 700, persistKey: 'strix.size.sidebar' });
+  const aiPanel = useResizable(400, { axis: 'x', direction: -1, min: 260, max: 1400, persistKey: 'strix.size.ai' });
+  const terminal = useResizable(260, { axis: 'y', direction: -1, min: 72, max: 800, persistKey: 'strix.size.terminal' });
 
   useEffect(() => {
     // Empty root → no workspace open. Optionally reopen the most-recent folder
@@ -1006,6 +1007,14 @@ export default function App() {
           <button
             type="button"
             className="activity-bottom"
+            aria-label="Toggle light/dark theme"
+            title={settings.theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+            onClick={() => updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' })}
+          >
+            <ThemeIcon />
+          </button>
+          <button
+            type="button"
             aria-label="Settings"
             title="Settings"
             onClick={() => setSettingsOpen(true)}

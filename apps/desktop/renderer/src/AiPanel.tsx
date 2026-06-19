@@ -15,6 +15,8 @@ import {
   formatRepoContext,
   extractMentions,
   resolveMentions,
+  tokenize,
+  scoreFile,
   type RepoFile,
   type RankedFile,
 } from './repoContext';
@@ -206,6 +208,64 @@ async function gatherRepoFiles(
     if (content.length > maxFileBytes) continue;
     const rel = abs.slice(workspaceKey.length).replace(/^[\\/]/, '').replace(/\\/g, '/');
     files.push({ path: rel, content });
+    total += content.length;
+  }
+  return files;
+}
+
+// Find the files across the WHOLE repo most relevant to a query and read only
+// those (within budget). Unlike gatherRepoFiles (pre-order, capped early), this
+// ranks every candidate path by filename relevance first — so on big projects
+// with many large folders the AI still sees the right files anywhere in the tree.
+async function gatherRelevantFiles(
+  workspaceKey: string,
+  query: string,
+  opts: { maxFiles?: number; maxBytes?: number; maxFileBytes?: number } = {},
+): Promise<RepoFile[]> {
+  const maxFiles = opts.maxFiles ?? 40;
+  const maxBytes = opts.maxBytes ?? 220_000;
+  const maxFileBytes = opts.maxFileBytes ?? 16_000;
+  let tree: TreeNode;
+  try {
+    tree = (await window.strix.fs.tree(workspaceKey)) as TreeNode;
+  } catch {
+    return [];
+  }
+  // 1) Collect every candidate path cheaply (no content reads), repo-wide.
+  const paths: string[] = [];
+  const walk = (nodes: TreeNode[]) => {
+    for (const n of nodes) {
+      if (paths.length >= 12_000) return;
+      if (n.type === 'directory') walk(n.children ?? []);
+      else if (TEXT_EXT.test(n.name) || !n.name.includes('.'))
+        paths.push((n as TreeNode & { path: string }).path);
+    }
+  };
+  walk(tree.children ?? []);
+
+  // 2) Rank by how well the path/filename matches the query.
+  const q = [...new Set(tokenize(query))];
+  const scored = paths
+    .map((abs) => {
+      const rel = abs.slice(workspaceKey.length).replace(/^[\\/]/, '').replace(/\\/g, '/');
+      return { abs, rel, score: q.length ? scoreFile(q, { path: rel, content: '' }) : 0 };
+    })
+    .sort((a, b) => b.score - a.score || a.rel.localeCompare(b.rel));
+
+  // 3) Read the top candidates within budget (stop once names stop matching).
+  const files: RepoFile[] = [];
+  let total = 0;
+  for (const c of scored) {
+    if (files.length >= maxFiles || total >= maxBytes) break;
+    if (q.length && c.score === 0 && files.length > 0) break;
+    let content = '';
+    try {
+      content = await window.strix.fs.read(c.abs);
+    } catch {
+      continue;
+    }
+    if (content.length > maxFileBytes) continue;
+    files.push({ path: c.rel, content });
     total += content.length;
   }
   return files;
@@ -512,9 +572,11 @@ export function AiPanel({
     let ctx = projectContext;
     if ((task === 'chat' || task === 'explain') && workspaceKey && userMessage.trim()) {
       try {
-        const pool = await gatherRepoFiles(workspaceKey, {
-          maxFiles: 60,
-          maxBytes: 200_000,
+        // Repo-wide: rank every file by relevance to the question, so big
+        // projects with many folders still surface the right files.
+        const pool = await gatherRelevantFiles(workspaceKey, userMessage, {
+          maxFiles: 40,
+          maxBytes: 220_000,
           maxFileBytes: 16_000,
         });
         // Files the user pinned with @path always go in; ranked files fill the rest.

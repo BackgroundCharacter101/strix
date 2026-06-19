@@ -59,6 +59,15 @@ export function FilesIcon({ size = 20 }: IconProps) {
   );
 }
 
+export function ThemeIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function MapIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>
