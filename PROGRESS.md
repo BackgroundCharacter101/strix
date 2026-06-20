@@ -19,7 +19,7 @@ formerly named **tabea**; the on-disk folder is still
   xterm.js, node-pty, isomorphic-git, OpenAI SDK → FreeLLMAPI. Vitest, ESLint
   (flat) + typescript-eslint, npm workspaces, Turborepo.
 - **GitHub:** `https://github.com/BackgroundCharacter101/strix` (private).
-  Active branch **`feat/editions-m1`** (pushed; HEAD `95b4d23`). `origin/main`
+  Active branch **`feat/editions-m1`** (pushed; HEAD `5dd857f`). `origin/main`
   has diverged (other commits) — open a PR rather than force-pushing main.
 - **Design source of truth:** `ARCHITECTURE.md`. Agent roles: `AGENTS.md` +
   `.github/agents/strix-*.agent.md`.
@@ -678,6 +678,11 @@ strix/ (folder: tabea)
   `--shadow-1/2`), and a `--font-display` (Bahnschrift → Segoe UI Variable →
   system) on wordmark / title bar / panel + section headers. Proper gear
   Settings icon (was a bulb-like shape); theme-toggle button removed (`90b7242`).
+- **Layout fix** (`5dd857f`): terminal moved into the editor column → the AI
+  assistant pane is now **full window height** (was cut above the terminal);
+  terminal sits under the editor only (VS Code layout). Settings icon → filled
+  cog (outline read as a sun). Terminal shell-picker menu opens downward (was
+  clipped by the panel's `overflow:hidden`).
 
 **Git / GitHub**
 - VS Code-style **Sync** (pull→push, auto-publish branch) + human-readable errors
