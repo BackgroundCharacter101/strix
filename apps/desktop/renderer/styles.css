@@ -304,6 +304,21 @@ body {
   flex: 1 1 auto;
   min-width: 0;
 }
+/* Direct-model add row: several inputs that wrap on narrow widths. */
+.set-directmodels-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+.set-directmodels-add input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.set-directmodels-add .set-save-btn {
+  flex: 0 0 auto;
+}
 .set-keys-list {
   list-style: none;
   margin: 0;

@@ -3,6 +3,16 @@ import { DEFAULT_SECURITY_PERSONA, type SecurityStance, type SecurityPersona } f
 import type { ThemeId, AccentId } from './themes';
 import { setIconTheme, type IconTheme } from './iconTheme';
 
+// A user-added direct model: an OpenAI-compatible endpoint + key + model id,
+// shown by `label` in the AI panel's model picker. `id` is a stable local key.
+export interface DirectModel {
+  id: string;
+  label: string;
+  baseURL: string;
+  apiKey: string;
+  model: string;
+}
+
 export interface Settings {
   fontSize: number;
   tabSize: number;
@@ -55,15 +65,11 @@ export interface Settings {
   aiDefaultModel: string;
   aiTemperature: number;
   aiMaxTokens: number;
-  // AI provider: 'freellmapi' (built-in local router, default) or 'direct'
-  // (bring your own OpenAI-compatible endpoint + key — no FreeLLMAPI involved).
-  aiProvider: 'freellmapi' | 'direct';
-  // Direct-provider connection (used only when aiProvider === 'direct'). Any
-  // OpenAI-compatible base URL (OpenAI, OpenRouter, Groq, Together, Mistral,
-  // DeepSeek, local Ollama/LM Studio, …). Calls go through the main process.
-  aiDirectBaseUrl: string;
-  aiDirectApiKey: string;
-  aiDirectModel: string;
+  // User-added direct models (bring your own OpenAI-compatible endpoint + key).
+  // These appear in the AI panel's model picker alongside FreeLLMAPI's Auto +
+  // models; picking one routes that request straight to the provider (through
+  // the main process), no FreeLLMAPI involved. Empty = FreeLLMAPI only.
+  aiDirectModels: DirectModel[];
   // Reopen the most-recently-used folder (and its tabs) automatically on launch
   // instead of showing the welcome screen.
   restoreLastFolder: boolean;
@@ -126,10 +132,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aiDefaultModel: 'auto',
   aiTemperature: 0.7,
   aiMaxTokens: 0,
-  aiProvider: 'freellmapi',
-  aiDirectBaseUrl: '',
-  aiDirectApiKey: '',
-  aiDirectModel: '',
+  aiDirectModels: [],
   restoreLastFolder: false,
   githubClientId: '',
   agentAutoApply: false,

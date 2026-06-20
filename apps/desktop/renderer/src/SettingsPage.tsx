@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gateway';
-import type { Settings } from './useSettings';
+import type { Settings, DirectModel } from './useSettings';
 import type { AiProviderKey } from '../../main/bridge';
 import { THEMES, ACCENTS } from './themes';
 import { SaveIcon, CloseIcon } from './icons';
@@ -116,6 +116,123 @@ function ProviderKeys({ serverUrl }: { serverUrl?: string }) {
       ) : (
         <p className="set-keys-empty">
           No provider keys yet. Add one above (Groq, Gemini, OpenRouter… are free) to power the AI.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Friendly host label for a base URL (so the list reads "api.openai.com").
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+// Add / list / remove "bring your own" direct models. Each is an
+// OpenAI-compatible endpoint + key + model id; they show up in the AI panel's
+// model picker next to FreeLLMAPI's Auto. Stored locally (in Settings).
+function DirectModels({
+  models,
+  onChange,
+}: {
+  models: DirectModel[];
+  onChange: (m: DirectModel[]) => void;
+}) {
+  const [label, setLabel] = useState('');
+  const [baseURL, setBaseURL] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [model, setModel] = useState('');
+
+  const add = () => {
+    const l = label.trim();
+    const b = baseURL.trim();
+    const k = apiKey.trim();
+    const m = model.trim();
+    if (!b || !k || !m) {
+      showToast('Base URL, API key and model are all required', 'error', 5000);
+      return;
+    }
+    const id =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    onChange([...models, { id, label: l || m, baseURL: b, apiKey: k, model: m }]);
+    setLabel('');
+    setBaseURL('');
+    setApiKey('');
+    setModel('');
+    showToast(`Added "${l || m}"`, 'success');
+  };
+
+  const remove = (id: string) => {
+    onChange(models.filter((d) => d.id !== id));
+    showToast('Direct model removed', 'info');
+  };
+
+  return (
+    <div className="set-keys">
+      <div className="set-directmodels-add">
+        <input
+          type="text"
+          aria-label="Model label"
+          placeholder="Label (e.g. GPT-4o mini)"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+        <input
+          type="text"
+          aria-label="Base URL"
+          placeholder="https://api.openai.com/v1"
+          value={baseURL}
+          onChange={(e) => setBaseURL(e.target.value)}
+        />
+        <input
+          type="password"
+          aria-label="Direct model API key"
+          placeholder="API key (sk-…)"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+        />
+        <input
+          type="text"
+          aria-label="Model id"
+          placeholder="gpt-4o-mini"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') add();
+          }}
+        />
+        <button type="button" className="set-save-btn" onClick={add}>
+          Add model
+        </button>
+      </div>
+      {models.length > 0 ? (
+        <ul className="set-keys-list" aria-label="Direct models">
+          {models.map((d) => (
+            <li key={d.id}>
+              <span className="set-key-platform">{d.label}</span>
+              <code className="set-key-mask">{d.model}</code>
+              <span className="set-key-status">{hostOf(d.baseURL)}</span>
+              <button
+                type="button"
+                className="set-key-remove"
+                aria-label={`remove ${d.label}`}
+                title="Remove model"
+                onClick={() => remove(d.id)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="set-keys-empty">
+          No direct models yet. Add one above (OpenAI, OpenRouter, Groq, Together, DeepSeek, local
+          Ollama…) to pick it in the AI panel next to Auto.
         </p>
       )}
     </div>
@@ -702,67 +819,6 @@ export function SettingsPage({
           <h3>AI</h3>
           <Row
             query={query}
-            label="AI provider"
-            desc="Built-in (FreeLLMAPI) routes free providers with auto-failover. Direct API key calls any OpenAI-compatible endpoint (OpenAI, OpenRouter, Groq, Together, Mistral, DeepSeek, local Ollama/LM Studio) with your own key — no FreeLLMAPI."
-          >
-            <select
-              aria-label="AI provider"
-              value={settings.aiProvider}
-              onChange={(e) => onChange({ aiProvider: e.target.value as 'freellmapi' | 'direct' })}
-            >
-              <option value="freellmapi">Built-in (FreeLLMAPI)</option>
-              <option value="direct">Direct API key (bring your own)</option>
-            </select>
-          </Row>
-
-          {settings.aiProvider === 'direct' && (
-            <>
-              <Row
-                query={query}
-                label="Provider base URL"
-                desc="OpenAI-compatible endpoint root. OpenAI: https://api.openai.com/v1 · OpenRouter: https://openrouter.ai/api/v1 · Groq: https://api.groq.com/openai/v1 · Ollama: http://localhost:11434/v1"
-              >
-                <input
-                  type="text"
-                  aria-label="Provider base URL"
-                  placeholder="https://api.openai.com/v1"
-                  value={settings.aiDirectBaseUrl}
-                  onChange={(e) => onChange({ aiDirectBaseUrl: e.target.value })}
-                />
-              </Row>
-              <Row
-                query={query}
-                label="Provider API key"
-                desc="Your key for the endpoint above. Stored locally on this machine; sent only to that provider (through the app's main process, never the renderer)."
-              >
-                <input
-                  type="password"
-                  aria-label="Provider API key"
-                  placeholder="sk-…"
-                  value={settings.aiDirectApiKey}
-                  onChange={(e) => onChange({ aiDirectApiKey: e.target.value })}
-                />
-              </Row>
-              <Row
-                query={query}
-                label="Model"
-                desc="Exact model id the provider expects, e.g. gpt-4o-mini, deepseek/deepseek-chat, llama-3.3-70b-versatile, qwen2.5-coder."
-              >
-                <input
-                  type="text"
-                  aria-label="Model"
-                  placeholder="gpt-4o-mini"
-                  value={settings.aiDirectModel}
-                  onChange={(e) => onChange({ aiDirectModel: e.target.value })}
-                />
-              </Row>
-            </>
-          )}
-
-          {settings.aiProvider === 'freellmapi' && (
-          <>
-          <Row
-            query={query}
             label="AI server URL"
             desc="A shared FreeLLMAPI host for the team (e.g. http://192.168.1.50:3001). Leave blank to use the local server."
           >
@@ -778,7 +834,7 @@ export function SettingsPage({
           <Row
             query={query}
             label="Default model"
-            desc="Model selected by default in the AI panel. 'auto' lets the router pick."
+            desc="Model selected by default in the AI panel. 'auto' lets the router pick. Direct models you add below also appear in that picker."
           >
             <input
               type="text"
@@ -788,8 +844,24 @@ export function SettingsPage({
               onChange={(e) => onChange({ aiDefaultModel: e.target.value || 'auto' })}
             />
           </Row>
-          </>
-          )}
+
+          <div className="set-row set-row-block">
+            <div className="set-info">
+              <div className="set-label">Direct API key models</div>
+              <div className="set-desc">
+                Bring your own models from any OpenAI-compatible endpoint (OpenAI, OpenRouter, Groq,
+                Together, Mistral, DeepSeek, local Ollama/LM Studio). Each one shows up in the AI
+                panel&apos;s model picker next to Auto — pick per message. Keys are stored locally
+                and sent only to that provider (through the app&apos;s main process, never the
+                renderer).
+              </div>
+            </div>
+          </div>
+          <DirectModels
+            models={settings.aiDirectModels}
+            onChange={(m) => onChange({ aiDirectModels: m })}
+          />
+
           <Row
             query={query}
             label="Temperature"
@@ -968,21 +1040,16 @@ export function SettingsPage({
             />
           </Row>
 
-          {settings.aiProvider === 'freellmapi' && (
-            <>
-              <div className="set-row set-row-block">
-                <div className="set-info">
-                  <div className="set-label">Provider API keys</div>
-                  <div className="set-desc">
-                    Add keys for the free LLM providers right here — no need to open the
-                    server&apos;s web page. Keys are stored encrypted on the AI host above (local by
-                    default).
-                  </div>
-                </div>
+          <div className="set-row set-row-block">
+            <div className="set-info">
+              <div className="set-label">FreeLLMAPI provider keys</div>
+              <div className="set-desc">
+                Free LLM providers for the built-in Auto router — no need to open the server&apos;s
+                web page. Keys are stored encrypted on the AI host above (local by default).
               </div>
-              <ProviderKeys serverUrl={settings.aiServerUrl} />
-            </>
-          )}
+            </div>
+          </div>
+          <ProviderKeys serverUrl={settings.aiServerUrl} />
         </section>
         )}
 

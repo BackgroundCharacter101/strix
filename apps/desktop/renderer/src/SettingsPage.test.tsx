@@ -63,6 +63,32 @@ describe('SettingsPage', () => {
     );
   });
 
+  it('adds a direct API-key model from the AI section', () => {
+    const { onChange } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'AI' }));
+    fireEvent.change(screen.getByLabelText('Model label'), { target: { value: 'GPT-4o mini' } });
+    fireEvent.change(screen.getByLabelText('Base URL'), {
+      target: { value: 'https://api.openai.com/v1' },
+    });
+    fireEvent.change(screen.getByLabelText('Direct model API key'), {
+      target: { value: 'sk-abc' },
+    });
+    fireEvent.change(screen.getByLabelText('Model id'), { target: { value: 'gpt-4o-mini' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add model' }));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        aiDirectModels: [
+          expect.objectContaining({
+            label: 'GPT-4o mini',
+            baseURL: 'https://api.openai.com/v1',
+            apiKey: 'sk-abc',
+            model: 'gpt-4o-mini',
+          }),
+        ],
+      }),
+    );
+  });
+
   it('Save fires its handler', () => {
     const { onSave } = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));

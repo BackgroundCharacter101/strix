@@ -11,6 +11,7 @@ import {
   type Attachment,
 } from '@strix/ai-gateway';
 import { readAttachment, MAX_ATTACH_BYTES } from './attachments';
+import type { DirectModel } from './useSettings';
 import {
   rankFiles,
   formatRepoContext,
@@ -316,10 +317,7 @@ export function AiPanel({
   aiDefaultModel = 'auto',
   aiTemperature = 0.7,
   aiMaxTokens = 0,
-  aiProvider = 'freellmapi',
-  aiDirectBaseUrl = '',
-  aiDirectApiKey = '',
-  aiDirectModel = '',
+  aiDirectModels = [],
   mode = 'normal',
   securityStance = 'balanced',
   onSecurityStanceChange,
@@ -361,12 +359,10 @@ export function AiPanel({
   aiDefaultModel?: string;
   aiTemperature?: number;
   aiMaxTokens?: number;
-  // AI provider: 'freellmapi' (built-in router) or 'direct' (bring-your-own
-  // OpenAI-compatible endpoint + key, streamed through the main process).
-  aiProvider?: 'freellmapi' | 'direct';
-  aiDirectBaseUrl?: string;
-  aiDirectApiKey?: string;
-  aiDirectModel?: string;
+  // User-added direct models (bring-your-own OpenAI-compatible endpoint + key).
+  // Selectable in the model picker; picking one streams that request straight to
+  // the provider via the main process, no FreeLLMAPI.
+  aiDirectModels?: DirectModel[];
   // Workbench mode; 'cybersec' switches the AI to a security-expert persona.
   mode?: 'normal' | 'cybersec';
   // Security-expert stance (only meaningful in cybersec mode).
@@ -396,25 +392,28 @@ export function AiPanel({
     signal,
   });
 
-  // "Bring your own provider": when the user picks a direct OpenAI-compatible
-  // endpoint (Settings → AI) and fills the connection in, every AI action runs
-  // against it — streamed through the main process (renderer CORS forbids direct
-  // calls) — with no FreeLLMAPI involved.
-  const directOn =
-    aiProvider === 'direct' &&
-    aiDirectBaseUrl.trim() !== '' &&
-    aiDirectApiKey.trim() !== '' &&
-    aiDirectModel.trim() !== '';
+  // The model picker holds either a FreeLLMAPI model id ('auto', 'gpt-…') or a
+  // direct model encoded as `direct:<id>`. When a direct model is selected, that
+  // request streams straight to its provider (through the main process, since
+  // the renderer can't call external hosts) — no FreeLLMAPI involved.
+  const DIRECT_PREFIX = 'direct:';
+  const selectedDirect =
+    model.startsWith(DIRECT_PREFIX)
+      ? aiDirectModels.find((d) => `${DIRECT_PREFIX}${d.id}` === model)
+      : undefined;
+  const directOn = !!selectedDirect;
   const directIdRef = useRef(0);
 
-  // Mirrors runTask's contract but routes to the direct provider when enabled.
+  // Mirrors runTask's contract but routes to the selected direct provider when
+  // one is chosen in the picker.
   const runTaskAny = (
     task: TaskType,
     opts: Parameters<typeof buildPrompt>[1],
     callbacks: { onToken: (t: string) => void; onDone: (via: string) => void },
     settings: { model?: string; temperature?: number; maxTokens?: number; signal?: AbortSignal },
   ): Promise<void> => {
-    if (!directOn) return runTask(task, opts, callbacks, settings);
+    if (!selectedDirect) return runTask(task, opts, callbacks, settings);
+    const direct = selectedDirect;
     return new Promise<void>((resolve, reject) => {
       const id = ++directIdRef.current;
       const messages = buildPrompt(task, opts);
@@ -443,7 +442,7 @@ export function AiPanel({
           if (p.id === id && !settled) {
             settled = true;
             cleanup();
-            callbacks.onDone(aiDirectModel);
+            callbacks.onDone(direct.label || direct.model);
             resolve();
           }
         }),
@@ -464,9 +463,9 @@ export function AiPanel({
       // Scaffold plans need headroom; otherwise honour the user's max-tokens cap.
       const maxTokens = task === 'scaffold' ? 4096 : aiMaxTokens || undefined;
       window.strix.ai.directStart(id, {
-        baseURL: aiDirectBaseUrl,
-        apiKey: aiDirectApiKey,
-        model: aiDirectModel,
+        baseURL: direct.baseURL,
+        apiKey: direct.apiKey,
+        model: direct.model,
         messages,
         temperature: task === 'autocomplete' ? undefined : aiTemperature,
         maxTokens,
@@ -480,7 +479,7 @@ export function AiPanel({
     opts: Parameters<typeof buildPrompt>[1],
     settings: { model?: string; temperature?: number; maxTokens?: number; signal?: AbortSignal },
   ): Promise<string> => {
-    if (!directOn) return complete(task, opts, settings);
+    if (!selectedDirect) return complete(task, opts, settings);
     let text = '';
     await runTaskAny(task, opts, { onToken: (t) => (text += t), onDone: () => {} }, settings);
     return text;
@@ -507,23 +506,17 @@ export function AiPanel({
   // fast. Flipping serverReady re-runs the config/model effect once it's up.
   const [serverReady, setServerReady] = useState(false);
   const ensureAi = async () => {
-    // Direct provider: no local FreeLLMAPI to boot.
+    // A selected direct model talks to its provider — no local FreeLLMAPI needed.
     if (directOn) return;
     await window.strix.ai.ensure(aiServerUrl || undefined);
     if (!serverReady) setServerReady(true);
   };
 
   // Point the AI client at the FreeLLMAPI server (local or a shared host) and
-  // load its model list. Re-runs if the server URL changes in Settings, or once
-  // the lazily-started server comes up. The server needs a moment to boot, so
-  // retry the model list a few times before settling on just ['auto'].
+  // load its model list (always — Auto + FreeLLMAPI models stay available in the
+  // picker alongside any direct models). Retries a few times while the server
+  // boots before settling on just ['auto'].
   useEffect(() => {
-    // Direct provider: the model list is just the user's chosen model — skip the
-    // FreeLLMAPI config/discovery entirely.
-    if (directOn) {
-      setModels(aiDirectModel ? [aiDirectModel] : []);
-      return;
-    }
     const url = aiServerUrl || undefined;
     let cancelled = false;
     window.strix.ai.config(url).then((c) => !cancelled && configureAi(c));
@@ -542,19 +535,13 @@ export function AiPanel({
     return () => {
       cancelled = true;
     };
-  }, [aiServerUrl, serverReady, directOn, aiDirectModel]);
+  }, [aiServerUrl, serverReady]);
 
-  // Keep the model picker showing the direct model when that provider is active.
+  // Detect whether the AI is usable, so we can prompt the user to configure it.
+  // A direct model selected, or any direct model added, or a FreeLLMAPI provider
+  // key all count as "configured". Re-checks on server change and window focus.
   useEffect(() => {
-    if (directOn && aiDirectModel) setModel(aiDirectModel);
-  }, [directOn, aiDirectModel]);
-
-  // Detect whether any provider key is configured, so we can prompt the user to
-  // add one. Re-checks when the server changes and when the window regains focus
-  // (e.g. right after adding a key in Settings).
-  useEffect(() => {
-    // Direct provider: "configured" means the connection fields are filled in.
-    if (directOn) {
+    if (directOn || aiDirectModels.length > 0) {
       setHasKeys(true);
       return;
     }
@@ -576,7 +563,7 @@ export function AiPanel({
       cancelled = true;
       window.removeEventListener('focus', check);
     };
-  }, [aiServerUrl, directOn]);
+  }, [aiServerUrl, directOn, aiDirectModels.length]);
 
   // Reload the conversation when the workspace changes (per-project chat).
   useEffect(() => {
@@ -1388,11 +1375,30 @@ export function AiPanel({
 
       <div className="ai-toolbar">
         <select aria-label="model" value={model} onChange={(e) => setModel(e.target.value)}>
-          {models.map((m) => (
-            <option key={m} value={m}>
-              {m === 'auto' ? 'Auto (router)' : m}
-            </option>
-          ))}
+          {aiDirectModels.length > 0 ? (
+            <optgroup label="FreeLLMAPI">
+              {models.map((m) => (
+                <option key={m} value={m}>
+                  {m === 'auto' ? 'Auto (router)' : m}
+                </option>
+              ))}
+            </optgroup>
+          ) : (
+            models.map((m) => (
+              <option key={m} value={m}>
+                {m === 'auto' ? 'Auto (router)' : m}
+              </option>
+            ))
+          )}
+          {aiDirectModels.length > 0 && (
+            <optgroup label="Direct API keys">
+              {aiDirectModels.map((d) => (
+                <option key={d.id} value={`${DIRECT_PREFIX}${d.id}`}>
+                  {d.label || d.model}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       </div>
 
