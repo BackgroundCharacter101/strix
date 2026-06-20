@@ -19,7 +19,7 @@ formerly named **tabea**; the on-disk folder is still
   xterm.js, node-pty, isomorphic-git, OpenAI SDK → FreeLLMAPI. Vitest, ESLint
   (flat) + typescript-eslint, npm workspaces, Turborepo.
 - **GitHub:** `https://github.com/BackgroundCharacter101/strix` (private).
-  Active branch **`feat/editions-m1`** (pushed; HEAD `90b7242`). `origin/main`
+  Active branch **`feat/editions-m1`** (pushed; HEAD `95b4d23`). `origin/main`
   has diverged (other commits) — open a PR rather than force-pushing main.
 - **Design source of truth:** `ARCHITECTURE.md`. Agent roles: `AGENTS.md` +
   `.github/agents/strix-*.agent.md`.
@@ -673,6 +673,11 @@ strix/ (folder: tabea)
   as rounded cards on a dark canvas, grabbable resizers (`82bbe24`, `a95beab`).
 - **Liquid Glass** opt-in theme (Settings → Appearance): frosted shell + overlays
   (`b705610` → `676ad2a`). Note: CSS `backdrop-filter` only; no WebGL refraction.
+- **Design-token reconcile** (`95b4d23`): radius scale bumped (md 6 / lg 8 /
+  xl 12 + `--radius-pill`), ad-hoc values → tokens (`--panel-radius`, `--gap`,
+  `--shadow-1/2`), and a `--font-display` (Bahnschrift → Segoe UI Variable →
+  system) on wordmark / title bar / panel + section headers. Proper gear
+  Settings icon (was a bulb-like shape); theme-toggle button removed (`90b7242`).
 
 **Git / GitHub**
 - VS Code-style **Sync** (pull→push, auto-publish branch) + human-readable errors
