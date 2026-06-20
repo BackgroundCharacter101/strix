@@ -4038,7 +4038,7 @@ a:focus-visible,
 /* Terminal shell picker (▾ next to +) */
 .term-shell-picker { position: relative; display: inline-flex; }
 .term-shell-menu {
-  position: absolute; bottom: 100%; left: 0; z-index: 30; min-width: 160px;
+  position: absolute; top: 100%; left: 0; z-index: 30; min-width: 160px;
   background: var(--bg-elevated); border: 1px solid var(--border);
   border-radius: var(--radius-md); box-shadow: var(--shadow-modal); padding: 4px;
   display: flex; flex-direction: column;
@@ -4048,3 +4048,10 @@ a:focus-visible,
   font-size: var(--text-sm); color: var(--text);
 }
 .term-shell-menu button:hover { background: var(--bg-hover); }
+
+/* Terminal now sits inside the editor column — don't double up the card chrome. */
+.editor-pane > .panel {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}

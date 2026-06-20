@@ -1134,6 +1134,22 @@ export default function App() {
                   )}
                 </div>
               )}
+              {showTerminal && !zen && (
+                <>
+                  <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
+                  <section className="panel" style={{ height: terminal.size }}>
+                    <TerminalTabs
+                      cwd={root ?? undefined}
+                      launch={claudeLaunch}
+                      freebuffEnv={freebuffEnv}
+                      fontSize={settings.terminalFontSize || settings.fontSize}
+                      fontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
+                      cursorStyle={settings.terminalCursorStyle}
+                      shell={settings.terminalShell || undefined}
+                    />
+                  </section>
+                </>
+              )}
             </main>
             {showAi && !zen && (
               <>
@@ -1177,22 +1193,6 @@ export default function App() {
               </>
             )}
           </div>
-          {showTerminal && !zen && (
-            <>
-              <div className="resizer resizer-y" onPointerDown={terminal.onPointerDown} />
-              <section className="panel" style={{ height: terminal.size }}>
-                <TerminalTabs
-                  cwd={root ?? undefined}
-                  launch={claudeLaunch}
-                  freebuffEnv={freebuffEnv}
-                  fontSize={settings.terminalFontSize || settings.fontSize}
-                  fontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
-                  cursorStyle={settings.terminalCursorStyle}
-                  shell={settings.terminalShell || undefined}
-                />
-              </section>
-            </>
-          )}
         </div>
       </div>
       {!zen && (
