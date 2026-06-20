@@ -4070,3 +4070,222 @@ a:focus-visible,
   border-radius: 0;
   box-shadow: none;
 }
+
+/* --- Coding agents (roster panel) --- */
+.agents-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  padding: var(--space-2) var(--space-3) var(--space-4);
+}
+.agents-empty {
+  color: var(--text-muted);
+  padding: var(--space-4);
+}
+.agents-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.agents-title {
+  font-weight: var(--weight-medium);
+  font-family: var(--font-display);
+}
+.agents-pause {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.agents-note {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.agents-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.agent-row {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  padding: 10px;
+}
+.agent-row.agent-running {
+  border-color: var(--accent);
+}
+.agent-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.agent-enable {
+  padding-top: 2px;
+}
+.agent-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.agent-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: var(--weight-medium);
+}
+.agent-badge {
+  font-size: 11px;
+  font-weight: var(--weight-regular);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0 8px;
+  font-family: var(--font-mono);
+}
+.agent-badge-report {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.agent-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.agent-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+.agent-ago {
+  color: var(--text-faint, var(--text-muted));
+}
+.agent-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex: 0 0 auto;
+}
+.agent-dot-running {
+  background: var(--accent);
+  animation: agent-pulse 1.2s ease-in-out infinite;
+}
+.agent-dot-ok {
+  background: var(--ok, #3ecf8e);
+}
+.agent-dot-error {
+  background: var(--danger);
+}
+.agent-dot-queued {
+  background: var(--accent);
+  opacity: 0.6;
+}
+@keyframes agent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.agent-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.agent-actions select {
+  max-width: 130px;
+  font-size: 12px;
+}
+.agent-run,
+.agent-report-toggle,
+.agent-remove,
+.agent-add-cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.agent-run:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.agent-run:hover:not(:disabled),
+.agent-report-toggle:hover,
+.agent-remove:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.agent-report {
+  margin-top: 10px;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  max-height: 320px;
+  overflow: auto;
+}
+.agents-add-btn {
+  margin-top: var(--space-3);
+  align-self: flex-start;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 7px 14px;
+  cursor: pointer;
+  font-weight: var(--weight-medium);
+}
+.agents-add-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.agent-add {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+}
+.agent-add textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+.agent-add-mode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.agent-add-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.activity-badge-run {
+  background: var(--accent);
+  min-width: 8px;
+  height: 8px;
+  padding: 0;
+  border-radius: 50%;
+  animation: agent-pulse 1.2s ease-in-out infinite;
+}

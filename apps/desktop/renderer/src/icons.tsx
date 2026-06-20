@@ -71,6 +71,19 @@ export function MapIcon({ size = 20 }: IconProps) {
   );
 }
 
+// Agents: a small robot head — reads as "automation/agents".
+export function AgentsIcon({ size = 20 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <rect x="5" y="8" width="14" height="10" rx="2.5" />
+      <path d="M12 4v4" />
+      <circle cx="12" cy="3.2" r="1.2" />
+      <path d="M9.5 12.5h.01M14.5 12.5h.01" />
+      <path d="M3 12v3M21 12v3" />
+    </svg>
+  );
+}
+
 export function OutlineIcon({ size = 20 }: IconProps) {
   return (
     <svg {...base(size)}>

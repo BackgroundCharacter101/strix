@@ -29,6 +29,7 @@ import { useEditorTabs } from './src/useEditorTabs';
 import { useResizable } from './src/useResizable';
 import { useGitStatus } from './src/useGitStatus';
 import {
+  AgentsIcon,
   ExtensionsIcon,
   FilesIcon,
   GearIcon,
@@ -45,6 +46,8 @@ import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID, IS_COMPETITION } from './src/edition';
 import { ProjectMapView } from './src/ProjectMapView';
+import { AgentsView } from './src/AgentsView';
+import { useAgents } from './src/agents/useAgents';
 import { buildKeymap, eventAccelerator } from './src/keybindings';
 import { applySaveTransforms } from './src/saveTransforms';
 import { buildFreebuffEnv } from './src/freebuffEnv';
@@ -56,7 +59,15 @@ export default function App() {
   const [showAi, setShowAi] = useState(true);
   const [showTerminal, setShowTerminal] = useState(true);
   const [sidebarView, setSidebarView] = useState<
-    'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline' | 'projectmap'
+    | 'explorer'
+    | 'search'
+    | 'scm'
+    | 'run'
+    | 'extensions'
+    | 'problems'
+    | 'outline'
+    | 'projectmap'
+    | 'agents'
   >(
     'explorer',
   );
@@ -165,6 +176,17 @@ export default function App() {
   const visibleGroups = GROUP_ORDER.slice(0, splitCount);
   const effectiveActive = visibleGroups.includes(activeGroup) ? activeGroup : 'a';
   const activeTabs = split ? groupTabs[effectiveActive] : tabs;
+
+  // Coding agents: persistent single-purpose AI agents that watch the project
+  // and keep docs current / post review reports. (Open files they rewrite are
+  // reloaded automatically by the fs.onChanged watcher below.)
+  const agents = useAgents({
+    root,
+    aiDirectModels: settings.aiDirectModels,
+    aiServerUrl: settings.aiServerUrl,
+    aiTemperature: settings.aiTemperature,
+    aiMaxTokens: settings.aiMaxTokens,
+  });
 
   // Open a file in the active group and jump to a 1-based line (Search/Problems).
   const openAtLine = useCallback(
@@ -591,7 +613,16 @@ export default function App() {
   }, []);
 
   const selectView = (
-    view: 'explorer' | 'search' | 'scm' | 'run' | 'extensions' | 'problems' | 'outline' | 'projectmap',
+    view:
+      | 'explorer'
+      | 'search'
+      | 'scm'
+      | 'run'
+      | 'extensions'
+      | 'problems'
+      | 'outline'
+      | 'projectmap'
+      | 'agents',
   ) => {
     if (showSidebar && sidebarView === view) {
       setShowSidebar(false);
@@ -959,6 +990,17 @@ export default function App() {
           <button
             type="button"
             className="activity-with-badge"
+            aria-label="Agents"
+            aria-pressed={showSidebar && sidebarView === 'agents'}
+            title="Coding agents"
+            onClick={() => selectView('agents')}
+          >
+            <AgentsIcon />
+            {agents.busy && <span className="activity-badge activity-badge-run" aria-hidden />}
+          </button>
+          <button
+            type="button"
+            className="activity-with-badge"
             aria-label="Source Control"
             aria-pressed={showSidebar && sidebarView === 'scm'}
             title={`Source Control${changedCount ? ` — ${changedCount} changed` : ''}`}
@@ -1032,10 +1074,14 @@ export default function App() {
                               ? 'Problems'
                               : sidebarView === 'projectmap'
                                 ? 'Project Map'
-                                : 'Explorer'}
+                                : sidebarView === 'agents'
+                                  ? 'Agents'
+                                  : 'Explorer'}
                   </div>
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={openAtLine} />
+                  ) : sidebarView === 'agents' ? (
+                    <AgentsView hub={agents} directModels={settings.aiDirectModels} noRoot={!root} />
                   ) : sidebarView === 'projectmap' ? (
                     <ProjectMapView
                       rootPath={root}

@@ -60,6 +60,43 @@ export async function runTask(
   await streamToPanel(stream, callbacks.onToken, callbacks.onDone);
 }
 
+export interface RawMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+// Stream a chat completion from arbitrary messages (a custom system persona +
+// user content) and resolve with the full text. Used by the agent runner, where
+// each agent supplies its own persona rather than a fixed TaskType prompt.
+export async function streamChatRaw(
+  messages: RawMessage[],
+  settings: RunTaskSettings = {},
+  onToken?: (token: string) => void,
+): Promise<string> {
+  const params: ChatCompletionCreateParamsStreaming = {
+    model: settings.model && settings.model !== 'auto' ? settings.model : 'auto',
+    messages: messages as ChatCompletionMessageParam[],
+    stream: true,
+  };
+  if (settings.maxTokens && settings.maxTokens > 0) params.max_tokens = settings.maxTokens;
+  if (typeof settings.temperature === 'number') params.temperature = settings.temperature;
+
+  const stream = await ai.chat.completions.create(
+    params,
+    settings.signal ? { signal: settings.signal } : undefined,
+  );
+  let text = '';
+  await streamToPanel(
+    stream,
+    (t) => {
+      text += t;
+      onToken?.(t);
+    },
+    () => {},
+  );
+  return text;
+}
+
 // Run a task and resolve with the full text (no streaming UI). Used for
 // inline autocomplete and other one-shot completions.
 export async function complete(
