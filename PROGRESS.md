@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-06-17
+> Last updated: 2026-06-20
 
 ---
 
@@ -380,7 +380,10 @@ strix/ (folder: tabea)
 - **ai:** `config(url?)` → `{baseURL, apiKey}` · `models(url?)` → string[] — the
   optional url points at a **shared FreeLLMAPI host** (Settings → AI server URL);
   blank = local. CSP allows `http://*:3001`. Packaged exe is IDE-only (no bundled
-  server). Team model in `docs/TEAM_SETUP.md`.
+  server). Team model in `docs/TEAM_SETUP.md`. **Direct provider:**
+  `directStart(id,{baseURL,apiKey,model,messages,temperature?,maxTokens?})` +
+  `directCancel(id)` stream an OpenAI-compatible completion from main (no CORS);
+  tokens arrive via `onDirectToken`/`onDirectDone`/`onDirectError` (id-keyed).
 - **collab:** `url()` → string|null (COLLAB_SERVER_URL)
 - **menu:** `onCommand(cb)` → unsubscribe (native menu → renderer command ids)
 
@@ -693,6 +696,23 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Bring-your-own AI provider (direct API key, no FreeLLMAPI):** Settings → AI →
+  **AI provider** = "Direct API key" reveals **Provider base URL + API key + Model**.
+  Every AI action (chat / explain / fix / refactor / audit / scaffold) then runs
+  against any **OpenAI-compatible** endpoint (OpenAI, OpenRouter, Groq, Together,
+  Mistral, DeepSeek, local Ollama/LM Studio) with the user's own key — FreeLLMAPI
+  is never booted. Because the renderer can't call external hosts (webSecurity/
+  CORS), calls **stream through the main process**: `main/aiProxy.ts` `streamChat`
+  (SSE parse, tested) + IPC `ai:directStart`/`ai:directCancel` → `ai:directToken`/
+  `directDone`/`directError` events keyed by id (mirrors the search-stream pattern).
+  Bridge `ai.directStart/directCancel/onDirectToken/onDirectDone/onDirectError`.
+  AiPanel branches via `runTaskAny`/`completeAny` (build messages with `buildPrompt`,
+  drive the same onToken/onDone contract); in direct mode it skips `ai.ensure`/
+  `config`/`listKeys`, the model picker shows the chosen model, and the "add a key"
+  banner is satisfied by the connection fields. Settings: `aiProvider` +
+  `aiDirectBaseUrl`/`aiDirectApiKey`/`aiDirectModel` (key stored locally; only sent
+  to that provider, via main). Built-in (FreeLLMAPI) stays the default; both
+  editions. (Autocomplete ghost-text still uses FreeLLMAPI.)
 - Outline / Go-to-Symbol (`7025762`), virtualized file tree + streaming search
   (`4ae6d8b`, `f710fd6`), @file typeahead + pinned chips, Find&Replace case/word.
 - **Cybersec (Competition):** "Audit project" — repo-wide AI security review
@@ -707,7 +727,7 @@ strix/ (folder: tabea)
 - **AI repo-wide gather** (`a95beab`): ranks every file by relevance so big
   multi-folder projects are scanned correctly (was capped to early folders).
 
-**Status:** typecheck + lint clean, **358 tests** pass, 0 prod vulns. Both
+**Status:** typecheck + lint clean, **362 tests** pass, 0 prod vulns. Both
 editions build to `Desktop\strix`. Problems tab removed from activity bar (still
 in Command Palette).
 

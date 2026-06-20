@@ -3,6 +3,7 @@ import {
   runTask,
   complete,
   configureAi,
+  buildPrompt,
   parseScaffold,
   type TaskType,
   type ChatMessage,
@@ -315,6 +316,10 @@ export function AiPanel({
   aiDefaultModel = 'auto',
   aiTemperature = 0.7,
   aiMaxTokens = 0,
+  aiProvider = 'freellmapi',
+  aiDirectBaseUrl = '',
+  aiDirectApiKey = '',
+  aiDirectModel = '',
   mode = 'normal',
   securityStance = 'balanced',
   onSecurityStanceChange,
@@ -356,6 +361,12 @@ export function AiPanel({
   aiDefaultModel?: string;
   aiTemperature?: number;
   aiMaxTokens?: number;
+  // AI provider: 'freellmapi' (built-in router) or 'direct' (bring-your-own
+  // OpenAI-compatible endpoint + key, streamed through the main process).
+  aiProvider?: 'freellmapi' | 'direct';
+  aiDirectBaseUrl?: string;
+  aiDirectApiKey?: string;
+  aiDirectModel?: string;
   // Workbench mode; 'cybersec' switches the AI to a security-expert persona.
   mode?: 'normal' | 'cybersec';
   // Security-expert stance (only meaningful in cybersec mode).
@@ -384,6 +395,96 @@ export function AiPanel({
     maxTokens: aiMaxTokens,
     signal,
   });
+
+  // "Bring your own provider": when the user picks a direct OpenAI-compatible
+  // endpoint (Settings → AI) and fills the connection in, every AI action runs
+  // against it — streamed through the main process (renderer CORS forbids direct
+  // calls) — with no FreeLLMAPI involved.
+  const directOn =
+    aiProvider === 'direct' &&
+    aiDirectBaseUrl.trim() !== '' &&
+    aiDirectApiKey.trim() !== '' &&
+    aiDirectModel.trim() !== '';
+  const directIdRef = useRef(0);
+
+  // Mirrors runTask's contract but routes to the direct provider when enabled.
+  const runTaskAny = (
+    task: TaskType,
+    opts: Parameters<typeof buildPrompt>[1],
+    callbacks: { onToken: (t: string) => void; onDone: (via: string) => void },
+    settings: { model?: string; temperature?: number; maxTokens?: number; signal?: AbortSignal },
+  ): Promise<void> => {
+    if (!directOn) return runTask(task, opts, callbacks, settings);
+    return new Promise<void>((resolve, reject) => {
+      const id = ++directIdRef.current;
+      const messages = buildPrompt(task, opts);
+      let settled = false;
+      const offs: Array<() => void> = [];
+      const signal = settings.signal;
+      const cleanup = () => {
+        offs.forEach((f) => f());
+        if (signal) signal.removeEventListener('abort', onAbort);
+      };
+      const onAbort = () => {
+        window.strix.ai.directCancel(id);
+        if (!settled) {
+          settled = true;
+          cleanup();
+          resolve();
+        }
+      };
+      offs.push(
+        window.strix.ai.onDirectToken((p) => {
+          if (p.id === id) callbacks.onToken(p.token);
+        }),
+      );
+      offs.push(
+        window.strix.ai.onDirectDone((p) => {
+          if (p.id === id && !settled) {
+            settled = true;
+            cleanup();
+            callbacks.onDone(aiDirectModel);
+            resolve();
+          }
+        }),
+      );
+      offs.push(
+        window.strix.ai.onDirectError((p) => {
+          if (p.id === id && !settled) {
+            settled = true;
+            cleanup();
+            reject(new Error(p.error || 'Provider request failed'));
+          }
+        }),
+      );
+      if (signal) {
+        if (signal.aborted) return onAbort();
+        signal.addEventListener('abort', onAbort);
+      }
+      // Scaffold plans need headroom; otherwise honour the user's max-tokens cap.
+      const maxTokens = task === 'scaffold' ? 4096 : aiMaxTokens || undefined;
+      window.strix.ai.directStart(id, {
+        baseURL: aiDirectBaseUrl,
+        apiKey: aiDirectApiKey,
+        model: aiDirectModel,
+        messages,
+        temperature: task === 'autocomplete' ? undefined : aiTemperature,
+        maxTokens,
+      });
+    });
+  };
+
+  // Run-and-collect (one-shot) variant of runTaskAny, mirroring complete().
+  const completeAny = async (
+    task: TaskType,
+    opts: Parameters<typeof buildPrompt>[1],
+    settings: { model?: string; temperature?: number; maxTokens?: number; signal?: AbortSignal },
+  ): Promise<string> => {
+    if (!directOn) return complete(task, opts, settings);
+    let text = '';
+    await runTaskAny(task, opts, { onToken: (t) => (text += t), onDone: () => {} }, settings);
+    return text;
+  };
   const [models, setModels] = useState<string[]>(['auto']);
   const [history, setHistory] = useState<ChatMessage[]>(() =>
     loadHistory(historyKeyFor(workspaceKey)),
@@ -406,6 +507,8 @@ export function AiPanel({
   // fast. Flipping serverReady re-runs the config/model effect once it's up.
   const [serverReady, setServerReady] = useState(false);
   const ensureAi = async () => {
+    // Direct provider: no local FreeLLMAPI to boot.
+    if (directOn) return;
     await window.strix.ai.ensure(aiServerUrl || undefined);
     if (!serverReady) setServerReady(true);
   };
@@ -415,6 +518,12 @@ export function AiPanel({
   // the lazily-started server comes up. The server needs a moment to boot, so
   // retry the model list a few times before settling on just ['auto'].
   useEffect(() => {
+    // Direct provider: the model list is just the user's chosen model — skip the
+    // FreeLLMAPI config/discovery entirely.
+    if (directOn) {
+      setModels(aiDirectModel ? [aiDirectModel] : []);
+      return;
+    }
     const url = aiServerUrl || undefined;
     let cancelled = false;
     window.strix.ai.config(url).then((c) => !cancelled && configureAi(c));
@@ -433,12 +542,22 @@ export function AiPanel({
     return () => {
       cancelled = true;
     };
-  }, [aiServerUrl, serverReady]);
+  }, [aiServerUrl, serverReady, directOn, aiDirectModel]);
+
+  // Keep the model picker showing the direct model when that provider is active.
+  useEffect(() => {
+    if (directOn && aiDirectModel) setModel(aiDirectModel);
+  }, [directOn, aiDirectModel]);
 
   // Detect whether any provider key is configured, so we can prompt the user to
   // add one. Re-checks when the server changes and when the window regains focus
   // (e.g. right after adding a key in Settings).
   useEffect(() => {
+    // Direct provider: "configured" means the connection fields are filled in.
+    if (directOn) {
+      setHasKeys(true);
+      return;
+    }
     const url = aiServerUrl || undefined;
     let cancelled = false;
     const check = () => {
@@ -457,7 +576,7 @@ export function AiPanel({
       cancelled = true;
       window.removeEventListener('focus', check);
     };
-  }, [aiServerUrl]);
+  }, [aiServerUrl, directOn]);
 
   // Reload the conversation when the workspace changes (per-project chat).
   useEffect(() => {
@@ -600,7 +719,7 @@ export function AiPanel({
 
     let acc = '';
     try {
-      await runTask(
+      await runTaskAny(
         task,
         { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: task === 'chat' ? attachments : undefined },
         {
@@ -651,7 +770,7 @@ export function AiPanel({
         maxBytes: 200_000,
         maxFileBytes: 16_000,
       });
-      await runTask(
+      await runTaskAny(
         'vuln_check',
         {
           filePath: '',
@@ -698,7 +817,7 @@ export function AiPanel({
     abortRef.current = controller;
     let acc = '';
     try {
-      await runTask(
+      await runTaskAny(
         kind,
         { filePath: filePath ?? '', fileContent: selection, userMessage: '', securityMode, securityStance, securityPersonaText },
         {
@@ -739,7 +858,7 @@ export function AiPanel({
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const suggested = await complete(
+      const suggested = await completeAny(
         task,
         {
           filePath: filePath ?? '',
@@ -783,7 +902,7 @@ export function AiPanel({
     abortRef.current = controller;
     let acc = '';
     try {
-      await runTask(
+      await runTaskAny(
         'chat',
         { filePath: filePath ?? '', fileContent, userMessage, history: prior, projectContext, securityMode, securityStance, securityPersonaText },
         {
@@ -887,7 +1006,7 @@ export function AiPanel({
       // Step 1 — stream a short plan so the long wait shows real progress.
       let planText = '';
       try {
-        await runTask(
+        await runTaskAny(
           'chat',
           {
             filePath: '',
@@ -923,12 +1042,12 @@ export function AiPanel({
         : projectContext;
       const buildOpts = { filePath: '', fileContent: '', userMessage: desc, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: atts };
       try {
-        raw = await complete('scaffold', buildOpts, { model: buildModel, signal: controller.signal });
+        raw = await completeAny('scaffold', buildOpts, { model: buildModel, signal: controller.signal });
       } catch (e1) {
         if (controller.signal.aborted) throw e1;
         // The preferred model may have failed — fall back to the router (auto),
         // which has its own provider failover.
-        raw = await complete('scaffold', buildOpts, { model: 'auto', signal: controller.signal });
+        raw = await completeAny('scaffold', buildOpts, { model: 'auto', signal: controller.signal });
       }
     } catch {
       if (!controller.signal.aborted) {

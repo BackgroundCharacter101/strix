@@ -1166,6 +1166,10 @@ export default function App() {
                     aiDefaultModel={settings.aiDefaultModel}
                     aiTemperature={settings.aiTemperature}
                     aiMaxTokens={settings.aiMaxTokens}
+                    aiProvider={settings.aiProvider}
+                    aiDirectBaseUrl={settings.aiDirectBaseUrl}
+                    aiDirectApiKey={settings.aiDirectApiKey}
+                    aiDirectModel={settings.aiDirectModel}
                     mode={CYBERSEC_ENABLED ? settings.mode : 'normal'}
                     securityStance={settings.securityStance}
                     onSecurityStanceChange={(s) => updateSettings({ securityStance: s })}

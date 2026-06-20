@@ -141,6 +141,23 @@ export interface StrixAiApi {
   listKeys(url?: string): Promise<AiProviderKey[]>;
   addKey(platform: string, key: string, url?: string): Promise<{ ok: boolean; error?: string }>;
   deleteKey(id: number, url?: string): Promise<{ ok: boolean }>;
+  // Direct "bring your own provider" streaming — calls an OpenAI-compatible
+  // endpoint from the main process (renderer CORS forbids it). Tokens arrive via
+  // onDirectToken keyed by `id`; finishes with onDirectDone or onDirectError.
+  directStart(id: number, params: DirectChatParams): void;
+  directCancel(id: number): void;
+  onDirectToken(cb: (p: { id: number; token: string }) => void): () => void;
+  onDirectDone(cb: (p: { id: number }) => void): () => void;
+  onDirectError(cb: (p: { id: number; error?: string }) => void): () => void;
+}
+
+export interface DirectChatParams {
+  baseURL: string;
+  apiKey: string;
+  model: string;
+  messages: { role: string; content: unknown }[];
+  temperature?: number;
+  maxTokens?: number;
 }
 
 export interface StrixCollabApi {

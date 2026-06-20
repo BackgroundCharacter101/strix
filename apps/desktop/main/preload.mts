@@ -89,6 +89,23 @@ const api: StrixApi = {
     listKeys: (url) => ipcRenderer.invoke('ai:listKeys', url),
     addKey: (platform, key, url) => ipcRenderer.invoke('ai:addKey', platform, key, url),
     deleteKey: (id, url) => ipcRenderer.invoke('ai:deleteKey', id, url),
+    directStart: (id, params) => ipcRenderer.send('ai:directStart', { id, params }),
+    directCancel: (id) => ipcRenderer.send('ai:directCancel', { id }),
+    onDirectToken: (cb) => {
+      const h = (_e: unknown, payload: { id: number; token: string }) => cb(payload);
+      ipcRenderer.on('ai:directToken', h);
+      return () => ipcRenderer.removeListener('ai:directToken', h);
+    },
+    onDirectDone: (cb) => {
+      const h = (_e: unknown, payload: { id: number }) => cb(payload);
+      ipcRenderer.on('ai:directDone', h);
+      return () => ipcRenderer.removeListener('ai:directDone', h);
+    },
+    onDirectError: (cb) => {
+      const h = (_e: unknown, payload: { id: number; error?: string }) => cb(payload);
+      ipcRenderer.on('ai:directError', h);
+      return () => ipcRenderer.removeListener('ai:directError', h);
+    },
   },
   collab: {
     url: () => ipcRenderer.invoke('collab:url'),

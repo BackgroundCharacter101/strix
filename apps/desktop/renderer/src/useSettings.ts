@@ -55,6 +55,15 @@ export interface Settings {
   aiDefaultModel: string;
   aiTemperature: number;
   aiMaxTokens: number;
+  // AI provider: 'freellmapi' (built-in local router, default) or 'direct'
+  // (bring your own OpenAI-compatible endpoint + key — no FreeLLMAPI involved).
+  aiProvider: 'freellmapi' | 'direct';
+  // Direct-provider connection (used only when aiProvider === 'direct'). Any
+  // OpenAI-compatible base URL (OpenAI, OpenRouter, Groq, Together, Mistral,
+  // DeepSeek, local Ollama/LM Studio, …). Calls go through the main process.
+  aiDirectBaseUrl: string;
+  aiDirectApiKey: string;
+  aiDirectModel: string;
   // Reopen the most-recently-used folder (and its tabs) automatically on launch
   // instead of showing the welcome screen.
   restoreLastFolder: boolean;
@@ -117,6 +126,10 @@ export const DEFAULT_SETTINGS: Settings = {
   aiDefaultModel: 'auto',
   aiTemperature: 0.7,
   aiMaxTokens: 0,
+  aiProvider: 'freellmapi',
+  aiDirectBaseUrl: '',
+  aiDirectApiKey: '',
+  aiDirectModel: '',
   restoreLastFolder: false,
   githubClientId: '',
   agentAutoApply: false,

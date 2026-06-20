@@ -1,5 +1,6 @@
 import { ipcMain, shell } from 'electron';
 import * as os from 'os';
+import { streamChat } from './aiProxy.js';
 import {
   buildFileTree,
   readFileContents,
@@ -321,5 +322,41 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
     } catch {
       return { ok: false };
     }
+  });
+
+  // --- Direct "bring your own provider" streaming (bypasses FreeLLMAPI) ---
+  // The renderer can't call external providers directly (webSecurity/CORS), so
+  // it streams an OpenAI-compatible completion through here. Tokens flow back as
+  // `ai:directToken` events keyed by a renderer-supplied request id.
+  const directCancels = new Map<number, boolean>();
+  ipcMain.on(
+    'ai:directStart',
+    (event, payload: { id: number; params: Parameters<typeof streamChat>[0] }) => {
+      const { id, params } = payload;
+      directCancels.set(id, false);
+      streamChat(
+        params,
+        (token) => {
+          if (!event.sender.isDestroyed()) event.sender.send('ai:directToken', { id, token });
+        },
+        () => directCancels.get(id) === true,
+      )
+        .then((r) => {
+          if (event.sender.isDestroyed()) return;
+          if (r.ok) event.sender.send('ai:directDone', { id });
+          else event.sender.send('ai:directError', { id, error: r.error });
+        })
+        .catch((e: unknown) => {
+          if (!event.sender.isDestroyed())
+            event.sender.send('ai:directError', {
+              id,
+              error: e instanceof Error ? e.message : String(e),
+            });
+        })
+        .finally(() => directCancels.delete(id));
+    },
+  );
+  ipcMain.on('ai:directCancel', (_event, payload: { id: number }) => {
+    if (directCancels.has(payload.id)) directCancels.set(payload.id, true);
   });
 }

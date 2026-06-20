@@ -702,6 +702,67 @@ export function SettingsPage({
           <h3>AI</h3>
           <Row
             query={query}
+            label="AI provider"
+            desc="Built-in (FreeLLMAPI) routes free providers with auto-failover. Direct API key calls any OpenAI-compatible endpoint (OpenAI, OpenRouter, Groq, Together, Mistral, DeepSeek, local Ollama/LM Studio) with your own key — no FreeLLMAPI."
+          >
+            <select
+              aria-label="AI provider"
+              value={settings.aiProvider}
+              onChange={(e) => onChange({ aiProvider: e.target.value as 'freellmapi' | 'direct' })}
+            >
+              <option value="freellmapi">Built-in (FreeLLMAPI)</option>
+              <option value="direct">Direct API key (bring your own)</option>
+            </select>
+          </Row>
+
+          {settings.aiProvider === 'direct' && (
+            <>
+              <Row
+                query={query}
+                label="Provider base URL"
+                desc="OpenAI-compatible endpoint root. OpenAI: https://api.openai.com/v1 · OpenRouter: https://openrouter.ai/api/v1 · Groq: https://api.groq.com/openai/v1 · Ollama: http://localhost:11434/v1"
+              >
+                <input
+                  type="text"
+                  aria-label="Provider base URL"
+                  placeholder="https://api.openai.com/v1"
+                  value={settings.aiDirectBaseUrl}
+                  onChange={(e) => onChange({ aiDirectBaseUrl: e.target.value })}
+                />
+              </Row>
+              <Row
+                query={query}
+                label="Provider API key"
+                desc="Your key for the endpoint above. Stored locally on this machine; sent only to that provider (through the app's main process, never the renderer)."
+              >
+                <input
+                  type="password"
+                  aria-label="Provider API key"
+                  placeholder="sk-…"
+                  value={settings.aiDirectApiKey}
+                  onChange={(e) => onChange({ aiDirectApiKey: e.target.value })}
+                />
+              </Row>
+              <Row
+                query={query}
+                label="Model"
+                desc="Exact model id the provider expects, e.g. gpt-4o-mini, deepseek/deepseek-chat, llama-3.3-70b-versatile, qwen2.5-coder."
+              >
+                <input
+                  type="text"
+                  aria-label="Model"
+                  placeholder="gpt-4o-mini"
+                  value={settings.aiDirectModel}
+                  onChange={(e) => onChange({ aiDirectModel: e.target.value })}
+                />
+              </Row>
+            </>
+          )}
+
+          {settings.aiProvider === 'freellmapi' && (
+          <>
+          <Row
+            query={query}
             label="AI server URL"
             desc="A shared FreeLLMAPI host for the team (e.g. http://192.168.1.50:3001). Leave blank to use the local server."
           >
@@ -727,6 +788,8 @@ export function SettingsPage({
               onChange={(e) => onChange({ aiDefaultModel: e.target.value || 'auto' })}
             />
           </Row>
+          </>
+          )}
           <Row
             query={query}
             label="Temperature"
@@ -905,16 +968,21 @@ export function SettingsPage({
             />
           </Row>
 
-          <div className="set-row set-row-block">
-            <div className="set-info">
-              <div className="set-label">Provider API keys</div>
-              <div className="set-desc">
-                Add keys for the free LLM providers right here — no need to open the server&apos;s
-                web page. Keys are stored encrypted on the AI host above (local by default).
+          {settings.aiProvider === 'freellmapi' && (
+            <>
+              <div className="set-row set-row-block">
+                <div className="set-info">
+                  <div className="set-label">Provider API keys</div>
+                  <div className="set-desc">
+                    Add keys for the free LLM providers right here — no need to open the
+                    server&apos;s web page. Keys are stored encrypted on the AI host above (local by
+                    default).
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          <ProviderKeys serverUrl={settings.aiServerUrl} />
+              <ProviderKeys serverUrl={settings.aiServerUrl} />
+            </>
+          )}
         </section>
         )}
 
