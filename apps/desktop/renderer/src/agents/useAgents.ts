@@ -4,6 +4,7 @@ import { resolveAgents, dueAgents } from './agentScheduler';
 import { matchAny } from './glob';
 import { buildAgentContext, isAllowedDocTarget, stripCodeFence, type AgentFile } from './agentContext';
 import { runAgentModel } from './agentRunner';
+import { parseScaffold, isSafeRelPath } from '@strix/ai-gateway';
 import type { AgentConfig, AgentStatus, ResolvedAgent } from './agentTypes';
 import type { DirectModel } from '../useSettings';
 import { showToast } from '../toast';
@@ -97,6 +98,7 @@ export interface UseAgents {
   addCustom: (cfg: AgentConfig) => void;
   removeCustom: (id: string) => void;
   runNow: (id: string) => void;
+  undoAgent: (id: string) => void;
   busy: boolean;
 }
 
@@ -233,6 +235,47 @@ export function useAgents(opts: {
             lastRun: Date.now(),
             lastMessage: `Updated ${agent.target}`,
           });
+        } else if (agent.outputMode === 'edit') {
+          const plan = parseScaffold(text);
+          if ('error' in plan) {
+            setStatus(agent.id, {
+              state: 'error',
+              lastRun: Date.now(),
+              lastMessage: `Couldn't parse the edit: ${plan.error}`,
+            });
+            return;
+          }
+          // Apply edits (search/replace) then full files, snapshotting each for
+          // undo. Every path is guarded by isSafeRelPath (inside project only).
+          const undo: { path: string; before: string | null }[] = [];
+          const touched = new Set<string>();
+          for (const e of plan.edits) {
+            if (!isSafeRelPath(e.path) || touched.has(e.path)) continue;
+            const abs = `${r}/${e.path}`;
+            const old = await window.strix.fs.read(abs).catch(() => '');
+            if (!old.includes(e.search)) continue; // stale snippet — skip
+            undo.push({ path: e.path, before: old });
+            await window.strix.fs.write(abs, old.replace(e.search, e.replace));
+            o.onFileWritten?.(abs);
+            touched.add(e.path);
+          }
+          for (const f of plan.files) {
+            if (!isSafeRelPath(f.path) || touched.has(f.path)) continue;
+            const abs = `${r}/${f.path}`;
+            const before = await window.strix.fs.read(abs).catch(() => null);
+            undo.push({ path: f.path, before });
+            await window.strix.fs.write(abs, f.content);
+            o.onFileWritten?.(abs);
+            touched.add(f.path);
+          }
+          setStatus(agent.id, {
+            state: 'ok',
+            lastRun: Date.now(),
+            lastMessage: touched.size
+              ? `Changed ${touched.size} file(s)${plan.notes ? ` — ${plan.notes}` : ''}`
+              : 'No changes needed',
+            undo: touched.size ? undo : undefined,
+          });
         } else {
           setStatus(agent.id, {
             state: 'ok',
@@ -296,6 +339,30 @@ export function useAgents(opts: {
 
   const runNow = useCallback((id: string) => enqueue([id]), [enqueue]);
 
+  // Revert the files an edit agent's last run changed (restore prior content;
+  // delete files the run created).
+  const undoAgent = useCallback(
+    (id: string) => {
+      const { root: r } = ref.current;
+      const snap = ref.current.statuses[id]?.undo;
+      if (!r || !snap?.length) return;
+      void (async () => {
+        for (const f of snap) {
+          const abs = `${r}/${f.path}`;
+          try {
+            if (f.before === null) await window.strix.fs.remove(abs);
+            else await window.strix.fs.write(abs, f.before);
+            ref.current.opts.onFileWritten?.(abs);
+          } catch {
+            /* best-effort */
+          }
+        }
+        setStatus(id, { lastMessage: 'Reverted last change', undo: undefined });
+      })();
+    },
+    [setStatus],
+  );
+
   // Debounced change watcher: collect changed paths, and after the idle window
   // enqueue every due agent.
   const pendingRef = useRef<Set<string>>(new Set());
@@ -339,6 +406,7 @@ export function useAgents(opts: {
     addCustom,
     removeCustom,
     runNow,
+    undoAgent,
     busy,
   };
 }

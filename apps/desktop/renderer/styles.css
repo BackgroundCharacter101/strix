@@ -4099,6 +4099,10 @@ a:focus-visible,
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
+.agent-badge-edit {
+  color: var(--yellow, #feca57);
+  border-color: color-mix(in srgb, var(--yellow, #feca57) 45%, transparent);
+}
 .agent-desc {
   font-size: 12px;
   color: var(--text-muted);

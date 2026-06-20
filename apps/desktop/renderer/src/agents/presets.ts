@@ -7,6 +7,17 @@ const CODE_WATCH = [
 
 const DEFAULT_COOLDOWN = 5 * 60 * 1000; // 5 min between automatic runs.
 
+// Appended to every 'edit' agent's persona: the strict output contract so the
+// reply can be parsed by parseScaffold and applied to the project.
+export const EDIT_OUTPUT_CONTRACT =
+  '\n\nOUTPUT FORMAT — return ONLY a JSON object, no prose, no code fences:\n' +
+  '{"edits":[{"path":"rel/path","search":"exact existing snippet","replace":"new snippet","summary":"what/why"}],' +
+  '"files":[{"path":"rel/path","content":"full file content","summary":"what/why"}],"notes":"one-line summary"}\n' +
+  'Rules: use "edits" (search/replace) for changes to existing files — "search" MUST match the current file ' +
+  'text EXACTLY (whitespace included); use "files" only for brand-new files or full rewrites. Keep changes ' +
+  'minimal and correct; never break the build. Only touch files inside the project (relative paths, no ".."). ' +
+  'If nothing needs changing, return {"edits":[],"files":[],"notes":"no changes needed"}.';
+
 // The built-in roster. All ship in both editions. Doc agents auto-write their
 // target (allowlisted); report agents post read-only findings into the panel.
 export const PRESET_AGENTS: AgentDef[] = [
@@ -86,43 +97,72 @@ export const PRESET_AGENTS: AgentDef[] = [
   },
   {
     id: 'security',
-    name: 'Security auditor',
-    description: 'Scans changed code for vulnerabilities (report only).',
+    name: 'Security fixer',
+    description: 'Finds vulnerabilities in changed code and fixes them.',
     persona:
-      'You are a security auditor. Review the provided code for vulnerabilities: injection, broken ' +
+      'You are a security engineer. Review the changed code for vulnerabilities — injection, broken ' +
       'auth/authz, hard-coded secrets, unsafe deserialization, path traversal, SSRF, XSS, crypto ' +
-      'misuse, and risky dependencies. Report concrete findings grouped by severity ' +
-      '(Critical/High/Medium/Low): for each give file:line, the issue, why it is exploitable, and a ' +
-      'fix. If nothing is found, say so plainly. Be precise; do not invent issues.',
-    outputMode: 'report',
+      'misuse — and FIX them directly with minimal, correct edits that preserve behaviour. Prefer ' +
+      'small search/replace edits. Do not introduce new dependencies. Only fix real, confirmed issues; ' +
+      'if the code is safe, make no changes.' + EDIT_OUTPUT_CONTRACT,
+    outputMode: 'edit',
     watch: CODE_WATCH,
     trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
     builtin: true,
   },
   {
-    id: 'reviewer',
-    name: 'Code reviewer',
-    description: 'Reviews changed files for bugs and smells (report only).',
+    id: 'bugfixer',
+    name: 'Bug fixer',
+    description: 'Fixes correctness bugs and bad error handling in changed code.',
     persona:
-      'You are a senior code reviewer. Review the changed files for correctness bugs, edge cases, ' +
-      'error handling, naming, and obvious performance issues. Give specific, actionable comments as ' +
-      '`path:line — problem → suggested fix`, most important first. No praise, no restating the code. ' +
-      'If it looks good, say so briefly.',
-    outputMode: 'report',
+      'You are a senior engineer. Find and FIX correctness bugs, broken edge cases, and missing error ' +
+      'handling in the changed files. Make minimal, surgical edits that keep the existing style and ' +
+      'public behaviour. Do not refactor for taste or rename things. If there are no real bugs, make ' +
+      'no changes.' + EDIT_OUTPUT_CONTRACT,
+    outputMode: 'edit',
     watch: CODE_WATCH,
     trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
     builtin: true,
   },
   {
-    id: 'testgaps',
-    name: 'Test-gap finder',
-    description: 'Flags untested logic and suggests test cases (report only).',
+    id: 'testwriter',
+    name: 'Test writer',
+    description: 'Writes/updates unit tests for changed code.',
     persona:
-      'You find missing test coverage. From the changed source files, identify functions/branches/edge ' +
-      'cases that lack tests and list concrete test cases worth adding (Arrange/Act/Assert in one line ' +
-      'each), grouped by file. Prioritise risky or complex logic. Do not write full test files — just ' +
-      'the gaps and the cases.',
-    outputMode: 'report',
+      'You write unit tests. For the changed source files, add or update tests covering the important ' +
+      'functions, branches and edge cases, matching the project\'s existing test framework and file ' +
+      'naming (look at existing *.test.* / *_test.* files for the pattern). Create new test files or ' +
+      'extend existing ones. Do not modify the source under test. If adequate tests already exist, make ' +
+      'no changes.' + EDIT_OUTPUT_CONTRACT,
+    outputMode: 'edit',
+    watch: CODE_WATCH,
+    trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
+    builtin: true,
+  },
+  {
+    id: 'doccomments',
+    name: 'Doc-comment writer',
+    description: 'Adds doc comments (JSDoc/docstrings) to undocumented code.',
+    persona:
+      'You document code. For the changed files, add concise doc comments (JSDoc for JS/TS, docstrings ' +
+      'for Python, etc.) to public functions, classes and exported symbols that lack them. Describe ' +
+      'purpose, params and return — do not change any code logic, only add comments. If everything is ' +
+      'already documented, make no changes.' + EDIT_OUTPUT_CONTRACT,
+    outputMode: 'edit',
+    watch: CODE_WATCH,
+    trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
+    builtin: true,
+  },
+  {
+    id: 'cleanup',
+    name: 'Cleanup agent',
+    description: 'Removes dead code / unused imports in changed files.',
+    persona:
+      'You tidy code safely. In the changed files, remove unused imports, unreachable/dead code, and ' +
+      'leftover debug logging, and fix trivially obvious issues — WITHOUT changing behaviour or public ' +
+      'APIs. Be conservative: if you are unsure something is unused, leave it. If nothing is safe to ' +
+      'remove, make no changes.' + EDIT_OUTPUT_CONTRACT,
+    outputMode: 'edit',
     watch: CODE_WATCH,
     trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
     builtin: true,

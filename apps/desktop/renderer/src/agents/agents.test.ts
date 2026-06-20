@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { matchGlob, matchAny } from './glob';
 import { resolveAgents, dueAgents, canRunNow } from './agentScheduler';
 import { isAllowedDocTarget, stripCodeFence, buildAgentContext } from './agentContext';
+import { PRESET_AGENTS, EDIT_OUTPUT_CONTRACT } from './presets';
 import type { AgentDef, AgentConfig, AgentStatus } from './agentTypes';
 
 describe('matchGlob', () => {
@@ -108,6 +109,16 @@ describe('stripCodeFence', () => {
   it('unwraps a fenced doc and ensures a trailing newline', () => {
     expect(stripCodeFence('```markdown\n# Hi\n```')).toBe('# Hi\n');
     expect(stripCodeFence('# Plain')).toBe('# Plain\n');
+  });
+});
+
+describe('presets', () => {
+  it('ships action (edit) agents that carry the JSON output contract', () => {
+    const security = PRESET_AGENTS.find((a) => a.id === 'security');
+    expect(security?.outputMode).toBe('edit');
+    expect(security?.persona).toContain(EDIT_OUTPUT_CONTRACT.trim().slice(0, 20));
+    // The roster has multiple code-editing doers, not just reporters.
+    expect(PRESET_AGENTS.filter((a) => a.outputMode === 'edit').length).toBeGreaterThanOrEqual(4);
   });
 });
 

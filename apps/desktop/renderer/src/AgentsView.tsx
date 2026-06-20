@@ -3,6 +3,7 @@ import type { UseAgents } from './agents/useAgents';
 import type { AgentStatus, ResolvedAgent } from './agents/agentTypes';
 import type { DirectModel } from './useSettings';
 import { canRunNow } from './agents/agentScheduler';
+import { EDIT_OUTPUT_CONTRACT } from './agents/presets';
 import { renderMarkdown } from './markdown';
 import { PlayIcon } from './icons';
 
@@ -91,6 +92,7 @@ export function AgentsView({
             onEnable={(v) => hub.setConfig(a.id, { enabled: v })}
             onModel={(m) => hub.setConfig(a.id, { model: m })}
             onRun={() => hub.runNow(a.id)}
+            onUndo={() => hub.undoAgent(a.id)}
             onRemove={a.builtin ? undefined : () => hub.removeCustom(a.id)}
           />
         ))}
@@ -122,6 +124,7 @@ function AgentRow({
   onEnable,
   onModel,
   onRun,
+  onUndo,
   onRemove,
 }: {
   agent: ResolvedAgent;
@@ -132,9 +135,13 @@ function AgentRow({
   onEnable: (v: boolean) => void;
   onModel: (m: string) => void;
   onRun: () => void;
+  onUndo: () => void;
   onRemove?: () => void;
 }) {
   const hasReport = agent.outputMode === 'report' && !!status?.report;
+  const canUndo = agent.outputMode === 'edit' && !!status?.undo?.length;
+  const badge =
+    agent.outputMode === 'doc' ? agent.target : agent.outputMode === 'edit' ? 'edits code' : 'report';
   return (
     <li className={`agent-row agent-${status?.state ?? 'idle'}`}>
       <div className="agent-main">
@@ -144,9 +151,7 @@ function AgentRow({
         <div className="agent-text">
           <div className="agent-name">
             {agent.name}
-            <span className={`agent-badge agent-badge-${agent.outputMode}`}>
-              {agent.outputMode === 'doc' ? agent.target : 'report'}
-            </span>
+            <span className={`agent-badge agent-badge-${agent.outputMode}`}>{badge}</span>
           </div>
           <div className="agent-desc">{agent.description}</div>
           <div className="agent-status">
@@ -177,6 +182,16 @@ function AgentRow({
               {open ? 'Hide' : 'Report'}
             </button>
           )}
+          {canUndo && (
+            <button
+              type="button"
+              className="agent-report-toggle"
+              title="Revert this agent's last change"
+              onClick={onUndo}
+            >
+              Undo
+            </button>
+          )}
           {onRemove && (
             <button type="button" className="agent-remove" title="Delete agent" onClick={onRemove}>
               ×
@@ -200,7 +215,7 @@ function AddAgent({
 }) {
   const [name, setName] = useState('');
   const [persona, setPersona] = useState('');
-  const [mode, setMode] = useState<'doc' | 'report'>('report');
+  const [mode, setMode] = useState<'doc' | 'edit' | 'report'>('report');
   const [target, setTarget] = useState('docs/NOTES.md');
 
   const add = () => {
@@ -211,6 +226,8 @@ function AddAgent({
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
         : `agent_${Date.now()}`;
+    // Edit agents must return the strict JSON plan, so append the contract.
+    const personaFull = mode === 'edit' ? p + EDIT_OUTPUT_CONTRACT : p;
     onAdd({
       id,
       enabled: true,
@@ -219,7 +236,7 @@ function AddAgent({
         id,
         name: n,
         description: 'Custom agent',
-        persona: p,
+        persona: personaFull,
         outputMode: mode,
         defaultTarget: mode === 'doc' ? target.trim() : undefined,
         watch: ['**/*.{ts,tsx,js,jsx,py,go,rs,java,rb,php,c,cpp,h,cs,json,md}'],
@@ -255,6 +272,15 @@ function AddAgent({
             onChange={() => setMode('report')}
           />
           Report
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="mode"
+            checked={mode === 'edit'}
+            onChange={() => setMode('edit')}
+          />
+          Edit code
         </label>
         <label>
           <input type="radio" name="mode" checked={mode === 'doc'} onChange={() => setMode('doc')} />

@@ -697,18 +697,20 @@ strix/ (folder: tabea)
 
 **Features**
 - **Agentic coding — agent roster (`src/agents/`, both editions):** a panel of
-  single-purpose AI agents that watch the project and either keep a doc current or
-  post a review report. **9 presets** (README updater, Progress tracker, Changelog
-  drafter, TODO tracker, Architecture notes — *doc agents*; Security auditor, Code
-  reviewer, Test-gap finder, Dependency watcher — *report agents*) + **+ Custom
-  agent**. Each agent has its own persona, model (Auto or a direct model), and runs
-  **on change (debounced 45s) + manual Run-now**, one at a time (sequential queue),
-  with a per-agent cooldown (default 5 min) and a global **Pause**. Triggers come
-  from the existing `fs.onChanged` watcher. **Safety:** all agents start disabled
-  (opt-in); doc agents may only write allowlisted doc files (`isAllowedDocTarget`:
-  safe rel path + `.md/.txt/.rst`), never code; review/security/test agents are
-  **report-only** (read-only findings in the panel, no file writes) — diff-to-apply
-  for code is phase 2. Config persists per-workspace in `.strix/agents.json`
+  single-purpose AI agents that watch the project and **act on it** — three output
+  modes: **doc** (keep a file current), **edit** (modify code), **report** (findings).
+  **11 presets** — doc: README updater, Progress tracker, Changelog drafter, TODO
+  tracker, Architecture notes; **edit (code doers): Security fixer, Bug fixer, Test
+  writer, Doc-comment writer, Cleanup agent**; report: Dependency watcher — plus
+  **+ Custom agent** (doc/edit/report). Each agent has its own persona, model (Auto
+  or a direct model), and runs **on change (debounced 45s) + manual Run-now**, one at
+  a time (sequential queue), per-agent cooldown (5 min), global **Pause**. **Edit
+  agents** return a strict JSON plan (`EDIT_OUTPUT_CONTRACT`) parsed by the proven
+  `parseScaffold`; edits/files are applied with **snapshot + one-click Undo** per run,
+  every path guarded by `isSafeRelPath` (inside project only). **Safety:** all agents
+  start disabled (opt-in); doc agents may only write allowlisted doc files
+  (`isAllowedDocTarget`: safe rel path + `.md/.txt/.rst`); edit agents stay inside the
+  project and are fully revertible. Config persists per-workspace in `.strix/agents.json`
   (team-shareable). Engine: `agentRunner.runAgentModel` → `streamChatRaw` (new
   gateway export, FreeLLMAPI) or the direct-model proxy. Pure core
   (glob/scheduler/context) tested (18 tests). Activity-bar **Agents** view.
@@ -753,7 +755,7 @@ strix/ (folder: tabea)
 - **AI repo-wide gather** (`a95beab`): ranks every file by relevance so big
   multi-folder projects are scanned correctly (was capped to early folders).
 
-**Status:** typecheck + lint clean, **370 tests** pass, 0 prod vulns. Both
+**Status:** typecheck + lint clean, **371 tests** pass, 0 prod vulns. Both
 editions build to `Desktop\strix`. Problems tab removed from activity bar (still
 in Command Palette).
 

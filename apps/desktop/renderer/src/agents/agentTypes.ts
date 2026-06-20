@@ -3,10 +3,11 @@
 // is "broken into agents" — each has its own persona, model, trigger and output.
 
 // What an agent does with its output:
-//  - 'doc'    → writes/updates a target file directly (allowlisted; snapshot+undo).
+//  - 'doc'    → writes/updates a target doc file directly (allowlisted).
+//  - 'edit'   → modifies code: returns a JSON edit plan that is applied to the
+//               project (snapshot + one-click Undo; paths guarded by isSafeRelPath).
 //  - 'report' → posts a read-only findings report into the Agents panel.
-// ('review' — open a diff to apply to code — is planned for phase 2.)
-export type AgentOutputMode = 'doc' | 'report';
+export type AgentOutputMode = 'doc' | 'edit' | 'report';
 
 // When an agent runs.
 export interface AgentTrigger {
@@ -60,6 +61,9 @@ export interface AgentStatus {
   lastMessage?: string;
   // For 'report' agents: the latest findings text (shown in the panel).
   report?: string;
+  // For 'edit' agents: snapshot of files changed by the last run, so it can be
+  // undone. `before` is null for files the run newly created.
+  undo?: { path: string; before: string | null }[];
 }
 
 // The merged, ready-to-run view of an agent (preset/custom def + user config).
