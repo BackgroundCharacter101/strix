@@ -3,7 +3,6 @@ import type { UseAgents } from './agents/useAgents';
 import type { AgentStatus, ResolvedAgent } from './agents/agentTypes';
 import type { DirectModel } from './useSettings';
 import { canRunNow } from './agents/agentScheduler';
-import { EDIT_OUTPUT_CONTRACT } from './agents/presets';
 import { renderMarkdown } from './markdown';
 import { PlayIcon } from './icons';
 
@@ -35,10 +34,17 @@ export function AgentsView({
   hub,
   directModels,
   noRoot,
+  onSendToAi,
+  onSendToFreebuff,
 }: {
   hub: UseAgents;
   directModels: DirectModel[];
   noRoot: boolean;
+  // Hand an agent's findings to the main AI Assistant (uses the model selected
+  // there — direct key / main working model).
+  onSendToAi: (text: string) => void;
+  // Hand findings to a FreeBuff coding-agent session to act on.
+  onSendToFreebuff: (text: string) => void;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -76,8 +82,9 @@ export function AgentsView({
         </label>
       </div>
       <p className="agents-note">
-        Each agent watches the project and runs on changes (after you go idle) or on demand. Doc
-        agents update their file; review agents post a read-only report below.
+        Agents monitor &amp; audit only — they never change your code. Doc agents keep their file
+        current; auditors post a read-only report you can hand to the main AI (→ AI) or FreeBuff
+        (→ FreeBuff) to fix. Runs on change (after you go idle) or on demand.
       </p>
 
       <ul className="agents-list">
@@ -92,7 +99,8 @@ export function AgentsView({
             onEnable={(v) => hub.setConfig(a.id, { enabled: v })}
             onModel={(m) => hub.setConfig(a.id, { model: m })}
             onRun={() => hub.runNow(a.id)}
-            onUndo={() => hub.undoAgent(a.id)}
+            onSendToAi={onSendToAi}
+            onSendToFreebuff={onSendToFreebuff}
             onRemove={a.builtin ? undefined : () => hub.removeCustom(a.id)}
           />
         ))}
@@ -124,7 +132,8 @@ function AgentRow({
   onEnable,
   onModel,
   onRun,
-  onUndo,
+  onSendToAi,
+  onSendToFreebuff,
   onRemove,
 }: {
   agent: ResolvedAgent;
@@ -135,13 +144,14 @@ function AgentRow({
   onEnable: (v: boolean) => void;
   onModel: (m: string) => void;
   onRun: () => void;
-  onUndo: () => void;
+  onSendToAi: (text: string) => void;
+  onSendToFreebuff: (text: string) => void;
   onRemove?: () => void;
 }) {
   const hasReport = agent.outputMode === 'report' && !!status?.report;
-  const canUndo = agent.outputMode === 'edit' && !!status?.undo?.length;
-  const badge =
-    agent.outputMode === 'doc' ? agent.target : agent.outputMode === 'edit' ? 'edits code' : 'report';
+  const badge = agent.outputMode === 'doc' ? agent.target : 'report';
+  // The findings, framed as a fix request for the main AI / FreeBuff.
+  const handoffText = `Findings from the "${agent.name}" agent — please review and fix:\n\n${status?.report ?? ''}`;
   return (
     <li className={`agent-row agent-${status?.state ?? 'idle'}`}>
       <div className="agent-main">
@@ -178,19 +188,27 @@ function AgentRow({
             <PlayIcon />
           </button>
           {hasReport && (
-            <button type="button" className="agent-report-toggle" onClick={onToggleOpen}>
-              {open ? 'Hide' : 'Report'}
-            </button>
-          )}
-          {canUndo && (
-            <button
-              type="button"
-              className="agent-report-toggle"
-              title="Revert this agent's last change"
-              onClick={onUndo}
-            >
-              Undo
-            </button>
+            <>
+              <button type="button" className="agent-report-toggle" onClick={onToggleOpen}>
+                {open ? 'Hide' : 'Report'}
+              </button>
+              <button
+                type="button"
+                className="agent-report-toggle"
+                title="Send these findings to the AI Assistant to fix"
+                onClick={() => onSendToAi(handoffText)}
+              >
+                → AI
+              </button>
+              <button
+                type="button"
+                className="agent-report-toggle"
+                title="Send these findings to FreeBuff to fix"
+                onClick={() => onSendToFreebuff(handoffText)}
+              >
+                → FreeBuff
+              </button>
+            </>
           )}
           {onRemove && (
             <button type="button" className="agent-remove" title="Delete agent" onClick={onRemove}>
@@ -215,7 +233,7 @@ function AddAgent({
 }) {
   const [name, setName] = useState('');
   const [persona, setPersona] = useState('');
-  const [mode, setMode] = useState<'doc' | 'edit' | 'report'>('report');
+  const [mode, setMode] = useState<'doc' | 'report'>('report');
   const [target, setTarget] = useState('docs/NOTES.md');
 
   const add = () => {
@@ -226,8 +244,6 @@ function AddAgent({
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
         : `agent_${Date.now()}`;
-    // Edit agents must return the strict JSON plan, so append the contract.
-    const personaFull = mode === 'edit' ? p + EDIT_OUTPUT_CONTRACT : p;
     onAdd({
       id,
       enabled: true,
@@ -236,7 +252,7 @@ function AddAgent({
         id,
         name: n,
         description: 'Custom agent',
-        persona: personaFull,
+        persona: p,
         outputMode: mode,
         defaultTarget: mode === 'doc' ? target.trim() : undefined,
         watch: ['**/*.{ts,tsx,js,jsx,py,go,rs,java,rb,php,c,cpp,h,cs,json,md}'],
@@ -272,15 +288,6 @@ function AddAgent({
             onChange={() => setMode('report')}
           />
           Report
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="mode"
-            checked={mode === 'edit'}
-            onChange={() => setMode('edit')}
-          />
-          Edit code
         </label>
         <label>
           <input type="radio" name="mode" checked={mode === 'doc'} onChange={() => setMode('doc')} />

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { matchGlob, matchAny } from './glob';
 import { resolveAgents, dueAgents, canRunNow } from './agentScheduler';
 import { isAllowedDocTarget, stripCodeFence, buildAgentContext } from './agentContext';
-import { PRESET_AGENTS, EDIT_OUTPUT_CONTRACT } from './presets';
+import { PRESET_AGENTS, REPORT_OUTPUT_HINT } from './presets';
 import type { AgentDef, AgentConfig, AgentStatus } from './agentTypes';
 
 describe('matchGlob', () => {
@@ -113,12 +113,14 @@ describe('stripCodeFence', () => {
 });
 
 describe('presets', () => {
-  it('ships action (edit) agents that carry the JSON output contract', () => {
+  it('agents only monitor/audit — no agent edits code', () => {
+    // Every preset is a doc-writer or a read-only reporter; none mutate code.
+    expect(PRESET_AGENTS.every((a) => a.outputMode === 'doc' || a.outputMode === 'report')).toBe(
+      true,
+    );
     const security = PRESET_AGENTS.find((a) => a.id === 'security');
-    expect(security?.outputMode).toBe('edit');
-    expect(security?.persona).toContain(EDIT_OUTPUT_CONTRACT.trim().slice(0, 20));
-    // The roster has multiple code-editing doers, not just reporters.
-    expect(PRESET_AGENTS.filter((a) => a.outputMode === 'edit').length).toBeGreaterThanOrEqual(4);
+    expect(security?.outputMode).toBe('report');
+    expect(security?.persona).toContain(REPORT_OUTPUT_HINT.trim().slice(0, 20));
   });
 });
 

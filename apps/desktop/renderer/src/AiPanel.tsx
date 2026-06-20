@@ -313,6 +313,7 @@ export function AiPanel({
   onAskClaude,
   onAskFreebuff,
   selectionRequest,
+  seedPrompt,
   aiServerUrl,
   aiDefaultModel = 'auto',
   aiTemperature = 0.7,
@@ -353,6 +354,9 @@ export function AiPanel({
   onAskFreebuff?: (text: string) => void;
   // Run an Explain/Fix on an editor selection (from the floating toolbar).
   selectionRequest?: { nonce: number; kind: 'explain' | 'fix'; selection: string };
+  // Text seeded into the composer (e.g. findings handed off from an agent). The
+  // user reviews and presses Send — using whichever model the picker is on.
+  seedPrompt?: { nonce: number; text: string };
   // Shared FreeLLMAPI host URL (blank = local server).
   aiServerUrl?: string;
   // AI tuning (from Settings): default model + sampling temperature + max tokens.
@@ -836,6 +840,23 @@ export function AiPanel({
       void runSelection(selectionRequest.kind, selectionRequest.selection);
     }
   }, [selectionRequest]);
+
+  // Seed the composer with handed-off text (e.g. an agent's findings) and focus
+  // it, so the user can review then Send to the selected model.
+  const lastSeed = useRef(0);
+  useEffect(() => {
+    if (seedPrompt && seedPrompt.nonce > lastSeed.current) {
+      lastSeed.current = seedPrompt.nonce;
+      setInput(seedPrompt.text);
+      requestAnimationFrame(() => {
+        const el = composerRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(el.value.length, el.value.length);
+        }
+      });
+    }
+  }, [seedPrompt]);
 
   // Fix (§8.4) / Refactor (§8.6): ask for the full updated file, show a diff.
   const propose = async (task: TaskType) => {

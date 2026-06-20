@@ -4,10 +4,10 @@
 
 // What an agent does with its output:
 //  - 'doc'    → writes/updates a target doc file directly (allowlisted).
-//  - 'edit'   → modifies code: returns a JSON edit plan that is applied to the
-//               project (snapshot + one-click Undo; paths guarded by isSafeRelPath).
-//  - 'report' → posts a read-only findings report into the Agents panel.
-export type AgentOutputMode = 'doc' | 'edit' | 'report';
+//  - 'report' → posts a read-only findings report into the Agents panel. Agents
+//               never change code; the report can be handed to the main AI
+//               (AI Assistant / FreeBuff) to act on.
+export type AgentOutputMode = 'doc' | 'report';
 
 // When an agent runs.
 export interface AgentTrigger {
@@ -59,11 +59,9 @@ export interface AgentStatus {
   lastRun?: number;
   // Short outcome line, e.g. "Updated README.md" or an error message.
   lastMessage?: string;
-  // For 'report' agents: the latest findings text (shown in the panel).
+  // For 'report' agents: the latest findings text (shown in the panel, and
+  // hand-offable to the main AI / FreeBuff).
   report?: string;
-  // For 'edit' agents: snapshot of files changed by the last run, so it can be
-  // undone. `before` is null for files the run newly created.
-  undo?: { path: string; before: string | null }[];
 }
 
 // The merged, ready-to-run view of an agent (preset/custom def + user config).

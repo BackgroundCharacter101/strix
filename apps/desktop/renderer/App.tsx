@@ -110,6 +110,8 @@ export default function App() {
     kind: 'explain' | 'fix';
     selection: string;
   }>();
+  // A prompt seeded into the AI composer (e.g. an agent's findings handed off).
+  const [aiSeed, setAiSeed] = useState<{ nonce: number; text: string }>();
   const [zen, setZen] = useState(false);
   const [recentCommands, setRecentCommands] = useState<string[]>(() => {
     try {
@@ -1068,7 +1070,16 @@ export default function App() {
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={openAtLine} />
                   ) : sidebarView === 'agents' ? (
-                    <AgentsView hub={agents} directModels={settings.aiDirectModels} noRoot={!root} />
+                    <AgentsView
+                      hub={agents}
+                      directModels={settings.aiDirectModels}
+                      noRoot={!root}
+                      onSendToAi={(text) => {
+                        setShowAi(true);
+                        setAiSeed({ nonce: Date.now(), text });
+                      }}
+                      onSendToFreebuff={askFreebuff}
+                    />
                   ) : sidebarView === 'projectmap' ? (
                     <ProjectMapView
                       rootPath={root}
@@ -1187,6 +1198,7 @@ export default function App() {
                     onAskClaude={CLAUDE_ENABLED ? askClaude : undefined}
                     onAskFreebuff={askFreebuff}
                     selectionRequest={selectionReq}
+                    seedPrompt={aiSeed}
                     aiServerUrl={settings.aiServerUrl}
                     aiDefaultModel={settings.aiDefaultModel}
                     aiTemperature={settings.aiTemperature}

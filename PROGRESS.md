@@ -697,20 +697,21 @@ strix/ (folder: tabea)
 
 **Features**
 - **Agentic coding — agent roster (`src/agents/`, both editions):** a panel of
-  single-purpose AI agents that watch the project and **act on it** — three output
-  modes: **doc** (keep a file current), **edit** (modify code), **report** (findings).
-  **11 presets** — doc: README updater, Progress tracker, Changelog drafter, TODO
-  tracker, Architecture notes; **edit (code doers): Security fixer, Bug fixer, Test
-  writer, Doc-comment writer, Cleanup agent**; report: Dependency watcher — plus
-  **+ Custom agent** (doc/edit/report). Each agent has its own persona, model (Auto
-  or a direct model), and runs **on change (debounced 45s) + manual Run-now**, one at
-  a time (sequential queue), per-agent cooldown (5 min), global **Pause**. **Edit
-  agents** return a strict JSON plan (`EDIT_OUTPUT_CONTRACT`) parsed by the proven
-  `parseScaffold`; edits/files are applied with **snapshot + one-click Undo** per run,
-  every path guarded by `isSafeRelPath` (inside project only). **Safety:** all agents
-  start disabled (opt-in); doc agents may only write allowlisted doc files
-  (`isAllowedDocTarget`: safe rel path + `.md/.txt/.rst`); edit agents stay inside the
-  project and are fully revertible. Config persists per-workspace in `.strix/agents.json`
+  single-purpose AI agents that **monitor & audit only — they never change code**.
+  Two output modes: **doc** (keep a file current) and **report** (read-only findings).
+  **10 presets** — doc: README updater, Progress tracker, Changelog drafter, TODO
+  tracker, Architecture notes; report (auditors): Security auditor, Bug spotter,
+  Test-gap finder, Cleanup advisor, Dependency watcher — plus **+ Custom agent**
+  (doc/report). Each has its own persona, model (Auto or a direct model), and runs
+  **on change (debounced 45s) + manual Run-now**, one at a time (sequential queue),
+  per-agent cooldown (5 min), global **Pause**. **Handoff:** a report has **→ AI**
+  (seeds the AI Assistant composer via `seedPrompt`, then the user sends to whatever
+  model the picker is on — direct key / main model) and **→ FreeBuff** (hands the
+  findings to a FreeBuff session) so the **main working model** does any fixing —
+  agents themselves only feed results. **Safety:** all agents start disabled (opt-in);
+  doc agents may only write allowlisted doc files (`isAllowedDocTarget`: safe rel
+  path + `.md/.txt/.rst`); report agents touch nothing. Config persists per-workspace
+  in `.strix/agents.json`
   (team-shareable). Engine: `agentRunner.runAgentModel` → `streamChatRaw` (new
   gateway export, FreeLLMAPI) or the direct-model proxy. Pure core
   (glob/scheduler/context) tested (18 tests). Activity-bar **Agents** view.
