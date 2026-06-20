@@ -712,6 +712,12 @@ strix/ (folder: tabea)
   (team-shareable). Engine: `agentRunner.runAgentModel` → `streamChatRaw` (new
   gateway export, FreeLLMAPI) or the direct-model proxy. Pure core
   (glob/scheduler/context) tested (18 tests). Activity-bar **Agents** view.
+  **Lightweight runs (not a whole-model dump):** an agent run sends a cheap
+  paths-only file tree (structure) + the current target (doc agents) + the
+  CONTENTS of only the **changed files** that woke it (cap 8 files / 8 KB), so a
+  run is "agent-sized" and doesn't exhaust free-tier rate limits (was reading 40
+  files × 12 KB → 429 "all models exhausted"). Each agent only receives the
+  changed files matching its own watch globs; manual Run-now reads a tiny sample.
 - **Bring-your-own AI models in the model picker (direct API keys, no FreeLLMAPI):**
   Settings → AI → **Direct API key models** lets users add any number of models,
   each = label + **OpenAI-compatible base URL + API key + model id** (OpenAI,
@@ -732,7 +738,8 @@ strix/ (folder: tabea)
   model}); keys stored locally, sent only to that provider (via main, never the
   renderer). FreeLLMAPI Auto stays the default; both editions. (Autocomplete
   ghost-text still uses FreeLLMAPI.)
-- Outline / Go-to-Symbol (`7025762`), virtualized file tree + streaming search
+- ~~Outline / Go-to-Symbol~~ (removed — rail view + `OutlineView`/`symbols.ts`
+  deleted; Monaco's built-in Ctrl+Shift+O stays), virtualized file tree + streaming search
   (`4ae6d8b`, `f710fd6`), @file typeahead + pinned chips, Find&Replace case/word.
 - **Cybersec (Competition):** "Audit project" — repo-wide AI security review
   (`3c24aa9`).
@@ -746,7 +753,7 @@ strix/ (folder: tabea)
 - **AI repo-wide gather** (`a95beab`): ranks every file by relevance so big
   multi-folder projects are scanned correctly (was capped to early folders).
 
-**Status:** typecheck + lint clean, **381 tests** pass, 0 prod vulns. Both
+**Status:** typecheck + lint clean, **370 tests** pass, 0 prod vulns. Both
 editions build to `Desktop\strix`. Problems tab removed from activity bar (still
 in Command Palette).
 

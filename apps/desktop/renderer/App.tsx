@@ -34,19 +34,18 @@ import {
   FilesIcon,
   GearIcon,
   MapIcon,
-  OutlineIcon,
   RunIcon,
   SearchIcon,
   SourceControlIcon,
   SparkleIcon,
   TerminalIcon,
 } from './src/icons';
-import { OutlineView } from './src/OutlineView';
 import { RunView } from './src/RunView';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID, IS_COMPETITION } from './src/edition';
 import { ProjectMapView } from './src/ProjectMapView';
 import { AgentsView } from './src/AgentsView';
+// (Outline / Go-to-Symbol rail view removed — Monaco's built-in Ctrl+Shift+O stays.)
 import { useAgents } from './src/agents/useAgents';
 import { buildKeymap, eventAccelerator } from './src/keybindings';
 import { applySaveTransforms } from './src/saveTransforms';
@@ -65,7 +64,6 @@ export default function App() {
     | 'run'
     | 'extensions'
     | 'problems'
-    | 'outline'
     | 'projectmap'
     | 'agents'
   >(
@@ -620,7 +618,6 @@ export default function App() {
       | 'run'
       | 'extensions'
       | 'problems'
-      | 'outline'
       | 'projectmap'
       | 'agents',
   ) => {
@@ -731,7 +728,6 @@ export default function App() {
     { id: 'file.newFolder', label: 'File: New Folder…', detail: '', run: newFolderAtRoot },
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
-    { id: 'view.outline', label: 'Go to Symbol (Outline)', detail: '', run: () => selectView('outline') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.run', label: 'View: Run & Serve', detail: '', run: () => selectView('run') },
     { id: 'view.problems', label: 'View: Problems', detail: '', run: () => selectView('problems') },
@@ -967,15 +963,6 @@ export default function App() {
           >
             <SearchIcon />
           </button>
-          <button
-            type="button"
-            aria-label="Outline"
-            aria-pressed={showSidebar && sidebarView === 'outline'}
-            title="Outline (Go to Symbol)"
-            onClick={() => selectView('outline')}
-          >
-            <OutlineIcon />
-          </button>
           {IS_COMPETITION && (
             <button
               type="button"
@@ -1090,14 +1077,6 @@ export default function App() {
                     />
                   ) : sidebarView === 'problems' ? (
                     <ProblemsView byPath={problemsByPath} onOpen={openAtLine} />
-                  ) : sidebarView === 'outline' ? (
-                    <OutlineView
-                      path={activeTabs.activePath}
-                      content={activeTabs.active?.draft ?? ''}
-                      onJump={(line) =>
-                        activeTabs.activePath && openAtLine(activeTabs.activePath, line)
-                      }
-                    />
                   ) : sidebarView === 'scm' ? (
                     <SourceControlView
                       rootPath={root}

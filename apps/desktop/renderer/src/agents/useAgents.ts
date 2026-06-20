@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PRESET_AGENTS, PRESET_IDS } from './presets';
 import { resolveAgents, dueAgents } from './agentScheduler';
+import { matchAny } from './glob';
 import { buildAgentContext, isAllowedDocTarget, stripCodeFence, type AgentFile } from './agentContext';
 import { runAgentModel } from './agentRunner';
 import type { AgentConfig, AgentStatus, ResolvedAgent } from './agentTypes';
@@ -44,11 +45,9 @@ async function saveConfigs(root: string, agents: AgentConfig[]): Promise<void> {
   }
 }
 
-// Gather a capped set of project files (relative path + content) for a run.
-async function gatherFiles(
-  root: string,
-  opts: { maxFiles: number; maxFileBytes: number },
-): Promise<AgentFile[]> {
+// Cheap structure: every text file's workspace-relative path, no reads. This is
+// the bulk of an agent's context and costs almost nothing in tokens.
+async function gatherTree(root: string, cap = 600): Promise<string[]> {
   let tree: TreeNode;
   try {
     tree = (await window.strix.fs.tree(root)) as TreeNode;
@@ -58,6 +57,7 @@ async function gatherFiles(
   const rels: string[] = [];
   const walk = (nodes: TreeNode[]) => {
     for (const n of nodes) {
+      if (rels.length >= cap) return;
       const rel = n.path.slice(root.length).replace(/^[\\/]/, '').replace(/\\/g, '/');
       if (IGNORE.test(`/${rel}`)) continue;
       if (n.type === 'directory') walk(n.children ?? []);
@@ -65,8 +65,17 @@ async function gatherFiles(
     }
   };
   walk(tree.children ?? []);
+  return rels;
+}
 
-  const picked = rels.slice(0, opts.maxFiles);
+// Read the contents of specific (changed) files — capped small so a run stays an
+// "agent-sized" call, not a whole-repo dump.
+async function readFiles(
+  root: string,
+  rels: string[],
+  opts: { maxFiles: number; maxFileBytes: number },
+): Promise<AgentFile[]> {
+  const picked = rels.filter((r) => TEXT_EXT.test(r)).slice(0, opts.maxFiles);
   const files: AgentFile[] = [];
   for (const rel of picked) {
     try {
@@ -167,15 +176,21 @@ export function useAgents(opts: {
     setStatuses((s) => ({ ...s, [id]: { ...(s[id] ?? { state: 'idle' }), ...patch } }));
   }, []);
 
-  // Execute a single agent run (used by both the queue and Run-now).
+  // Execute a single agent run (used by both the queue and Run-now). `changed`
+  // is the set of files that woke it (empty on a manual run).
   const execute = useCallback(
-    async (agent: ResolvedAgent) => {
+    async (agent: ResolvedAgent, changed: string[]) => {
       const { root: r, opts: o } = ref.current;
       if (!r) return;
       setBusy(true);
       setStatus(agent.id, { state: 'running' });
       try {
-        const files = await gatherFiles(r, { maxFiles: 40, maxFileBytes: 12_000 });
+        // Cheap structure for every run; read CONTENTS only for the changed
+        // files (or a tiny sample on a manual run) — keeps each run small so it
+        // doesn't exhaust the model/rate limits.
+        const tree = await gatherTree(r);
+        const toRead = changed.length ? changed : tree.slice(0, 6);
+        const files = await readFiles(r, toRead, { maxFiles: 8, maxFileBytes: 8_000 });
         let currentTarget = '';
         if (agent.outputMode === 'doc' && agent.target) {
           currentTarget = await window.strix.fs.read(`${r}/${agent.target}`).catch(() => '');
@@ -184,6 +199,7 @@ export function useAgents(opts: {
           projectName: r.split(/[\\/]/).pop(),
           target: agent.outputMode === 'doc' ? agent.target : undefined,
           currentTarget,
+          tree,
           files,
         });
         const text = await runAgentModel({
@@ -239,8 +255,10 @@ export function useAgents(opts: {
   );
 
   // Sequential queue — only one agent runs at a time (keeps token spend + load
-  // bounded). Ids are de-duplicated while queued.
+  // bounded). Ids are de-duplicated while queued; each carries the changed set
+  // that triggered it (merged if re-queued before it runs).
   const queueRef = useRef<string[]>([]);
+  const changedForRun = useRef<Map<string, Set<string>>>(new Map());
   const drainingRef = useRef(false);
   const drain = useCallback(async () => {
     if (drainingRef.current) return;
@@ -248,8 +266,10 @@ export function useAgents(opts: {
     try {
       while (queueRef.current.length) {
         const id = queueRef.current.shift() as string;
+        const changed = [...(changedForRun.current.get(id) ?? [])];
+        changedForRun.current.delete(id);
         const agent = ref.current.agents.find((a) => a.id === id);
-        if (agent) await execute(agent);
+        if (agent) await execute(agent, changed);
       }
     } finally {
       drainingRef.current = false;
@@ -257,9 +277,12 @@ export function useAgents(opts: {
   }, [execute]);
 
   const enqueue = useCallback(
-    (ids: string[]) => {
+    (ids: string[], changed: string[] = []) => {
       let added = false;
       for (const id of ids) {
+        const set = changedForRun.current.get(id) ?? new Set<string>();
+        changed.forEach((c) => set.add(c));
+        changedForRun.current.set(id, set);
         if (!queueRef.current.includes(id)) {
           queueRef.current.push(id);
           setStatus(id, { state: 'queued' });
@@ -293,7 +316,12 @@ export function useAgents(opts: {
         const c = ref.current;
         if (c.paused) return;
         const due = dueAgents(c.agents, changed, c.statuses, Date.now());
-        if (due.length) enqueue(due.map((a) => a.id));
+        if (due.length) {
+          // Each agent only sees the changed files it actually watches.
+          for (const a of due) {
+            enqueue([a.id], changed.filter((p) => a.watch.some((g) => matchAny([g], p))));
+          }
+        }
       }, DEBOUNCE_MS);
     });
     return () => {

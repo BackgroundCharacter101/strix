@@ -15,16 +15,25 @@ export interface AgentFile {
   content: string;
 }
 
-// Build the user-message context for an agent run: the current target file (for
-// doc agents, so they edit in place) plus the relevant source files.
+// Build the user-message context for an agent run. Kept deliberately small so a
+// run is an "agent-sized" call, not a whole-project dump: a cheap paths-only
+// tree for structure, the current target (doc agents), and the CONTENTS of just
+// the changed files (the delta) — not every file in the repo.
 export function buildAgentContext(opts: {
   projectName?: string;
   target?: string;
   currentTarget?: string;
+  // Workspace-relative paths (structure only — no contents). Cheap context.
+  tree?: string[];
+  // Full contents of the changed/relevant files only.
   files: AgentFile[];
 }): string {
   const parts: string[] = [];
   if (opts.projectName) parts.push(`Project: ${opts.projectName}`);
+
+  if (opts.tree && opts.tree.length) {
+    parts.push(`\n=== Project structure (${opts.tree.length} files) ===\n${opts.tree.join('\n')}`);
+  }
 
   if (opts.target) {
     parts.push(
@@ -33,12 +42,12 @@ export function buildAgentContext(opts: {
   }
 
   if (opts.files.length) {
-    parts.push('\n=== Project files (most relevant first) ===');
+    parts.push('\n=== Changed files (contents) ===');
     for (const f of opts.files) {
       parts.push(`\n--- ${f.path} ---\n${f.content}`);
     }
   } else {
-    parts.push('\n(No file contents available — work from the description.)');
+    parts.push('\n(No changed-file contents — work from the structure above.)');
   }
 
   return parts.join('\n');

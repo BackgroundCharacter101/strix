@@ -84,19 +84,6 @@ export function AgentsIcon({ size = 20 }: IconProps) {
   );
 }
 
-export function OutlineIcon({ size = 20 }: IconProps) {
-  return (
-    <svg {...base(size)}>
-      <path d="M4 6h2" />
-      <path d="M9 6h11" />
-      <path d="M7 12h2" />
-      <path d="M12 12h8" />
-      <path d="M7 18h2" />
-      <path d="M12 18h8" />
-    </svg>
-  );
-}
-
 export function SparkleIcon({ size = 20 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
