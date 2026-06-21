@@ -708,7 +708,11 @@ strix/ (folder: tabea)
   "N sessions left", "X / Y", "resets in 2h 30m", "% used", tested) and shows a live
   **sessions/time-left progress bar** (red when ≤15%). Regexes are loose + tuned to
   FreeBuff's real wording — if a build's phrasing differs, the bar just stays hidden
-  until the pattern is added.
+  until the pattern is added. **Confirmed FreeBuff v0.0.112 has no headless/print/JSON
+  mode** (only `login`/`--continue`/`--cwd`) — so a clean chat-bubble GUI isn't
+  feasible; the embedded terminal is the chosen approach, **polished**: branded header
+  (FB monogram + model chip e.g. "MiMo 2.5" + per-session "1h left" chip, both scraped
+  via `parseFreebuffUsage` model/sessionLabel), Restart, and the sessions/reset bar.
 - **Agentic coding — agent roster (`src/agents/`, both editions):** a panel of
   single-purpose AI agents that **monitor & audit only — they never change code**.
   Two output modes: **doc** (keep a file current) and **report** (read-only findings).

@@ -2668,16 +2668,58 @@ kbd {
   flex-direction: column;
   gap: 6px;
 }
-.freebuff-bar {
+.freebuff-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   flex: 0 0 auto;
 }
-.freebuff-badge {
-  font-size: 12px;
-  color: var(--text-muted);
+.freebuff-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: var(--weight-medium);
+  font-family: var(--font-display);
+}
+.freebuff-logo {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   font-family: var(--font-mono);
+}
+.freebuff-chip {
+  font-size: 11px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 1px 9px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.freebuff-chip.is-warn {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+.freebuff-restart {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.freebuff-restart:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .freebuff-term {
   flex: 1 1 auto;

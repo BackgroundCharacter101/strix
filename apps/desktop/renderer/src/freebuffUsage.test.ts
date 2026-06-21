@@ -40,6 +40,17 @@ describe('parseFreebuffUsage', () => {
   it('returns null when there is nothing usage-like', () => {
     expect(parseFreebuffUsage('Welcome to FreeBuff! Type a prompt.')).toBeNull();
   });
+
+  it('scrapes the model and per-session time from the status bar', () => {
+    const u = parseFreebuffUsage('1 of 5 sessions used · resets in 16h 59m\nMiMo 2.5 · 1h left  × End session');
+    expect(u).toMatchObject({ left: 4, total: 5, resetLabel: '16h 59m' });
+    expect(u?.model).toMatch(/MiMo 2\.5/i);
+    expect(u?.sessionLabel).toBe('1h left');
+  });
+
+  it('does not mistake "sessions left" for a session time', () => {
+    expect(parseFreebuffUsage('5 sessions left')?.sessionLabel).toBeUndefined();
+  });
 });
 
 describe('formatUsage', () => {

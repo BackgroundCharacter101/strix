@@ -54,23 +54,29 @@ export function FreebuffPanel({
 
   return (
     <div className="freebuff-panel">
-      <div className="freebuff-bar">
-        <span className="freebuff-badge">
-          FreeBuff{installed === false ? ' — not installed' : ''}
+      <div className="freebuff-head">
+        <span className="freebuff-brand">
+          <span className="freebuff-logo" aria-hidden>
+            FB
+          </span>
+          FreeBuff
         </span>
+        {usage?.model && <span className="freebuff-chip">{usage.model}</span>}
+        {usage?.sessionLabel && <span className="freebuff-chip">{usage.sessionLabel}</span>}
+        {installed === false && <span className="freebuff-chip is-warn">not installed</span>}
         <button
           type="button"
-          className="ai-ghost-btn"
+          className="freebuff-restart"
           title="Restart the FreeBuff session"
           onClick={() => setRestart((n) => n + 1)}
         >
           Restart
         </button>
       </div>
-      {usage && (
+      {usage && (typeof usage.percent === 'number' || usage.resetLabel || typeof usage.left === 'number') && (
         <div
           className="freebuff-usage"
-          title="Scraped live from FreeBuff's output"
+          title="Live usage, scraped from FreeBuff"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}

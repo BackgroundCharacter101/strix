@@ -28,7 +28,16 @@ export interface FreebuffUsage {
   percent?: number;
   // Short unit noun for the label ("sessions", "requests", "messages").
   unit: string;
+  // The active model name FreeBuff shows in its status line (e.g. "MiMo 2.5").
+  model?: string;
+  // Time left in the current session, e.g. "1h left" (distinct from the reset).
+  sessionLabel?: string;
 }
+
+// Models FreeBuff may show in its status bar (used to pull the name out cleanly,
+// including a trailing version like "MiMo 2.5" or "gpt-4o").
+const MODEL_RE =
+  /\b((?:mimo|gpt|claude|gemini|llama|qwen|deepseek|mistral|grok)(?:[ .-]?[\w.]+)*)/i;
 
 function clampPct(n: number): number {
   return Math.max(0, Math.min(100, Math.round(n)));
@@ -84,7 +93,16 @@ export function parseFreebuffUsage(raw: string): FreebuffUsage | null {
     found = true;
   }
 
-  if (!found) return null;
+  // Per-session time budget: "1h left", "59m left" (a time unit before "left",
+  // so it won't catch "5 sessions left").
+  const sess = /(\d+\s*(?:h|hr|hrs|hours?|m|min|mins|minutes?)\s*left)\b/i.exec(text);
+  if (sess) out.sessionLabel = sess[1].replace(/\s+/g, ' ').trim();
+
+  // Active model name from the status bar (best-effort).
+  const mod = MODEL_RE.exec(text);
+  if (mod) out.model = mod[1].trim().replace(/\s+/g, ' ');
+
+  if (!found && !out.model && !out.sessionLabel) return null;
 
   if (out.percent === undefined && typeof out.left === 'number' && out.total) {
     out.percent = clampPct((out.left / out.total) * 100);
