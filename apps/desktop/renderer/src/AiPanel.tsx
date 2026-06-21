@@ -417,6 +417,20 @@ export function AiPanel({
       /* ignore */
     }
   }, [aiMode]);
+  // FreeBuff is mounted lazily on first use, then kept mounted (hidden) so its
+  // session survives toggling back to Strix AI.
+  const [freebuffStarted, setFreebuffStarted] = useState(aiMode === 'freebuff');
+  useEffect(() => {
+    if (aiMode === 'freebuff') setFreebuffStarted(true);
+  }, [aiMode]);
+  // A hand-off (Ask FreeBuff / agent → FreeBuff) switches the panel to FreeBuff.
+  const lastFbSeed = useRef(0);
+  useEffect(() => {
+    if (freebuffSeed && freebuffSeed.nonce > lastFbSeed.current) {
+      lastFbSeed.current = freebuffSeed.nonce;
+      setAiMode('freebuff');
+    }
+  }, [freebuffSeed]);
   const [model, setModel] = useState(aiDefaultModel);
   // Merge the per-session model with the tuned temperature/maxTokens for every
   // AI call (one place so all actions honour Settings → AI).
@@ -1447,17 +1461,7 @@ export function AiPanel({
         )}
       </header>
 
-      {aiMode === 'freebuff' ? (
-        <FreebuffPanel
-          cwd={workspaceKey ?? undefined}
-          env={freebuffEnv}
-          seed={freebuffSeed}
-          fontSize={terminalFontSize}
-          fontFamily={terminalFontFamily}
-          cursorStyle={terminalCursorStyle}
-          shell={terminalShell}
-        />
-      ) : (
+      {aiMode === 'strix' && (
         <>
       <div className="ai-toolbar">
         <select aria-label="model" value={model} onChange={(e) => setModel(e.target.value)}>
@@ -1955,6 +1959,24 @@ export function AiPanel({
         />
       )}
         </>
+      )}
+      {/* FreeBuff stays mounted once opened (hidden in Strix mode) so toggling
+          back doesn't kill the PTY / start a new session. */}
+      {freebuffStarted && (
+        <div
+          className="freebuff-host"
+          style={{ display: aiMode === 'freebuff' ? 'flex' : 'none' }}
+        >
+          <FreebuffPanel
+            cwd={workspaceKey ?? undefined}
+            env={freebuffEnv}
+            seed={freebuffSeed}
+            fontSize={terminalFontSize}
+            fontFamily={terminalFontFamily}
+            cursorStyle={terminalCursorStyle}
+            shell={terminalShell}
+          />
+        </div>
       )}
     </section>
   );

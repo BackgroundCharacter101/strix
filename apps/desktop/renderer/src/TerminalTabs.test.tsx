@@ -98,64 +98,8 @@ describe('TerminalTabs', () => {
     });
   });
 
-  it('launches a FreeBuff tab that boots `freebuff` when installed', async () => {
-    const hasCommand = vi.fn(async () => true);
-    window.strix = makeStrixApi({ terminal: { hasCommand } });
-    render(<TerminalTabs />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start FreeBuff' }));
-
-    expect(await screen.findByRole('tab', { name: 'FreeBuff' })).toBeInTheDocument();
-    await waitFor(() => {
-      const slot = screen.getAllByTestId('terminal').find((t) => t.dataset.boot === 'freebuff');
-      expect(slot).toBeTruthy();
-    });
-    expect(hasCommand).toHaveBeenCalledWith('freebuff');
-  });
-
-  it('seeds the FreeBuff session with a prompt via the launch prop', async () => {
-    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => true) } });
-    const { rerender } = render(<TerminalTabs launch={{ nonce: 0 }} />);
-    rerender(<TerminalTabs launch={{ nonce: 1, agent: 'freebuff', prompt: 'In a.ts: why slow?' }} />);
-
-    await waitFor(() => {
-      const slot = screen
-        .getAllByTestId('terminal')
-        .find((t) => t.dataset.seed === 'In a.ts: why slow?');
-      expect(slot).toBeTruthy();
-      expect(slot?.dataset.boot).toBe('freebuff');
-    });
-  });
-
-  it('reuses the running FreeBuff session for a new prompt (no second tab)', async () => {
-    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => true) } });
-    const { rerender } = render(<TerminalTabs launch={{ nonce: 0 }} />);
-    rerender(<TerminalTabs launch={{ nonce: 1, agent: 'freebuff', prompt: 'first prompt' }} />);
-    await screen.findByRole('tab', { name: 'FreeBuff' });
-
-    // Asking again routes to the SAME session (re-seeded), not a new tab.
-    rerender(<TerminalTabs launch={{ nonce: 2, agent: 'freebuff', prompt: 'second prompt' }} />);
-    await waitFor(() => {
-      const slot = screen.getAllByTestId('terminal').find((t) => t.dataset.seed === 'second prompt');
-      expect(slot).toBeTruthy();
-    });
-    expect(screen.getAllByRole('tab', { name: 'FreeBuff' })).toHaveLength(1);
-  });
-
-  it('one-click installs FreeBuff when it is not on PATH', async () => {
-    window.strix = makeStrixApi({ terminal: { hasCommand: vi.fn(async () => false) } });
-    render(<TerminalTabs />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start FreeBuff' }));
-
-    await screen.findByRole('tab', { name: 'FreeBuff' });
-    await waitFor(() => {
-      const slot = screen
-        .getAllByTestId('terminal')
-        .find((t) => t.dataset.boot === 'npm install -g freebuff');
-      expect(slot).toBeTruthy();
-    });
-  });
+  // FreeBuff moved to the AI Assistant panel (FreebuffPanel) — it's no longer a
+  // bottom-terminal launcher, so its tests live with that component now.
 
   it('closes a tab and falls back to a remaining tab', () => {
     render(<TerminalTabs />);

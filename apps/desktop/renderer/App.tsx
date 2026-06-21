@@ -101,7 +101,7 @@ export default function App() {
     prompt?: string;
     command?: string;
     title?: string;
-    agent?: 'claude' | 'freebuff';
+    agent?: 'claude';
   }>({
     nonce: 0,
   });
@@ -112,6 +112,8 @@ export default function App() {
   }>();
   // A prompt seeded into the AI composer (e.g. an agent's findings handed off).
   const [aiSeed, setAiSeed] = useState<{ nonce: number; text: string }>();
+  // A prompt handed off to the embedded FreeBuff (switches the AI panel to it).
+  const [freebuffSeed, setFreebuffSeed] = useState<{ nonce: number; text: string }>();
   const [zen, setZen] = useState(false);
   const [recentCommands, setRecentCommands] = useState<string[]>(() => {
     try {
@@ -653,13 +655,6 @@ export default function App() {
     setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt, agent: 'claude' }));
   };
 
-  // Launch the FreeBuff free coding agent (both editions), optionally seeded
-  // with a prompt handed off from the AI panel.
-  const launchFreebuff = (prompt?: string) => {
-    setShowTerminal(true);
-    setClaudeLaunch((p) => ({ nonce: p.nonce + 1, prompt, agent: 'freebuff' }));
-  };
-
   // Env injected into the FreeBuff session so users can point the CLI at their
   // own VPS / full-access backend (Settings → AI → FreeBuff connection).
   const freebuffEnv = useMemo(
@@ -696,9 +691,9 @@ export default function App() {
     launchClaude(prompt);
   };
 
-  // Hand a question (+ the active file's path) off to a FreeBuff session. The
-  // prompt is auto-typed once the agent is ready; we also copy it to the
-  // clipboard as a reliable fallback (FreeBuff boots slowly the first time).
+  // Hand a question (+ the active file's path) off to the embedded FreeBuff in
+  // the AI panel (reveals the panel + switches it to FreeBuff + seeds the prompt
+  // into the live session — no bottom-terminal FreeBuff anymore).
   const askFreebuff = (text: string) => {
     const rel = activeTabs.activePath ? relativeSegments(root, activeTabs.activePath).join('/') : '';
     const q = text.trim();
@@ -706,11 +701,9 @@ export default function App() {
     if (rel && q) prompt = `In ${rel}: ${q}`;
     else if (rel) prompt = `Review ${rel}`;
     else prompt = q;
-    // Auto-typed + submitted into FreeBuff; clipboard is a fallback in case the
-    // session is still cold-starting the very first time.
-    void navigator.clipboard?.writeText(prompt).catch(() => {});
+    setShowAi(true);
+    setFreebuffSeed((p) => ({ nonce: (p?.nonce ?? 0) + 1, text: prompt }));
     showToast('Sent to FreeBuff', 'info', 2500);
-    launchFreebuff(prompt);
   };
 
   const openDiff = async (absPath: string) => {
@@ -742,10 +735,13 @@ export default function App() {
       run: () => launchClaude(),
     },
     {
-      id: 'terminal.freebuff',
-      label: 'Start FreeBuff (free coding agent)',
+      id: 'ai.freebuff',
+      label: 'Open FreeBuff (AI panel)',
       detail: '',
-      run: () => launchFreebuff(),
+      run: () => {
+        setShowAi(true);
+        setFreebuffSeed((p) => ({ nonce: (p?.nonce ?? 0) + 1, text: '' }));
+      },
     },
     { id: 'view.zen', label: 'View: Toggle Zen Mode', detail: 'Ctrl+K Z', run: toggleZen },
     {
@@ -1177,7 +1173,6 @@ export default function App() {
                     <TerminalTabs
                       cwd={root ?? undefined}
                       launch={claudeLaunch}
-                      freebuffEnv={freebuffEnv}
                       fontSize={settings.terminalFontSize || settings.fontSize}
                       fontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
                       cursorStyle={settings.terminalCursorStyle}
@@ -1200,6 +1195,7 @@ export default function App() {
                     selectionRequest={selectionReq}
                     seedPrompt={aiSeed}
                     freebuffEnv={freebuffEnv}
+                    freebuffSeed={freebuffSeed}
                     terminalFontSize={settings.terminalFontSize || settings.fontSize}
                     terminalFontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
                     terminalCursorStyle={settings.terminalCursorStyle}

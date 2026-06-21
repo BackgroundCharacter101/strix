@@ -713,6 +713,12 @@ strix/ (folder: tabea)
   feasible; the embedded terminal is the chosen approach, **polished**: branded header
   (FB monogram + model chip e.g. "MiMo 2.5" + per-session "1h left" chip, both scraped
   via `parseFreebuffUsage` model/sessionLabel), Restart, and the sessions/reset bar.
+  **Session persists across the toggle** — FreebuffPanel stays mounted (hidden via CSS)
+  once opened, so flipping to Strix AI and back no longer kills the PTY / starts a new
+  session. **FreeBuff removed from the bottom terminal** (button + launcher +
+  `terminal.freebuff` command + menu item gone); hand-offs ("Ask FreeBuff", agent →
+  FreeBuff, palette "Open FreeBuff") route to the embedded panel via a `freebuffSeed`
+  (switches the panel to FreeBuff + seeds the prompt into the live session).
 - **Agentic coding — agent roster (`src/agents/`, both editions):** a panel of
   single-purpose AI agents that **monitor & audit only — they never change code**.
   Two output modes: **doc** (keep a file current) and **report** (read-only findings).

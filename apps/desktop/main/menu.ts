@@ -92,8 +92,8 @@ export function buildAppMenu(win: BrowserWindow): void {
         cmd('Toggle AI Assistant', 'view.ai'),
         cmd('Split Editor', 'view.split', 'CmdOrCtrl+\\'),
         cmd('Toggle Zen Mode', 'view.zen', 'CmdOrCtrl+K Z'),
-        // FreeBuff (free coding agent) ships in both editions.
-        cmd('Start FreeBuff', 'terminal.freebuff'),
+        // FreeBuff now lives in the AI Assistant panel (not the terminal).
+        cmd('Open FreeBuff', 'ai.freebuff'),
         // Claude Code is a Competition-edition-only feature.
         ...(CLAUDE_ENABLED ? [cmd('Start Claude Code', 'terminal.claude')] : []),
         { type: 'separator' },

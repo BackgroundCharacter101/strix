@@ -32,12 +32,6 @@ const CLAUDE_INSTALL =
   'Install it with:  npm install -g @anthropic-ai/claude-code\r\n' +
   'Then type:  claude';
 
-// FreeBuff (a free coding-agent CLI) runs interactively. When it's missing we
-// kick off a one-click global install; once it finishes the user types freebuff
-// (or clicks the FreeBuff button again, which now detects it and launches).
-const FREEBUFF_NOTICE_INSTALL =
-  'FreeBuff CLI not found — installing it now (npm install -g freebuff)…\r\n' +
-  'When the install finishes, type:  freebuff';
 
 // Display title for a tab. Shell tabs are numbered by their position among other
 // shell tabs, so the tab bar always reads "Terminal 1, 2, 3…" in order — no gaps
@@ -62,25 +56,22 @@ function claudeCommand(prompt?: string): string {
 export function TerminalTabs({
   cwd,
   launch = { nonce: 0 },
-  freebuffEnv,
   fontSize,
   fontFamily,
   cursorStyle,
   shell,
 }: {
   cwd?: string;
-  // Env injected into a FreeBuff session (self-hosted / full-access backend).
-  freebuffEnv?: Record<string, string>;
-  // Bumping nonce (from a command / menu / AI hand-off) opens a session:
+  // Bumping nonce (from a command / menu / Run target) opens a session:
   //  - command set  → a generic run target (e.g. "npm run dev") in a titled tab
-  //  - agent:'freebuff' → a FreeBuff session (optionally seeded with a prompt)
   //  - otherwise    → a Claude Code session (optionally seeded with a prompt)
+  // (FreeBuff lives in the AI panel now, not the bottom terminal.)
   launch?: {
     nonce: number;
     prompt?: string;
     command?: string;
     title?: string;
-    agent?: 'claude' | 'freebuff';
+    agent?: 'claude';
   };
   // Terminal font, following the editor settings.
   fontSize?: number;
@@ -115,45 +106,6 @@ export function TerminalTabs({
     setActive(id);
   };
 
-  const launchFreebuff = async (prompt?: string) => {
-    // Reuse a running FreeBuff session (FreeBuff is most users' main AI, so
-    // repeated asks should go to the SAME agent, not spawn a fresh one each
-    // time). Bump its seed nonce to send the new prompt to it.
-    const existing = tabs.find((t) => t.title === 'FreeBuff' && t.bootCommand === 'freebuff');
-    if (existing) {
-      setActive(existing.id);
-      if (prompt) {
-        setTabs((prev) =>
-          prev.map((t) =>
-            t.id === existing.id
-              ? { ...t, seed: { nonce: (t.seed?.nonce ?? 0) + 1, text: prompt } }
-              : t,
-          ),
-        );
-      }
-      return;
-    }
-    const id = nextId.current++;
-    const installed = await window.strix.terminal.hasCommand('freebuff');
-    const tab: TabDesc = installed
-      ? {
-          id,
-          title: 'FreeBuff',
-          bootCommand: 'freebuff',
-          seed: prompt ? { nonce: 1, text: prompt } : undefined,
-          env: freebuffEnv,
-          notice: prompt ? 'Asking FreeBuff…' : 'Starting FreeBuff…',
-        }
-      : {
-          id,
-          title: 'FreeBuff',
-          bootCommand: 'npm install -g freebuff',
-          notice: FREEBUFF_NOTICE_INSTALL,
-        };
-    setTabs((prev) => [...prev, tab]);
-    setActive(id);
-  };
-
   // Open a titled tab running an arbitrary command (Run/Serve targets).
   const runCommand = (command: string, title: string) => {
     const id = nextId.current++;
@@ -166,7 +118,6 @@ export function TerminalTabs({
   const launchRef = useRef<(l: typeof launch) => void>(() => {});
   launchRef.current = (l) => {
     if (l.command) runCommand(l.command, l.title ?? 'Run');
-    else if (l.agent === 'freebuff') void launchFreebuff(l.prompt);
     else void launchClaude(l.prompt);
   };
   useEffect(() => {
@@ -233,15 +184,6 @@ export function TerminalTabs({
             </div>
           )}
         </span>
-        <button
-          type="button"
-          className="term-agent-btn term-freebuff-btn"
-          aria-label="Start FreeBuff"
-          title="Start FreeBuff (free coding agent) in this workspace"
-          onClick={() => void launchFreebuff()}
-        >
-          <SparkleIcon size={13} /> FreeBuff
-        </button>
         {CLAUDE_ENABLED && (
           <button
             type="button"
