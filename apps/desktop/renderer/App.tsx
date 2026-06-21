@@ -1199,6 +1199,11 @@ export default function App() {
                     onAskFreebuff={askFreebuff}
                     selectionRequest={selectionReq}
                     seedPrompt={aiSeed}
+                    freebuffEnv={freebuffEnv}
+                    terminalFontSize={settings.terminalFontSize || settings.fontSize}
+                    terminalFontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
+                    terminalCursorStyle={settings.terminalCursorStyle}
+                    terminalShell={settings.terminalShell || undefined}
                     aiServerUrl={settings.aiServerUrl}
                     aiDefaultModel={settings.aiDefaultModel}
                     aiTemperature={settings.aiTemperature}

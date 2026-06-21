@@ -696,6 +696,13 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **FreeBuff in the AI Assistant panel (`FreebuffPanel.tsx`, both editions):** a
+  **Strix AI ⇄ FreeBuff** segmented toggle in the AI-panel header. FreeBuff mode runs
+  the agent in a real **in-panel terminal** (reuses `Terminal`, `bootCommand:'freebuff'`,
+  workspace cwd + `freebuffEnv` + terminal font/cursor/shell) with install-detect
+  (`terminal.hasCommand`) → one-click `npm i -g freebuff` fallback + Restart. Chosen
+  over parsing FreeBuff's full-screen TUI into chat bubbles (unreliable). Mode persists
+  (`localStorage strix.aiMode`). AiPanel gained `freebuffEnv`/`terminal*` props.
 - **Agentic coding — agent roster (`src/agents/`, both editions):** a panel of
   single-purpose AI agents that **monitor & audit only — they never change code**.
   Two output modes: **doc** (keep a file current) and **report** (read-only findings).

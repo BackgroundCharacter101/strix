@@ -11,6 +11,7 @@ import {
   type Attachment,
 } from '@strix/ai-gateway';
 import { readAttachment, MAX_ATTACH_BYTES } from './attachments';
+import { FreebuffPanel } from './FreebuffPanel';
 import type { DirectModel } from './useSettings';
 import {
   rankFiles,
@@ -314,6 +315,12 @@ export function AiPanel({
   onAskFreebuff,
   selectionRequest,
   seedPrompt,
+  freebuffEnv,
+  freebuffSeed,
+  terminalFontSize,
+  terminalFontFamily,
+  terminalCursorStyle,
+  terminalShell,
   aiServerUrl,
   aiDefaultModel = 'auto',
   aiTemperature = 0.7,
@@ -357,6 +364,14 @@ export function AiPanel({
   // Text seeded into the composer (e.g. findings handed off from an agent). The
   // user reviews and presses Send — using whichever model the picker is on.
   seedPrompt?: { nonce: number; text: string };
+  // FreeBuff (embedded mode): env for its PTY, an optional prompt to seed into
+  // the session, and the terminal font/cursor/shell settings.
+  freebuffEnv?: Record<string, string>;
+  freebuffSeed?: { nonce: number; text: string };
+  terminalFontSize?: number;
+  terminalFontFamily?: string;
+  terminalCursorStyle?: 'block' | 'underline' | 'bar';
+  terminalShell?: string;
   // Shared FreeLLMAPI host URL (blank = local server).
   aiServerUrl?: string;
   // AI tuning (from Settings): default model + sampling temperature + max tokens.
@@ -386,6 +401,22 @@ export function AiPanel({
   const [allPaths, setAllPaths] = useState<string[]>([]);
   const [mentionItems, setMentionItems] = useState<string[]>([]);
   const [mentionIndex, setMentionIndex] = useState(0);
+  // Which assistant the panel shows: the built-in Strix chat, or FreeBuff
+  // embedded in this panel (a real in-panel terminal session). Persisted.
+  const [aiMode, setAiMode] = useState<'strix' | 'freebuff'>(() => {
+    try {
+      return localStorage.getItem('strix.aiMode') === 'freebuff' ? 'freebuff' : 'strix';
+    } catch {
+      return 'strix';
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('strix.aiMode', aiMode);
+    } catch {
+      /* ignore */
+    }
+  }, [aiMode]);
   const [model, setModel] = useState(aiDefaultModel);
   // Merge the per-session model with the tuned temperature/maxTokens for every
   // AI call (one place so all actions honour Settings → AI).
@@ -1384,16 +1415,50 @@ export function AiPanel({
           <SparkleIcon size={15} />
           AI Assistant
         </span>
-        <button
-          type="button"
-          className="ai-ghost-btn"
-          onClick={clearHistory}
-          disabled={busy || history.length === 0}
-        >
-          Clear
-        </button>
+        <div className="ai-mode-toggle" role="tablist" aria-label="AI mode">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={aiMode === 'strix'}
+            className={aiMode === 'strix' ? 'is-active' : ''}
+            onClick={() => setAiMode('strix')}
+          >
+            Strix AI
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={aiMode === 'freebuff'}
+            className={aiMode === 'freebuff' ? 'is-active' : ''}
+            onClick={() => setAiMode('freebuff')}
+          >
+            FreeBuff
+          </button>
+        </div>
+        {aiMode === 'strix' && (
+          <button
+            type="button"
+            className="ai-ghost-btn"
+            onClick={clearHistory}
+            disabled={busy || history.length === 0}
+          >
+            Clear
+          </button>
+        )}
       </header>
 
+      {aiMode === 'freebuff' ? (
+        <FreebuffPanel
+          cwd={workspaceKey ?? undefined}
+          env={freebuffEnv}
+          seed={freebuffSeed}
+          fontSize={terminalFontSize}
+          fontFamily={terminalFontFamily}
+          cursorStyle={terminalCursorStyle}
+          shell={terminalShell}
+        />
+      ) : (
+        <>
       <div className="ai-toolbar">
         <select aria-label="model" value={model} onChange={(e) => setModel(e.target.value)}>
           {aiDirectModels.length > 0 ? (
@@ -1889,7 +1954,8 @@ export function AiPanel({
           onCancel={() => setSaveReq(null)}
         />
       )}
-
+        </>
+      )}
     </section>
   );
 }
