@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Terminal } from './Terminal';
+import { parseFreebuffUsage, formatUsage, type FreebuffUsage } from './freebuffUsage';
 
 // FreeBuff embedded inside the AI Assistant panel. FreeBuff is an interactive
 // TUI, so we run it in a real (in-panel) terminal rather than trying to parse its
@@ -23,6 +24,10 @@ export function FreebuffPanel({
 }) {
   const [installed, setInstalled] = useState<boolean | null>(null);
   const [restart, setRestart] = useState(0);
+  // Latest usage scraped from FreeBuff's output (sessions/time left).
+  const [usage, setUsage] = useState<FreebuffUsage | null>(null);
+  // Rolling tail of recent output to scan (usage line may span chunks).
+  const bufRef = useRef('');
 
   useEffect(() => {
     let cancelled = false;
@@ -34,6 +39,18 @@ export function FreebuffPanel({
       cancelled = true;
     };
   }, [restart]);
+
+  // Reset the scraped usage when the session restarts.
+  useEffect(() => {
+    setUsage(null);
+    bufRef.current = '';
+  }, [restart]);
+
+  const onData = (chunk: string) => {
+    bufRef.current = (bufRef.current + chunk).slice(-4000);
+    const u = parseFreebuffUsage(bufRef.current);
+    if (u) setUsage(u);
+  };
 
   return (
     <div className="freebuff-panel">
@@ -50,6 +67,26 @@ export function FreebuffPanel({
           Restart
         </button>
       </div>
+      {usage && (
+        <div
+          className="freebuff-usage"
+          title="Scraped live from FreeBuff's output"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={usage.percent ?? undefined}
+        >
+          <div className="freebuff-usage-label">{formatUsage(usage)}</div>
+          {typeof usage.percent === 'number' && (
+            <div className="freebuff-usage-track">
+              <div
+                className={`freebuff-usage-fill${usage.percent <= 15 ? ' is-low' : ''}`}
+                style={{ width: `${usage.percent}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
       <div className="freebuff-term">
         {installed === null ? (
           <div className="freebuff-checking">Checking for FreeBuff…</div>
@@ -69,6 +106,7 @@ export function FreebuffPanel({
             fontFamily={fontFamily}
             cursorStyle={cursorStyle}
             shell={shell}
+            onData={onData}
           />
         )}
       </div>

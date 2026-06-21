@@ -26,6 +26,9 @@ export interface TerminalProps {
   cursorStyle?: 'block' | 'underline' | 'bar';
   // Shell override for the PTY (blank = platform default).
   shell?: string;
+  // Raw PTY output chunks (after writing to xterm) — used to scrape FreeBuff's
+  // usage/limit line for the progress bar.
+  onData?: (chunk: string) => void;
 }
 
 export function Terminal({
@@ -38,8 +41,12 @@ export function Terminal({
   fontFamily,
   cursorStyle,
   shell,
+  onData,
 }: TerminalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  // Latest onData in a ref so the PTY subscription never needs re-binding.
+  const onDataRef = useRef(onData);
+  onDataRef.current = onData;
   const termRef = useRef<XTerm | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
   const sessionRef = useRef<string | null>(null);
@@ -127,6 +134,7 @@ export function Terminal({
     const offData = window.strix.terminal.onData(({ id, data }) => {
       if (id === sessionRef.current) {
         term.write(data);
+        onDataRef.current?.(data);
         if (!readyRef.current) {
           outBuf = (outBuf + data).slice(-2000);
           if (READY_RE.test(outBuf)) {

@@ -703,6 +703,12 @@ strix/ (folder: tabea)
   (`terminal.hasCommand`) → one-click `npm i -g freebuff` fallback + Restart. Chosen
   over parsing FreeBuff's full-screen TUI into chat bubbles (unreliable). Mode persists
   (`localStorage strix.aiMode`). AiPanel gained `freebuffEnv`/`terminal*` props.
+  **Usage bar:** the panel scrapes FreeBuff's output (`Terminal` got an `onData`
+  callback) through `freebuffUsage.ts` `parseFreebuffUsage` (ANSI-stripped; matches
+  "N sessions left", "X / Y", "resets in 2h 30m", "% used", tested) and shows a live
+  **sessions/time-left progress bar** (red when ≤15%). Regexes are loose + tuned to
+  FreeBuff's real wording — if a build's phrasing differs, the bar just stays hidden
+  until the pattern is added.
 - **Agentic coding — agent roster (`src/agents/`, both editions):** a panel of
   single-purpose AI agents that **monitor & audit only — they never change code**.
   Two output modes: **doc** (keep a file current) and **report** (read-only findings).

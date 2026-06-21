@@ -2691,6 +2691,33 @@ kbd {
   padding: var(--space-4);
   color: var(--text-muted);
 }
+/* Live usage scraped from FreeBuff output: sessions / time left + a bar. */
+.freebuff-usage {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.freebuff-usage-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.freebuff-usage-track {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.freebuff-usage-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+  transition: width 0.4s var(--ease, ease);
+}
+.freebuff-usage-fill.is-low {
+  background: var(--danger);
+}
 
 .ai-pane-title {
   display: inline-flex;
