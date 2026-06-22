@@ -306,6 +306,20 @@
   --statusbar-ink: #0a0a0c;
   --link: #ffffff;
 }
+/* Black = near-black accent for a fully blacked-out OLED look. Fills sit just
+   above the panel surface (so buttons stay visible) with light ink; the status
+   stripe goes black instead of coloured. Editor cursor stays a soft grey
+   (themes.ts hex) so it's legible on the black editor. */
+:root[data-accent='black'] {
+  --accent: #16161a;
+  --accent-hover: #24242a;
+  --accent-ink: #e9e9ee;
+  --selection: rgba(255, 255, 255, 0.12);
+  --statusbar: #0c0c0f;
+  --statusbar-hover: #16161a;
+  --statusbar-ink: #cfcfd6;
+  --link: #b9b9c2;
+}
 
 /* =========================================================================
    CYBERSEC MODE — overrides the accent family with a "matrix" green and

@@ -704,8 +704,11 @@ strix/ (folder: tabea)
   other dark themes. Selectable in Settings → Appearance → Color theme. **Accents:**
   added **Red** (`#e5484d`) and **White** (`#e8e8ec`, monochrome — dark ink on white
   fills); White is the neutral/all-black accent to pair with the Black theme for the
-  accent-free Cursor look. `[data-accent='red'/'white']` token blocks + `themes.ts`
-  ACCENTS (Monaco cursor/selection follow via `accentHex`).
+  accent-free Cursor look. Added **Black** accent — near-black fills (`#16161a`) + light
+  ink + black status stripe for a fully blacked-out OLED IDE (its `themes.ts` hex is a
+  soft grey `#8a8a93` so the Monaco cursor stays legible on the black editor).
+  `[data-accent='red'/'white'/'black']` token blocks + `themes.ts` ACCENTS (Monaco
+  cursor/selection follow via `accentHex`).
 - **Terminal glitch fix (`Terminal.tsx`):** stray characters / a broken first prompt
   (e.g. a leftover "ss" at the top-left) came from creating the PTY while the panel was
   still 0×0 (just-opened / mid-animation) — the shell printed its prompt at the wrong

@@ -20,6 +20,9 @@ export const ACCENTS = [
   { id: 'blue', label: 'Blue', hex: '#3b82f6' },
   { id: 'red', label: 'Red', hex: '#e5484d' },
   { id: 'white', label: 'White', hex: '#e8e8ec' },
+  // Black = blacked-out UI accent. Hex here drives the Monaco cursor/selection,
+  // so it's a soft grey (legible on the black editor) rather than pure black.
+  { id: 'black', label: 'Black', hex: '#8a8a93' },
 ] as const;
 
 export type AccentId = (typeof ACCENTS)[number]['id'];
