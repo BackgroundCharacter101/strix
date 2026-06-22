@@ -896,6 +896,14 @@ body {
   height: 100%;
   overflow: auto;
 }
+.tree-truncated {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  padding: 3px 12px;
+  cursor: help;
+}
 .sidebar .tree {
   position: relative;
   margin: 0;

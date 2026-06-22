@@ -208,6 +208,10 @@ export function FileViewer({
   };
   // A NUL byte in the decoded text strongly implies a binary file.
   const isBinary = (buffer?.draft ?? '').includes(String.fromCharCode(0));
+  // Guard truly huge text files (e.g. a 50MB log / data dump) — mounting Monaco
+  // on them spikes RAM/CPU. Offer an explicit "open anyway" escape hatch.
+  const [forceHuge, setForceHuge] = useState(false);
+  const isHuge = (buffer?.draft?.length ?? 0) > 15_000_000 && !forceHuge;
 
   if (!path || !buffer) {
     return (
@@ -356,7 +360,18 @@ export function FileViewer({
         )}
       </div>
       <div className="editor-host">
-        {isBinary ? (
+        {isHuge ? (
+          <div className="binary-notice" role="note">
+            <p>
+              This file is very large ({Math.round((buffer.draft.length / 1_000_000) * 10) / 10} MB)
+              — opening it in the editor may slow the IDE.
+            </p>
+            <p className="binary-notice-path">{path}</p>
+            <button type="button" className="set-save-btn" onClick={() => setForceHuge(true)}>
+              Open anyway
+            </button>
+          </div>
+        ) : isBinary ? (
           <div className="binary-notice" role="note">
             <p>This is a binary file and can’t be shown in the text editor.</p>
             <p className="binary-notice-path">{path}</p>

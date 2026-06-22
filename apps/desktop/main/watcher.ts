@@ -12,7 +12,10 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 const pending = new Set<string>();
 
 // Noise we never care about (build output, VCS internals, deps, temp files).
-const IGNORE = /(^|[\\/])(node_modules|\.git|dist|release|\.cache|out|\.next|coverage)([\\/]|$)/i;
+// Matches the fs-tree ignore list so a big repo's generated dirs don't fire
+// event storms (an npm install / cargo build can emit thousands of events).
+const IGNORE =
+  /(^|[\\/])(node_modules|\.git|dist|build|release|\.cache|\.parcel-cache|out|\.next|\.nuxt|\.svelte-kit|coverage|\.turbo|target|vendor|\.venv|venv|__pycache__|\.gradle|\.mvn|\.idea)([\\/]|$)/i;
 
 export function shouldIgnore(rel: string): boolean {
   if (!rel) return true;

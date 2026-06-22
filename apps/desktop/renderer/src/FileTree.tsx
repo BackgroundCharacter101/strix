@@ -172,7 +172,7 @@ export interface FileTreeProps {
 }
 
 export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: FileTreeProps) {
-  const { tree, loading, error, reload } = useFileTree(rootPath);
+  const { tree, loading, error, truncated, reload } = useFileTree(rootPath);
   // Root starts expanded; other folders start collapsed.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set([rootPath]));
   const [menu, setMenu] = useState<Menu | null>(null);
@@ -273,6 +273,11 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
 
   return (
     <>
+      {truncated && (
+        <div className="tree-truncated" role="note" title="Large project — the file list was capped to stay fast. Add folders to Settings → Editor → Exclude folders.">
+          Large project — list capped
+        </div>
+      )}
       <div
         className="tree-scroll"
         ref={scrollRef}

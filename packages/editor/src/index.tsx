@@ -109,29 +109,40 @@ export function CodeEditor({
   // The Monaco option object derived from the user's settings. Memoized on the
   // individual fields so a settings change produces a new object (and triggers
   // the live-apply effect below) without rebuilding on every render.
+  // Big files (e.g. minified bundles, generated data) choke Monaco — a multi-MB
+  // single line tokenized + minimapped pegs CPU/RAM. Past a threshold, strip the
+  // expensive features so the editor stays responsive.
+  const isLarge = (value?.length ?? 0) > 1_500_000;
   const options = useMemo<MonacoEditor.IStandaloneEditorConstructionOptions>(
     () => ({
       ...MODERN_OPTIONS,
       readOnly,
-      minimap: { enabled: editorOptions?.minimap ?? false },
-      inlineSuggest: { enabled: true },
+      minimap: { enabled: isLarge ? false : (editorOptions?.minimap ?? false) },
+      inlineSuggest: { enabled: !isLarge },
       fontSize: editorOptions?.fontSize ?? 13,
       tabSize: editorOptions?.tabSize ?? 2,
       insertSpaces: editorOptions?.insertSpaces ?? true,
-      wordWrap: editorOptions?.wordWrap ? 'on' : 'off',
+      wordWrap: isLarge ? 'off' : editorOptions?.wordWrap ? 'on' : 'off',
       fontFamily: editorOptions?.fontFamily || MODERN_OPTIONS.fontFamily,
       lineNumbers: editorOptions?.lineNumbers ?? 'on',
       cursorStyle: editorOptions?.cursorStyle ?? 'line',
       cursorBlinking: editorOptions?.cursorBlinking ?? MODERN_OPTIONS.cursorBlinking,
-      renderWhitespace: editorOptions?.renderWhitespace ?? 'selection',
+      renderWhitespace: isLarge ? 'none' : (editorOptions?.renderWhitespace ?? 'selection'),
       lineHeight: editorOptions?.lineHeight ?? MODERN_OPTIONS.lineHeight,
-      fontLigatures: editorOptions?.fontLigatures ?? MODERN_OPTIONS.fontLigatures,
+      fontLigatures: isLarge ? false : (editorOptions?.fontLigatures ?? MODERN_OPTIONS.fontLigatures),
       smoothScrolling: editorOptions?.smoothScrolling ?? MODERN_OPTIONS.smoothScrolling,
-      stickyScroll: { enabled: editorOptions?.stickyScroll ?? true },
-      bracketPairColorization: { enabled: editorOptions?.bracketColorization ?? true },
+      stickyScroll: { enabled: isLarge ? false : (editorOptions?.stickyScroll ?? true) },
+      bracketPairColorization: { enabled: isLarge ? false : (editorOptions?.bracketColorization ?? true) },
       scrollBeyondLastLine: editorOptions?.scrollBeyondLastLine ?? false,
+      // Large-file safety: skip folding + cap per-line tokenization (a giant
+      // minified line otherwise locks the tokenizer).
+      folding: !isLarge,
+      largeFileOptimizations: true,
+      maxTokenizationLineLength: isLarge ? 5_000 : 20_000,
+      occurrencesHighlight: isLarge ? 'off' : 'singleFile',
     }),
     [
+      isLarge,
       readOnly,
       editorOptions?.minimap,
       editorOptions?.fontSize,

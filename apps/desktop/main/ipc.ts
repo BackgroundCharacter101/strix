@@ -3,6 +3,8 @@ import * as os from 'os';
 import { streamChat } from './aiProxy.js';
 import {
   buildFileTree,
+  readDir,
+  setUserIgnore,
   readFileContents,
   writeFileContents,
   createEntry,
@@ -64,6 +66,8 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
     writeFileContents(filePath, content),
   );
   ipcMain.handle('file:tree', (_event, rootPath: string) => buildFileTree(rootPath));
+  ipcMain.handle('file:readDir', (_event, dirPath: string) => readDir(dirPath));
+  ipcMain.handle('file:setExcludes', (_event, list: string[]) => setUserIgnore(list ?? []));
   ipcMain.handle('file:create', (_event, targetPath: string, type: 'file' | 'directory') =>
     createEntry(targetPath, type),
   );

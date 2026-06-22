@@ -29,6 +29,8 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       tree: vi.fn(
         async (): Promise<FileNode> => ({ name: '', path: '', type: 'directory', children: [] }),
       ),
+      readDir: vi.fn(async (): Promise<FileNode[]> => []),
+      setExcludes: vi.fn(async (): Promise<void> => {}),
       create: vi.fn(async (): Promise<void> => {}),
       rename: vi.fn(async (): Promise<void> => {}),
       remove: vi.fn(async (): Promise<void> => {}),

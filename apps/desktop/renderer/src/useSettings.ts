@@ -58,6 +58,9 @@ export interface Settings {
   // Auto-save: periodically write dirty buffers. autoSaveSeconds is the interval.
   autoSave: boolean;
   autoSaveSeconds: number;
+  // Extra folder names to exclude from the file tree / search / AI scan (on top
+  // of the built-in node_modules/.git/build/target/… list). Comma-separated.
+  excludeFolders: string;
   // Shared FreeLLMAPI host, e.g. http://192.168.1.50:3001 (blank = local).
   aiServerUrl: string;
   // AI tuning. Default model seeds the picker; temperature 0–2; maxTokens 0 =
@@ -128,6 +131,7 @@ export const DEFAULT_SETTINGS: Settings = {
   eol: 'keep',
   autoSave: true,
   autoSaveSeconds: 60,
+  excludeFolders: '',
   aiServerUrl: '',
   aiDefaultModel: 'auto',
   aiTemperature: 0.7,

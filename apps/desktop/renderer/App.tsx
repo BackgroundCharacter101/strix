@@ -849,6 +849,17 @@ export default function App() {
     applyAccent(editorAccent, editorTheme);
   }, [editorAccent, editorTheme]);
 
+  // Push the user's extra folder-excludes to the main process (applied to every
+  // tree walk: explorer, search, AI gather) and re-read the tree to apply.
+  useEffect(() => {
+    const list = settings.excludeFolders
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    void window.strix.fs.setExcludes(list);
+    setTreeNonce((n) => n + 1);
+  }, [settings.excludeFolders]);
+
   const recordRecentCommand = (id: string) => {
     if (id.startsWith('recent:')) return; // don't track "open recent folder" entries
     setRecentCommands((prev) => {

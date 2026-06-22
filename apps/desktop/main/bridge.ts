@@ -10,7 +10,12 @@ import type { Language, JsonRpcMessage } from './lsp';
 export interface StrixFsApi {
   read(filePath: string): Promise<string>;
   write(filePath: string, content: string): Promise<void>;
-  tree(rootPath: string): Promise<FileNode>;
+  // Full (capped) tree for the explorer + AI gather. May be `truncated` on huge
+  // repos. `readDir` lists ONE level (lazy expansion). `setExcludes` sets extra
+  // ignored folder names applied to every walk.
+  tree(rootPath: string): Promise<FileNode & { truncated?: boolean }>;
+  readDir(dirPath: string): Promise<FileNode[]>;
+  setExcludes(list: string[]): Promise<void>;
   create(targetPath: string, type: 'file' | 'directory'): Promise<void>;
   rename(from: string, to: string): Promise<void>;
   remove(targetPath: string): Promise<void>;

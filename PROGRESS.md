@@ -696,6 +696,24 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Big-project performance (fixes 4 GB RAM / 40% CPU / crash on large repos):**
+  - **`buildFileTree` capped + cheaper** (`main/fs.ts`): was `maxDepth:Infinity` and a
+    per-file `fs.stat`. Now depth 12 + **60k-node cap** (flags `truncated`), uses dirent
+    types (no per-file stat). Bounds RAM regardless of project size.
+  - **Killed the 10 s full-tree poll** (`useFileTree`) that re-walked the entire repo
+    every 10 s (the 40% CPU). Now watcher-driven, **debounced 600 ms**.
+  - **Expanded ignore list** (fs tree + watcher): node_modules/.git/dist + build/out/
+    .next/coverage/.turbo/**target**/vendor/**.venv**/venv/__pycache__/.gradle/.mvn/.idea.
+    Watcher ignore matched so generated-dir churn no longer storms events.
+  - **Big-file editor guard** (`packages/editor`): files > 1.5 MB drop minimap/folding/
+    sticky-scroll/bracket-colour, cap `maxTokenizationLineLength` (minified bundles no
+    longer lock Monaco); files > 15 MB show a notice + "Open anyway" (`FileViewer`).
+  - **User excludes** (Settings → Editor → "Exclude folders", comma-separated) →
+    `fs.setExcludes` applied to **every** tree walk (explorer/search/AI). New bridge
+    `fs.readDir` (lazy one-level) + `fs.setExcludes`. **"Large project — list capped"**
+    banner in the Explorer when truncated. (Tests: caps/ignore/readDir, +4.) Remaining
+    optimization (deferred, non-critical given the cap): wire `fs.readDir` into a fully
+    lazy explorer.
 - **Black (OLED) theme (Cursor-style):** a new `[data-theme='black']` token block —
   true-black app canvas / titlebar / editor (`#000`), panels lifted a hair (`#0a0a0c`),
   hairline borders (`#1b1b1f`), deeper shadows. Registered in `themes.ts` THEMES +

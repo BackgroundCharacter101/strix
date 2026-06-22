@@ -5,20 +5,21 @@ export interface FileTreeState {
   tree: FileNode | null;
   loading: boolean;
   error: string | null;
+  // True when the project was too large and the tree was capped (partial list).
+  truncated: boolean;
   reload: () => void;
 }
 
-// How often the Explorer re-reads the workspace from disk, so changes made
-// OUTSIDE the IDE (e.g. a coding agent like FreeBuff creating/editing files)
-// show up without a manual refresh.
-const POLL_MS = 10_000;
+// Debounce window for coalescing a burst of file-change events into one tree
+// re-read (an agent / npm install can fire hundreds of events at once).
+const REFRESH_DEBOUNCE_MS = 600;
 
 export function useFileTree(rootPath: string): FileTreeState {
   const [tree, setTree] = useState<FileNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // `silent` refreshes (the 10s poll) don't toggle loading/error, so the tree
+  // `silent` refreshes (watcher-driven) don't toggle loading/error, so the tree
   // updates in place — no "Loading…" flash and no error flicker on a transient
   // read — and the component-local expanded/selection state is preserved.
   const fetchTree = useCallback(
@@ -45,18 +46,24 @@ export function useFileTree(rootPath: string): FileTreeState {
   // Initial (visible) load.
   useEffect(() => fetchTree(false), [fetchTree]);
 
-  // Live refresh: poll every 10s while the window is visible (fallback), AND
-  // refresh immediately when the workspace watcher reports a change.
+  // Live refresh: re-read ONLY when the workspace watcher reports a change
+  // (debounced). No interval poll — a periodic full-tree walk pegged the CPU on
+  // big projects.
   useEffect(() => {
-    const id = setInterval(() => {
-      if (!document.hidden) fetchTree(true);
-    }, POLL_MS);
-    const off = window.strix.fs.onChanged(() => fetchTree(true));
+    let timer: number | null = null;
+    const off = window.strix.fs.onChanged(() => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        if (!document.hidden) fetchTree(true);
+      }, REFRESH_DEBOUNCE_MS);
+    });
     return () => {
-      clearInterval(id);
+      if (timer) window.clearTimeout(timer);
       off();
     };
   }, [fetchTree]);
 
-  return { tree, loading, error, reload };
+  const truncated = Boolean((tree as (FileNode & { truncated?: boolean }) | null)?.truncated);
+  return { tree, loading, error, truncated, reload };
 }

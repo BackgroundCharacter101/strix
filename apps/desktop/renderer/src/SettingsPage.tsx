@@ -693,6 +693,19 @@ export function SettingsPage({
               }
             />
           </Row>
+          <Row
+            query={query}
+            label="Exclude folders"
+            desc="Comma-separated folder names to skip in the file tree, search and AI scan (on top of the built-ins: node_modules, .git, dist, build, target, .venv, …). Helps big projects stay fast."
+          >
+            <input
+              type="text"
+              aria-label="Exclude folders"
+              placeholder="logs, tmp, fixtures"
+              value={settings.excludeFolders}
+              onChange={(e) => onChange({ excludeFolders: e.target.value })}
+            />
+          </Row>
         </section>
         )}
 

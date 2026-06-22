@@ -103,4 +103,32 @@ describe('buildFileTree', () => {
     const tree = await buildFileTree(tmp, { ignore: ['src'] });
     expect(tree.children!.map((c) => c.name)).toEqual(['node_modules', 'readme.md']);
   });
+
+  it('ignores generated dirs (build/target/.venv) by default', async () => {
+    await fs.mkdir(path.join(tmp, 'build'), { recursive: true });
+    await fs.mkdir(path.join(tmp, 'target'), { recursive: true });
+    await fs.mkdir(path.join(tmp, '.venv'), { recursive: true });
+    const tree = await buildFileTree(tmp);
+    const names = tree.children!.map((c) => c.name);
+    expect(names).not.toContain('build');
+    expect(names).not.toContain('target');
+    expect(names).not.toContain('.venv');
+  });
+
+  it('caps the tree at maxNodes and flags truncated', async () => {
+    for (let i = 0; i < 10; i++) await writeFileContents(path.join(tmp, `f${i}.txt`), '');
+    const tree = await buildFileTree(tmp, { maxNodes: 3 });
+    expect(tree.truncated).toBe(true);
+  });
+
+  it('readDir lists a single level without recursing', async () => {
+    const { readDir } = await import('./fs');
+    const entries = await readDir(tmp);
+    const names = entries.map((e) => e.name);
+    expect(names).toContain('src');
+    expect(names).toContain('readme.md');
+    expect(names).not.toContain('node_modules'); // ignored
+    // 'src' is a directory but its children are NOT loaded (lazy).
+    expect(entries.find((e) => e.name === 'src')?.children).toBeUndefined();
+  });
 });
