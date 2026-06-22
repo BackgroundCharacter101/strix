@@ -91,6 +91,7 @@ const api: StrixApi = {
     listKeys: (url) => ipcRenderer.invoke('ai:listKeys', url),
     addKey: (platform, key, url) => ipcRenderer.invoke('ai:addKey', platform, key, url),
     deleteKey: (id, url) => ipcRenderer.invoke('ai:deleteKey', id, url),
+    detectLocal: () => ipcRenderer.invoke('ai:detectLocal'),
     directStart: (id, params) => ipcRenderer.send('ai:directStart', { id, params }),
     directCancel: (id) => ipcRenderer.send('ai:directCancel', { id }),
     onDirectToken: (cb) => {

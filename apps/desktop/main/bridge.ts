@@ -146,6 +146,9 @@ export interface StrixAiApi {
   listKeys(url?: string): Promise<AiProviderKey[]>;
   addKey(platform: string, key: string, url?: string): Promise<{ ok: boolean; error?: string }>;
   deleteKey(id: number, url?: string): Promise<{ ok: boolean }>;
+  // Detect locally-running model servers (Ollama, LM Studio) so the user can
+  // one-click add them as direct models — no URL/model typing.
+  detectLocal(): Promise<DetectedLocalModel[]>;
   // Direct "bring your own provider" streaming — calls an OpenAI-compatible
   // endpoint from the main process (renderer CORS forbids it). Tokens arrive via
   // onDirectToken keyed by `id`; finishes with onDirectDone or onDirectError.
@@ -154,6 +157,14 @@ export interface StrixAiApi {
   onDirectToken(cb: (p: { id: number; token: string }) => void): () => void;
   onDirectDone(cb: (p: { id: number }) => void): () => void;
   onDirectError(cb: (p: { id: number; error?: string }) => void): () => void;
+}
+
+export interface DetectedLocalModel {
+  provider: string;
+  label: string;
+  baseURL: string;
+  apiKey: string;
+  model: string;
 }
 
 export interface DirectChatParams {

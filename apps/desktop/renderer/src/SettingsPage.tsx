@@ -5,7 +5,7 @@ import type { AiProviderKey } from '../../main/bridge';
 import { THEMES, ACCENTS } from './themes';
 import { SaveIcon, CloseIcon } from './icons';
 import { showToast } from './toast';
-import { CYBERSEC_ENABLED } from './edition';
+import { CYBERSEC_ENABLED, IS_COMPETITION } from './edition';
 import { KEY_COMMANDS, resolveKey, eventAccelerator } from './keybindings';
 
 // FreeLLMAPI providers the user can add a key for (ids match the server).
@@ -137,14 +137,23 @@ function hostOf(url: string): string {
 function DirectModels({
   models,
   onChange,
+  enableLocalDetect,
 }: {
   models: DirectModel[];
   onChange: (m: DirectModel[]) => void;
+  // Competition: show "Detect local models" (probes Ollama / LM Studio).
+  enableLocalDetect?: boolean;
 }) {
   const [label, setLabel] = useState('');
   const [baseURL, setBaseURL] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('');
+  const [detecting, setDetecting] = useState(false);
+
+  const genId = () =>
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   const add = () => {
     const l = label.trim();
@@ -155,16 +164,43 @@ function DirectModels({
       showToast('Base URL, API key and model are all required', 'error', 5000);
       return;
     }
-    const id =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    onChange([...models, { id, label: l || m, baseURL: b, apiKey: k, model: m }]);
+    onChange([...models, { id: genId(), label: l || m, baseURL: b, apiKey: k, model: m }]);
     setLabel('');
     setBaseURL('');
     setApiKey('');
     setModel('');
     showToast(`Added "${l || m}"`, 'success');
+  };
+
+  // Probe localhost for running model servers (Ollama / LM Studio) and add any
+  // that aren't already in the list — no URL/model typing.
+  const detect = async () => {
+    setDetecting(true);
+    try {
+      const found = await window.strix.ai.detectLocal();
+      if (!found.length) {
+        showToast('No local model server found. Is Ollama / LM Studio running?', 'info', 6000);
+        return;
+      }
+      const existing = new Set(models.map((d) => `${d.baseURL}|${d.model}`));
+      const added = found
+        .filter((f) => !existing.has(`${f.baseURL}|${f.model}`))
+        .map((f) => ({
+          id: genId(),
+          label: f.label,
+          baseURL: f.baseURL,
+          apiKey: f.apiKey,
+          model: f.model,
+        }));
+      if (!added.length) {
+        showToast('Local models already added.', 'info');
+        return;
+      }
+      onChange([...models, ...added]);
+      showToast(`Added ${added.length} local model(s)`, 'success');
+    } finally {
+      setDetecting(false);
+    }
   };
 
   const remove = (id: string) => {
@@ -174,6 +210,14 @@ function DirectModels({
 
   return (
     <div className="set-keys">
+      {enableLocalDetect && (
+        <div className="set-directmodels-detect">
+          <button type="button" className="set-save-btn" disabled={detecting} onClick={detect}>
+            {detecting ? 'Scanning…' : 'Detect local models (Ollama / LM Studio)'}
+          </button>
+          <span className="set-desc">Finds running local servers and adds them automatically.</span>
+        </div>
+      )}
       <div className="set-directmodels-add">
         <input
           type="text"
@@ -873,6 +917,7 @@ export function SettingsPage({
           <DirectModels
             models={settings.aiDirectModels}
             onChange={(m) => onChange({ aiDirectModels: m })}
+            enableLocalDetect={IS_COMPETITION}
           />
 
           <Row

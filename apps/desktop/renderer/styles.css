@@ -304,6 +304,14 @@ body {
   flex: 1 1 auto;
   min-width: 0;
 }
+/* Detect-local-models row (Competition). */
+.set-directmodels-detect {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
 /* Direct-model add row: several inputs that wrap on narrow widths. */
 .set-directmodels-add {
   display: flex;

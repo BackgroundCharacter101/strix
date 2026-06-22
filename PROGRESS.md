@@ -696,6 +696,14 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Local models auto-detect (Competition):** Settings → AI → "Detect local models
+  (Ollama / LM Studio)" probes `127.0.0.1:11434/api/tags` (Ollama) + `:1234/v1/models`
+  (LM Studio) from the **main process** (`aiProxy.detectLocalModels`, fast timeout, no
+  CORS) and one-click adds each as a direct model — no URL/model typing. They run
+  through the existing direct-model streaming (Ollama speaks the OpenAI-compatible API
+  at `/v1`), appear in the AI panel picker, and the bottom of the agent model dropdowns.
+  Bridge `ai.detectLocal`; detect button gated `IS_COMPETITION` (manual direct-add stays
+  both editions). Tests: detect maps Ollama tags + LM Studio + empty-when-down (+2).
 - **Big-project performance (fixes 4 GB RAM / 40% CPU / crash on large repos):**
   - **`buildFileTree` capped + cheaper** (`main/fs.ts`): was `maxDepth:Infinity` and a
     per-file `fs.stat`. Now depth 12 + **60k-node cap** (flags `truncated`), uses dirent

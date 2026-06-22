@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { streamChat } from './aiProxy';
+import { streamChat, detectLocalModels } from './aiProxy';
 
 function sseStream(chunks: string[]): unknown {
   const enc = new TextEncoder();
@@ -90,5 +90,38 @@ describe('streamChat', () => {
     const r = await streamChat(params, (t) => tokens.push(t), () => true);
     expect(r.ok).toBe(true);
     expect(tokens).toEqual([]);
+  });
+});
+
+describe('detectLocalModels', () => {
+  it('lists Ollama tags + LM Studio models as direct-model entries', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('11434')) {
+          return { ok: true, json: async () => ({ models: [{ name: 'qwen2.5-coder:7b' }] }) } as unknown as Response;
+        }
+        if (url.includes('1234')) {
+          return { ok: true, json: async () => ({ data: [{ id: 'local-model' }] }) } as unknown as Response;
+        }
+        return { ok: false } as unknown as Response;
+      }),
+    );
+    const found = await detectLocalModels();
+    expect(found.find((m) => m.provider === 'Ollama')).toMatchObject({
+      baseURL: 'http://127.0.0.1:11434/v1',
+      model: 'qwen2.5-coder:7b',
+    });
+    expect(found.find((m) => m.provider === 'LM Studio')?.model).toBe('local-model');
+  });
+
+  it('returns empty when nothing is running (fetch rejects)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('ECONNREFUSED');
+      }),
+    );
+    expect(await detectLocalModels()).toEqual([]);
   });
 });

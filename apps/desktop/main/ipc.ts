@@ -1,6 +1,6 @@
 import { ipcMain, shell } from 'electron';
 import * as os from 'os';
-import { streamChat } from './aiProxy.js';
+import { streamChat, detectLocalModels } from './aiProxy.js';
 import {
   buildFileTree,
   readDir,
@@ -360,6 +360,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
         .finally(() => directCancels.delete(id));
     },
   );
+  ipcMain.handle('ai:detectLocal', () => detectLocalModels());
   ipcMain.on('ai:directCancel', (_event, payload: { id: number }) => {
     if (directCancels.has(payload.id)) directCancels.set(payload.id, true);
   });

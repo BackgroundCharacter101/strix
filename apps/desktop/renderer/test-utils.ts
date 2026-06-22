@@ -103,6 +103,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       listKeys: vi.fn(async () => []),
       addKey: vi.fn(async () => ({ ok: true })),
       deleteKey: vi.fn(async () => ({ ok: true })),
+      detectLocal: vi.fn(async () => []),
       directStart: vi.fn(),
       directCancel: vi.fn(),
       onDirectToken: vi.fn(() => () => {}),
