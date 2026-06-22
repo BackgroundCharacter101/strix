@@ -123,6 +123,9 @@
   --accent-ink: var(--amber-ink); /* text/icon colour on top of accent fills */
   --selection: rgba(232, 189, 58, 0.2); /* translucent gold wash for selected rows */
   --link: var(--amber-400);
+  /* Keyboard focus ring — its OWN token (not --accent) so it stays visible even
+     when the accent is near-black/near-white. A bright blue reads on any surface. */
+  --focus: #5b9dff;
 
   /* Status bar — the signature amber stripe */
   --statusbar: var(--amber-500);
@@ -174,6 +177,7 @@
   --overlay-subtle: rgba(120, 95, 45, 0.07);
   --scrim: rgba(60, 50, 35, 0.22);
   --shadow-modal: 0 10px 34px rgba(85, 68, 40, 0.18);
+  --focus: #2f6fd6; /* darker ring for contrast on the cream light surfaces */
 }
 
 /* Midnight — deep blue-black surfaces. */
@@ -311,13 +315,15 @@
    stripe goes black instead of coloured. Editor cursor stays a soft grey
    (themes.ts hex) so it's legible on the black editor. */
 :root[data-accent='black'] {
-  --accent: #16161a;
-  --accent-hover: #24242a;
-  --accent-ink: #e9e9ee;
+  /* Lifted just enough above the panel surface that filled buttons stay
+     findable, while still reading as "blacked out". */
+  --accent: #1f1f26;
+  --accent-hover: #2c2c34;
+  --accent-ink: #ececf1;
   --selection: rgba(255, 255, 255, 0.12);
-  --statusbar: #0c0c0f;
-  --statusbar-hover: #16161a;
-  --statusbar-ink: #cfcfd6;
+  --statusbar: #141419;
+  --statusbar-hover: #1f1f26;
+  --statusbar-ink: #d4d4da;
   --link: #b9b9c2;
 }
 
@@ -337,6 +343,7 @@
   --statusbar-hover: #1d8b50;
   --statusbar-ink: #eafff3;
   --link: #5fce98;
+  --focus: #43c489;
 
   /* Pentester vibe: monospace UI + green-tinted near-black surfaces. Slightly
      lifted off pure black and with softer phosphor text so it's easy on the eyes.

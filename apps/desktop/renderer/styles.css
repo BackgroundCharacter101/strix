@@ -1768,7 +1768,7 @@ kbd {
 }
 
 .tree-row:focus-visible {
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--focus);
 }
 
 .tree-folder {
@@ -3752,7 +3752,7 @@ select option {
 textarea:focus,
 input:focus,
 select:focus {
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--focus);
 }
 
 /* Keyboard focus ring for interactive elements. Many custom controls use
@@ -3765,7 +3765,7 @@ a:focus-visible,
 [role='menuitem']:focus-visible,
 [role='option']:focus-visible,
 .palette-item:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: -1px;
   border-radius: 3px;
 }

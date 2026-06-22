@@ -708,7 +708,11 @@ strix/ (folder: tabea)
   ink + black status stripe for a fully blacked-out OLED IDE (its `themes.ts` hex is a
   soft grey `#8a8a93` so the Monaco cursor stays legible on the black editor).
   `[data-accent='red'/'white'/'black']` token blocks + `themes.ts` ACCENTS (Monaco
-  cursor/selection follow via `accentHex`).
+  cursor/selection follow via `accentHex`). **Design-review fixes:** focus rings now
+  use a dedicated `--focus` token (bright blue; darker on light theme, green in
+  cybersec) instead of `--accent`, so the keyboard ring stays visible with near-black/
+  near-white accents (was invisible on the Black accent); Black accent fill nudged up
+  (`#1f1f26`) so filled buttons stay findable.
 - **Terminal glitch fix (`Terminal.tsx`):** stray characters / a broken first prompt
   (e.g. a leftover "ss" at the top-left) came from creating the PTY while the panel was
   still 0×0 (just-opened / mid-animation) — the shell printed its prompt at the wrong
