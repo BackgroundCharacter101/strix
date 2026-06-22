@@ -88,6 +88,44 @@ function defineStrixThemes(accent: string) {
     },
   });
 
+  // OLED black: a pure-black editor to match the Black (OLED) UI theme.
+  monaco.editor.defineTheme('strix-black', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '6f7a86', fontStyle: 'italic' },
+      { token: 'type', foreground: '7fc2e8' },
+      { token: 'string', foreground: 'c9a26a' },
+      { token: 'number', foreground: 'd19a66' },
+    ],
+    colors: {
+      'editor.background': '#000000',
+      'editor.foreground': '#e2e2e6',
+      'editorLineNumber.foreground': '#3a3a40',
+      'editorLineNumber.activeForeground': accent,
+      'editorCursor.foreground': accent,
+      'editor.selectionBackground': withAlpha(accent, '3a'),
+      'editor.inactiveSelectionBackground': withAlpha(accent, '20'),
+      'editor.selectionHighlightBackground': withAlpha(accent, '22'),
+      'editor.wordHighlightBackground': withAlpha(accent, '1f'),
+      'editor.lineHighlightBackground': '#ffffff08',
+      'editor.lineHighlightBorder': '#00000000',
+      'editorIndentGuide.background': '#161619',
+      'editorIndentGuide.activeBackground': withAlpha(accent, '55'),
+      'editorBracketMatch.border': accent,
+      'editorBracketMatch.background': withAlpha(accent, '22'),
+      'editorGutter.background': '#000000',
+      'editorWidget.background': '#0a0a0c',
+      'editorWidget.border': '#1f1f24',
+      'editorSuggestWidget.background': '#0a0a0c',
+      'editorSuggestWidget.selectedBackground': withAlpha(accent, '33'),
+      'editorOverviewRuler.border': '#00000000',
+      'scrollbarSlider.background': '#5a5a5a55',
+      'scrollbarSlider.hoverBackground': '#5a5a5a88',
+      'minimap.background': '#000000',
+    },
+  });
+
   monaco.editor.defineTheme('strix-light', {
     base: 'vs',
     inherit: true,

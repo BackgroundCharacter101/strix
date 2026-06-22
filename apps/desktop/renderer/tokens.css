@@ -193,6 +193,26 @@
   --overlay-subtle: rgba(255, 255, 255, 0.06);
 }
 
+/* Black (OLED) — true-black surfaces with hairline borders, Cursor-style. The
+   app canvas, titlebar and editor all sit at pure black; panels lift a hair. */
+:root[data-theme='black'] {
+  --bg: #000000;
+  --bg-elevated: #0a0a0c;
+  --bg-titlebar: #000000;
+  --bg-activity: #000000;
+  --bg-input: #0e0e10;
+  --bg-hover: #18181b;
+  --border: #1b1b1f;
+  --text: #e9e9ee;
+  --text-muted: #8a8a93;
+  --icon-muted: #6a6a73;
+  --scrollbar: #2c2c30;
+  --scrollbar-hover: #3a3a40;
+  --overlay-subtle: rgba(255, 255, 255, 0.05);
+  --shadow-1: 0 2px 10px rgba(0, 0, 0, 0.7);
+  --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
 /* High contrast — black with bright edges for maximum legibility. */
 :root[data-theme='high-contrast'] {
   --bg: #000000;

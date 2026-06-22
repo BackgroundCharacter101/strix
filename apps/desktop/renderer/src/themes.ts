@@ -4,6 +4,7 @@
 
 export const THEMES = [
   { id: 'dark', label: 'Strix Dark' },
+  { id: 'black', label: 'Black (OLED)' },
   { id: 'midnight', label: 'Midnight' },
   { id: 'high-contrast', label: 'High Contrast' },
   { id: 'light', label: 'Light' },
@@ -25,7 +26,10 @@ export function accentHex(id: string): string {
   return ACCENTS.find((a) => a.id === id)?.hex ?? '#e8bd3a';
 }
 
-// Light theme uses the 'vs'-based Monaco theme; every dark theme uses 'vs-dark'.
-export function monacoThemeFor(theme: string): 'strix-dark' | 'strix-light' {
-  return theme === 'light' ? 'strix-light' : 'strix-dark';
+// Light theme uses the 'vs'-based Monaco theme; the OLED-black theme gets its own
+// pure-black editor; every other dark theme uses the shared 'strix-dark'.
+export function monacoThemeFor(theme: string): 'strix-dark' | 'strix-light' | 'strix-black' {
+  if (theme === 'light') return 'strix-light';
+  if (theme === 'black') return 'strix-black';
+  return 'strix-dark';
 }

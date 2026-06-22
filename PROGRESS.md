@@ -696,6 +696,12 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Black (OLED) theme (Cursor-style):** a new `[data-theme='black']` token block —
+  true-black app canvas / titlebar / editor (`#000`), panels lifted a hair (`#0a0a0c`),
+  hairline borders (`#1b1b1f`), deeper shadows. Registered in `themes.ts` THEMES +
+  `monacoThemeFor('black') → 'strix-black'`, a new pure-black Monaco editor theme
+  (`monaco-setup.ts`, `editor/gutter/minimap.background #000`). Picks accent like the
+  other dark themes. Selectable in Settings → Appearance → Color theme.
 - **Terminal glitch fix (`Terminal.tsx`):** stray characters / a broken first prompt
   (e.g. a leftover "ss" at the top-left) came from creating the PTY while the panel was
   still 0×0 (just-opened / mid-animation) — the shell printed its prompt at the wrong
