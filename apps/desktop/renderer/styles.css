@@ -3815,8 +3815,8 @@ a:focus-visible,
 :root[data-glass='true'] .app-body {
   background:
     radial-gradient(80% 65% at 10% -8%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 60%),
-    radial-gradient(70% 70% at 108% 108%, color-mix(in srgb, #d946ef 30%, transparent), transparent 62%),
-    radial-gradient(60% 60% at 95% 0%, color-mix(in srgb, #3b82f6 22%, transparent), transparent 60%),
+    radial-gradient(70% 70% at 108% 108%, color-mix(in srgb, var(--accent-hover) 28%, transparent), transparent 62%),
+    radial-gradient(60% 60% at 95% 0%, color-mix(in srgb, var(--link) 20%, transparent), transparent 60%),
     var(--bg-app);
 }
 :root[data-glass='true'] .activity-bar,

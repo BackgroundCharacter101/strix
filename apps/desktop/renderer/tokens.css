@@ -311,7 +311,9 @@
   --accent: #e8e8ec;
   --accent-hover: #ffffff;
   --accent-ink: #0a0a0c;
-  --selection: rgba(255, 255, 255, 0.16);
+  /* Mid-grey wash so the selected-row tint reads on BOTH dark and light surfaces
+     (a pure-white wash vanished on the light theme). */
+  --selection: rgba(150, 150, 162, 0.3);
   --statusbar: #e8e8ec;
   --statusbar-hover: #ffffff;
   --statusbar-ink: #0a0a0c;
