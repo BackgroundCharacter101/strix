@@ -696,6 +696,14 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Terminal glitch fix (`Terminal.tsx`):** stray characters / a broken first prompt
+  (e.g. a leftover "ss" at the top-left) came from creating the PTY while the panel was
+  still 0×0 (just-opened / mid-animation) — the shell printed its prompt at the wrong
+  width and the later resize left ConPTY reflow artifacts. Now the PTY **spawns only
+  once the host has a real size** (`fit` + bounded `requestAnimationFrame` retry, so a
+  hidden terminal / test env still spawns), and resize events are **coalesced to one
+  fit+resize per frame** (panel-drag bursts no longer smear box-drawing). `cd` on
+  folder-change was already quoted (spaces safe).
 - **FreeBuff in the AI Assistant panel (`FreebuffPanel.tsx`, both editions):** a
   **Strix AI ⇄ FreeBuff** segmented toggle in the AI-panel header. FreeBuff mode runs
   the agent in a real **in-panel terminal** (reuses `Terminal`, `bootCommand:'freebuff'`,

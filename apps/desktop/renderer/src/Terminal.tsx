@@ -110,12 +110,10 @@ export function Terminal({
     } catch {
       /* WebGL unavailable — keep the default DOM renderer */
     }
-    fit.fit();
+    let disposed = false;
     if (notice) {
       for (const line of notice.split('\n')) term.writeln(line);
     }
-
-    let disposed = false;
 
     // An interactive agent (FreeBuff) finishes booting at an unknown time, so a
     // fixed delay drops the prompt. Watch the output for the agent's "ready for
@@ -152,39 +150,73 @@ export function Terminal({
       }
     });
 
-    // Spawn in the latest cwd (cwdRef may have advanced before the session was
-    // ready, e.g. a folder was opened during launch).
-    window.strix.terminal
-      .create({ cols: term.cols, rows: term.rows, cwd: cwdRef.current, env, shell })
-      .then((id) => {
-      if (disposed) {
-        window.strix.terminal.kill(id);
+    // Spawn only once the host has a real size. Creating the PTY while the panel
+    // is still 0×0 (just opened / mid-animation) makes the shell print its first
+    // prompt at the wrong width, and the later resize leaves ConPTY reflow
+    // artifacts (the stray characters seen at the top-left). Fit + retry on the
+    // next frame until laid out, so the PTY starts at the correct dimensions.
+    let spawnTries = 0;
+    const spawn = () => {
+      if (disposed) return;
+      fit.fit();
+      // Wait for layout — but bounded, so a terminal that stays hidden (or a
+      // test env with no layout) still spawns rather than waiting forever.
+      if (
+        (el.clientWidth === 0 || el.clientHeight === 0) &&
+        spawnTries < 10 &&
+        typeof requestAnimationFrame === 'function'
+      ) {
+        spawnTries += 1;
+        requestAnimationFrame(spawn);
         return;
       }
-      sessionRef.current = id;
-      // Run the boot command once the shell has had a moment to initialise.
-      if (bootCommand) {
-        setTimeout(() => window.strix.terminal.input(id, `${bootCommand}\r`), 400);
-      }
-      // Fallback: if the readiness banner is never detected (e.g. a future
-      // FreeBuff redesign), seed anyway after a long grace period.
-      setTimeout(() => {
-        if (pendingSeedRef.current) {
-          readyRef.current = true;
-          flushPendingSeed();
-        }
-      }, 30000);
-    });
+      window.strix.terminal
+        .create({
+          cols: Math.max(term.cols, 2),
+          rows: Math.max(term.rows, 1),
+          cwd: cwdRef.current,
+          env,
+          shell,
+        })
+        .then((id) => {
+          if (disposed) {
+            window.strix.terminal.kill(id);
+            return;
+          }
+          sessionRef.current = id;
+          // Run the boot command once the shell has had a moment to initialise.
+          if (bootCommand) {
+            setTimeout(() => window.strix.terminal.input(id, `${bootCommand}\r`), 400);
+          }
+          // Fallback: if the readiness banner is never detected (e.g. a future
+          // FreeBuff redesign), seed anyway after a long grace period.
+          setTimeout(() => {
+            if (pendingSeedRef.current) {
+              readyRef.current = true;
+              flushPendingSeed();
+            }
+          }, 30000);
+        });
+    };
+    spawn();
 
     // Keep the PTY's dimensions in sync with the RENDERED size. A ResizeObserver
     // catches every cause (panel drag, tab show/hide, window resize, late
     // layout) — a window 'resize' listener alone missed panel/tab changes, so
     // TUI apps like FreeBuff rendered at the wrong size.
+    // Coalesce bursts of resize events (panel drag fires many) into one fit +
+    // PTY resize per frame — resizing ConPTY mid-stream repeatedly is what
+    // smears box-drawing / leaves stray characters.
+    let resizeRaf = 0;
     const syncSize = () => {
-      fit.fit();
-      if (sessionRef.current) {
-        window.strix.terminal.resize(sessionRef.current, term.cols, term.rows);
-      }
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        fit.fit();
+        if (sessionRef.current) {
+          window.strix.terminal.resize(sessionRef.current, term.cols, term.rows);
+        }
+      });
     };
     // ResizeObserver isn't available in some test (jsdom) environments. Only
     // refit from it when the element is actually visible (a hidden/display:none
@@ -200,6 +232,7 @@ export function Terminal({
 
     return () => {
       disposed = true;
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
       ro?.disconnect();
       window.removeEventListener('resize', syncSize);
       offData();
