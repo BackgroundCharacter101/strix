@@ -18,6 +18,8 @@ export const ACCENTS = [
   { id: 'teal', label: 'Teal', hex: '#1fb6a6' },
   { id: 'emerald', label: 'Emerald', hex: '#2ea36b' },
   { id: 'blue', label: 'Blue', hex: '#3b82f6' },
+  { id: 'red', label: 'Red', hex: '#e5484d' },
+  { id: 'white', label: 'White', hex: '#e8e8ec' },
 ] as const;
 
 export type AccentId = (typeof ACCENTS)[number]['id'];

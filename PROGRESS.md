@@ -701,7 +701,11 @@ strix/ (folder: tabea)
   hairline borders (`#1b1b1f`), deeper shadows. Registered in `themes.ts` THEMES +
   `monacoThemeFor('black') → 'strix-black'`, a new pure-black Monaco editor theme
   (`monaco-setup.ts`, `editor/gutter/minimap.background #000`). Picks accent like the
-  other dark themes. Selectable in Settings → Appearance → Color theme.
+  other dark themes. Selectable in Settings → Appearance → Color theme. **Accents:**
+  added **Red** (`#e5484d`) and **White** (`#e8e8ec`, monochrome — dark ink on white
+  fills); White is the neutral/all-black accent to pair with the Black theme for the
+  accent-free Cursor look. `[data-accent='red'/'white']` token blocks + `themes.ts`
+  ACCENTS (Monaco cursor/selection follow via `accentHex`).
 - **Terminal glitch fix (`Terminal.tsx`):** stray characters / a broken first prompt
   (e.g. a leftover "ss" at the top-left) came from creating the PTY while the panel was
   still 0×0 (just-opened / mid-animation) — the shell printed its prompt at the wrong
