@@ -712,7 +712,11 @@ strix/ (folder: tabea)
   use a dedicated `--focus` token (bright blue; darker on light theme, green in
   cybersec) instead of `--accent`, so the keyboard ring stays visible with near-black/
   near-white accents (was invisible on the Black accent); Black accent fill nudged up
-  (`#1f1f26`) so filled buttons stay findable.
+  (`#1f1f26`) so filled buttons stay findable. **`--bg-app` (floating-panel canvas) is
+  now theme-aware** (was a hardcoded `#030305` in `styles.css` under plain `:root`, so
+  light theme showed near-black slivers in the panel gaps and Black wasn't pure `#000`)
+  — moved to the token layer with per-theme overrides (light `#e4dccc`, black/HC `#000`,
+  midnight `#0a0b10`). Black-accent selection wash bumped (`.12 → .17`) for readability.
 - **Terminal glitch fix (`Terminal.tsx`):** stray characters / a broken first prompt
   (e.g. a leftover "ss" at the top-left) came from creating the PTY while the panel was
   still 0×0 (just-opened / mid-animation) — the shell printed its prompt at the wrong

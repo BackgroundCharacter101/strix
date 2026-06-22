@@ -104,6 +104,9 @@
 
   /* Surfaces — cool, layered near-black with clear elevation steps (modern
      editor depth: titlebar deepest → bg → panels → elevated/inputs). */
+  /* Canvas behind the floating panel cards (gaps). Theme-aware — overridden in
+     each [data-theme] block so light mode doesn't show dark slivers. */
+  --bg-app: #030305;
   --bg: #0c0d11;
   --bg-elevated: #16171d;
   --bg-titlebar: #0a0b0e;
@@ -160,6 +163,7 @@
 :root[data-theme='light'] {
   /* Warm, soft, low-glare: a paper-like cream base instead of stark white, with
      warm-gray text (not pure black) and gentle warm borders — easy on the eyes. */
+  --bg-app: #e4dccc; /* canvas a touch darker than panels (no dark slivers) */
   --bg: #faf7f1;
   --bg-elevated: #f2ede3;
   --bg-titlebar: #ece5d8;
@@ -182,6 +186,7 @@
 
 /* Midnight — deep blue-black surfaces. */
 :root[data-theme='midnight'] {
+  --bg-app: #0a0b10;
   --bg: #14161c;
   --bg-elevated: #1a1d26;
   --bg-titlebar: #1f2330;
@@ -200,6 +205,7 @@
 /* Black (OLED) — true-black surfaces with hairline borders, Cursor-style. The
    app canvas, titlebar and editor all sit at pure black; panels lift a hair. */
 :root[data-theme='black'] {
+  --bg-app: #000000; /* true black canvas for OLED */
   --bg: #000000;
   --bg-elevated: #0a0a0c;
   --bg-titlebar: #000000;
@@ -219,6 +225,7 @@
 
 /* High contrast — black with bright edges for maximum legibility. */
 :root[data-theme='high-contrast'] {
+  --bg-app: #000000;
   --bg: #000000;
   --bg-elevated: #0a0a0a;
   --bg-titlebar: #0a0a0a;
@@ -320,7 +327,7 @@
   --accent: #1f1f26;
   --accent-hover: #2c2c34;
   --accent-ink: #ececf1;
-  --selection: rgba(255, 255, 255, 0.12);
+  --selection: rgba(255, 255, 255, 0.17);
   --statusbar: #141419;
   --statusbar-hover: #1f1f26;
   --statusbar-ink: #d4d4da;

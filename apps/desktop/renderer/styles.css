@@ -3843,10 +3843,8 @@ a:focus-visible,
 /* ===================== Floating workbench (modern) =====================
    Each region (activity bar, sidebar, editor, AI pane, terminal) floats as a
    rounded card on a darker app canvas, separated by small gaps — the modern
-   "panels float" layout. Resizers live in the gaps (transparent until hover). */
-:root {
-  --bg-app: #030305;
-}
+   "panels float" layout. Resizers live in the gaps (transparent until hover).
+   --bg-app (the canvas behind the floating cards) is theme-aware in tokens.css. */
 .app,
 .app-body {
   background: var(--bg-app);
