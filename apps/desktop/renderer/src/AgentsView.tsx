@@ -87,6 +87,12 @@ export function AgentsView({
         (→ FreeBuff) to fix. Runs on change (after you go idle) or on demand.
       </p>
 
+      <FindingsInbox
+        hub={hub}
+        onSendToAi={onSendToAi}
+        onSendToFreebuff={onSendToFreebuff}
+      />
+
       <ul className="agents-list">
         {hub.agents.map((a) => (
           <AgentRow
@@ -120,6 +126,85 @@ export function AgentsView({
         </button>
       )}
     </div>
+  );
+}
+
+// Aggregated inbox of every auditor's latest findings — glanceable, with
+// per-entry handoff to the main AI / FreeBuff and dismiss. Sorted newest first.
+function FindingsInbox({
+  hub,
+  onSendToAi,
+  onSendToFreebuff,
+}: {
+  hub: UseAgents;
+  onSendToAi: (text: string) => void;
+  onSendToFreebuff: (text: string) => void;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const entries = hub.agents
+    .filter((a) => hub.statuses[a.id]?.report)
+    .map((a) => ({ agent: a, status: hub.statuses[a.id]! }))
+    .sort((x, y) => (y.status.lastRun ?? 0) - (x.status.lastRun ?? 0));
+
+  if (entries.length === 0) return null;
+
+  return (
+    <section className="agents-inbox" aria-label="Findings inbox">
+      <div className="agents-inbox-head">
+        <span className="agents-inbox-title">
+          Findings <span className="agents-inbox-count">{entries.length}</span>
+        </span>
+      </div>
+      <ul className="agents-inbox-list">
+        {entries.map(({ agent, status }) => {
+          const handoff = `Findings from the "${agent.name}" agent — please review and fix:\n\n${status.report ?? ''}`;
+          const isOpen = openId === agent.id;
+          return (
+            <li key={agent.id} className="agents-inbox-item">
+              <div className="agents-inbox-row">
+                <button
+                  type="button"
+                  className="agents-inbox-expand"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenId((o) => (o === agent.id ? null : agent.id))}
+                >
+                  <span className="agents-inbox-agent">{agent.name}</span>
+                  <span className="agent-ago">{timeAgo(status.lastRun)}</span>
+                </button>
+                <div className="agents-inbox-actions">
+                  <button
+                    type="button"
+                    className="agent-report-toggle"
+                    title="Send these findings to the AI Assistant to fix"
+                    onClick={() => onSendToAi(handoff)}
+                  >
+                    → AI
+                  </button>
+                  <button
+                    type="button"
+                    className="agent-report-toggle"
+                    title="Send these findings to FreeBuff to fix"
+                    onClick={() => onSendToFreebuff(handoff)}
+                  >
+                    → FreeBuff
+                  </button>
+                  <button
+                    type="button"
+                    className="agent-remove"
+                    aria-label={`dismiss ${agent.name} findings`}
+                    title="Dismiss these findings"
+                    onClick={() => hub.dismissReport(agent.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              {isOpen && <div className="agent-report ai-md">{renderMarkdown(status.report ?? '')}</div>}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

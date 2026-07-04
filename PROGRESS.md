@@ -696,6 +696,12 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Agents: Findings inbox** (`AgentsView` `FindingsInbox`): an aggregated section at
+  the top of the Agents panel showing every auditor's latest findings (count badge,
+  newest first). Each entry expands to the report and has per-entry **→ AI** /
+  **→ FreeBuff** handoff plus **dismiss** (`useAgents.dismissReport` clears
+  `status.report`). Hidden when empty. Tests: AgentsView.test (hidden-when-empty +
+  aggregate/handoff/dismiss, +2).
 - **Multi-window (one window per project):** relaunching Strix (or **File → New
   Window**, Ctrl+Shift+N) opens a NEW window in the same process — no duplicate AI
   server/port conflicts. Made safe for real multi-project use: **watchers are keyed

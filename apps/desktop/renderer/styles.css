@@ -4205,6 +4205,81 @@ a:focus-visible,
   flex-direction: column;
   gap: 8px;
 }
+
+/* Findings inbox — aggregated latest reports from all auditors. */
+.agents-inbox {
+  margin-bottom: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  overflow: hidden;
+}
+.agents-inbox-head {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.agents-inbox-title {
+  font-weight: var(--weight-medium);
+  font-family: var(--font-display);
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.agents-inbox-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+.agents-inbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.agents-inbox-item + .agents-inbox-item {
+  border-top: 1px solid var(--border);
+}
+.agents-inbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 4px;
+}
+.agents-inbox-expand {
+  all: unset;
+  cursor: pointer;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+}
+.agents-inbox-expand:hover {
+  background: var(--bg-hover);
+}
+.agents-inbox-agent {
+  font-weight: var(--weight-medium);
+  font-size: 12px;
+}
+.agents-inbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.agents-inbox-item .agent-report {
+  border-top: 1px solid var(--border);
+  margin-top: 0;
+}
 .agent-row {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

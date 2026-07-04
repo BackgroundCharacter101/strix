@@ -97,6 +97,8 @@ export interface UseAgents {
   addCustom: (cfg: AgentConfig) => void;
   removeCustom: (id: string) => void;
   runNow: (id: string) => void;
+  // Clear an agent's latest findings from the inbox (after acting on them).
+  dismissReport: (id: string) => void;
   busy: boolean;
 }
 
@@ -296,6 +298,11 @@ export function useAgents(opts: {
 
   const runNow = useCallback((id: string) => enqueue([id]), [enqueue]);
 
+  const dismissReport = useCallback(
+    (id: string) => setStatus(id, { report: undefined }),
+    [setStatus],
+  );
+
   // Debounced change watcher: collect changed paths, and after the idle window
   // enqueue every due agent.
   const pendingRef = useRef<Set<string>>(new Set());
@@ -339,6 +346,7 @@ export function useAgents(opts: {
     addCustom,
     removeCustom,
     runNow,
+    dismissReport,
     busy,
   };
 }
