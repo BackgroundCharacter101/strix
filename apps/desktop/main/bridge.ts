@@ -113,7 +113,8 @@ export interface StrixTerminalApi {
 }
 
 export interface StrixLspApi {
-  start(language: Language): Promise<string>;
+  // `root` = this window's workspace, the server process cwd (multi-window safe).
+  start(language: Language, root?: string): Promise<string>;
   send(id: string, message: JsonRpcMessage): void;
   stop(id: string): void;
   onMessage(cb: (e: { id: string; message: JsonRpcMessage }) => void): () => void;
@@ -157,6 +158,22 @@ export interface StrixAiApi {
   onDirectToken(cb: (p: { id: number; token: string }) => void): () => void;
   onDirectDone(cb: (p: { id: number }) => void): () => void;
   onDirectError(cb: (p: { id: number; error?: string }) => void): () => void;
+  // FreeLLMAPI streaming via the main process (the unified key never reaches
+  // the renderer). Same id-keyed event contract as the direct-provider stream.
+  freellmStart(id: number, params: FreeLLMChatParams): void;
+  freellmCancel(id: number): void;
+  onFreellmToken(cb: (p: { id: number; token: string }) => void): () => void;
+  onFreellmDone(cb: (p: { id: number }) => void): () => void;
+  onFreellmError(cb: (p: { id: number; error?: string }) => void): () => void;
+}
+
+export interface FreeLLMChatParams {
+  /** FreeLLMAPI base URL, e.g. http://192.168.1.50:3001 (blank = local). */
+  serverUrl: string;
+  model: string;
+  messages: { role: string; content: unknown }[];
+  temperature?: number;
+  maxTokens?: number;
 }
 
 export interface DetectedLocalModel {

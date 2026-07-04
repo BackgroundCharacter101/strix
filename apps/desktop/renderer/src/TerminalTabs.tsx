@@ -9,6 +9,9 @@ interface TabDesc {
   // are numbered by position via terminalTitle().
   title?: string;
   bootCommand?: string;
+  // 'run' tabs (Run & Serve / AI run) capture their output so the user can
+  // one-click hand it to the AI ("Fix with AI") after the program exits.
+  kind?: 'run';
   // Prompt auto-typed + submitted into an interactive agent (FreeBuff hand-off).
   // Bumping the nonce re-prompts a session that's already running.
   seed?: { nonce: number; text: string };
@@ -60,6 +63,7 @@ export function TerminalTabs({
   fontFamily,
   cursorStyle,
   shell,
+  onFixWithAi,
 }: {
   cwd?: string;
   // Bumping nonce (from a command / menu / Run target) opens a session:
@@ -78,11 +82,16 @@ export function TerminalTabs({
   fontFamily?: string;
   cursorStyle?: 'block' | 'underline' | 'bar';
   shell?: string;
+  // Hand a run tab's captured output to the AI assistant ("Fix with AI") so the
+  // session continues after the program exits — the user reviews, then sends.
+  onFixWithAi?: (output: string, command: string) => void;
 }) {
   const [tabs, setTabs] = useState<TabDesc[]>([{ id: 0 }]);
   const [active, setActive] = useState(0);
   const [shellMenu, setShellMenu] = useState(false);
   const nextId = useRef(1);
+  // Rolling output tail per run tab (for the Fix-with-AI handoff).
+  const runOutput = useRef(new Map<number, string>());
 
   const addShell = (shellOverride?: string) => {
     const id = nextId.current++;
@@ -109,7 +118,10 @@ export function TerminalTabs({
   // Open a titled tab running an arbitrary command (Run/Serve targets).
   const runCommand = (command: string, title: string) => {
     const id = nextId.current++;
-    setTabs((prev) => [...prev, { id, title, bootCommand: command, notice: `▶ ${command}` }]);
+    setTabs((prev) => [
+      ...prev,
+      { id, title, kind: 'run', bootCommand: command, notice: `▶ ${command}` },
+    ]);
     setActive(id);
   };
 
@@ -125,6 +137,7 @@ export function TerminalTabs({
   }, [launch.nonce, launch]);
 
   const closeTab = (id: number) => {
+    runOutput.current.delete(id);
     const remaining = tabs.filter((x) => x.id !== id);
     setTabs(remaining);
     if (active === id) {
@@ -195,6 +208,20 @@ export function TerminalTabs({
             <SparkleIcon size={13} /> Claude Code
           </button>
         )}
+        {onFixWithAi && tabs.find((t) => t.id === active)?.kind === 'run' && (
+          <button
+            type="button"
+            className="term-agent-btn term-fix-btn"
+            aria-label="Fix with AI"
+            title="Send this run's output to the AI assistant to diagnose and fix"
+            onClick={() => {
+              const tab = tabs.find((t) => t.id === active);
+              onFixWithAi(runOutput.current.get(active) ?? '', tab?.bootCommand ?? '');
+            }}
+          >
+            <SparkleIcon size={13} /> Fix with AI
+          </button>
+        )}
       </div>
       {/* Each tab keeps its own Terminal mounted (hidden, not unmounted) so its
           PTY session and scrollback survive tab switches. */}
@@ -215,6 +242,14 @@ export function TerminalTabs({
               fontFamily={fontFamily}
               cursorStyle={cursorStyle}
               shell={tab.shell ?? shell}
+              onData={
+                tab.kind === 'run'
+                  ? (chunk) => {
+                      const cur = runOutput.current.get(tab.id) ?? '';
+                      runOutput.current.set(tab.id, (cur + chunk).slice(-8000));
+                    }
+                  : undefined
+              }
             />
           </div>
         ))}

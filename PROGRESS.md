@@ -696,6 +696,33 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Multi-window (one window per project):** relaunching Strix (or **File → New
+  Window**, Ctrl+Shift+N) opens a NEW window in the same process — no duplicate AI
+  server/port conflicts. Made safe for real multi-project use: **watchers are keyed
+  per window** (`watcher.ts` Map by webContents id; window B no longer steals window
+  A's file events; cleaned up on window destroy), **LSP servers spawn in the calling
+  window's root** (`lsp.start(language, root?)` through bridge/preload/ipc;
+  lspClient passes `rootPath`), menu commands route to the **focused** window, and
+  window controls/dialogs were already per-sender. Tabs/AI history are per-project
+  (localStorage keys include the root).
+- **Live HTML preview after AI Apply:** applying AI changes previously did
+  close+open on the file (remounted the viewer → preview panel reset) and the
+  preview iframe only refreshed manually. Now `onOpenPath` **reloads the buffer in
+  place** (keeps viewer state) and FileViewer bumps the preview whenever the
+  on-disk content changes (clean reload or save — typing doesn't reload the
+  iframe), so the HTML preview is live for AI applies / agent writes / saves.
+- **Run → "Fix with AI" (session continues after a run):** run tabs (Run & Serve /
+  AI run) now capture their output (8 KB tail); a **Fix with AI** button on the
+  active run tab hands `command + ANSI-stripped output` to the AI composer
+  (one-click handoff — user reviews, presses Send). Chosen over exit-code
+  detection because runs execute inside a persistent shell (no exit event when
+  the program window closes).
+- **AI rollback verified + covered:** revert logic confirmed sound (restores prior
+  content, deletes files the batch created, reopens live); added a regression test
+  (apply → Revert → `fs.remove` on created + prior content rewritten).
+- (Parallel session's FreeLLMAPI main-proxy stream (`ai:freellm*`) was missing its
+  bridge declarations — typecheck was broken; declared `freellmStart/…` +
+  `FreeLLMChatParams` in `bridge.ts` and mocked in test-utils.)
 - **Local models auto-detect (Competition):** Settings → AI → "Detect local models
   (Ollama / LM Studio)" probes `127.0.0.1:11434/api/tags` (Ollama) + `:1234/v1/models`
   (LM Studio) from the **main process** (`aiProxy.detectLocalModels`, fast timeout, no

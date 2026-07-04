@@ -109,6 +109,11 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       onDirectToken: vi.fn(() => () => {}),
       onDirectDone: vi.fn(() => () => {}),
       onDirectError: vi.fn(() => () => {}),
+      freellmStart: vi.fn(),
+      freellmCancel: vi.fn(),
+      onFreellmToken: vi.fn(() => () => {}),
+      onFreellmDone: vi.fn(() => () => {}),
+      onFreellmError: vi.fn(() => () => {}),
     },
     collab: {
       url: vi.fn(async (): Promise<string | null> => null),

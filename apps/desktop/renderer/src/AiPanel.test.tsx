@@ -244,6 +244,33 @@ describe('AiPanel', () => {
     await waitFor(() => expect(onOpenPath).toHaveBeenCalledWith('/ws/src/index.ts'));
   });
 
+  it('rolls back an applied batch — restores modified files, deletes created ones', async () => {
+    complete.mockResolvedValue(
+      '{"files":[{"path":"src/new.ts","content":"n"},{"path":"src/mod.ts","content":"changed"}]}',
+    );
+    const write = vi.fn(async () => {});
+    const remove = vi.fn(async () => {});
+    // new.ts doesn't exist on disk (read throws → created); mod.ts had content.
+    const read = vi.fn(async (p: string) => {
+      if (p.includes('new.ts')) throw new Error('ENOENT');
+      return 'prior';
+    });
+    window.strix = makeStrixApi({ fs: { write, remove, read } });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey="/ws" onOpenPath={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'build a demo app' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    await screen.findByText('src/new.ts');
+    fireEvent.click(screen.getByRole('button', { name: 'Apply changes' }));
+    await waitFor(() => expect(write).toHaveBeenCalledWith('/ws/src/mod.ts', 'changed'));
+
+    // The roll-back entry appears; reverting deletes the created file and
+    // restores the modified one to its prior content.
+    fireEvent.click(await screen.findByRole('button', { name: 'Revert' }));
+    await waitFor(() => expect(remove).toHaveBeenCalledWith('/ws/src/new.ts'));
+    await waitFor(() => expect(write).toHaveBeenCalledWith('/ws/src/mod.ts', 'prior'));
+  });
+
   it('routes instructions to the file agent but keeps questions as chat (in a project)', async () => {
     complete.mockResolvedValue('{"files":[{"path":"a.ts","content":"1"}]}');
     runTask.mockImplementation(async (_t, _o, cb) => {

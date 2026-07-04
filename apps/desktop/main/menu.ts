@@ -1,6 +1,7 @@
 import {
   Menu,
   shell,
+  BrowserWindow as ElectronBrowserWindow,
   type BrowserWindow,
   type MenuItemConstructorOptions,
 } from 'electron';
@@ -26,9 +27,14 @@ export function popupMenu(win: BrowserWindow, label: string, x: number, y: numbe
 // `registerAccelerator: false` is used for any item whose shortcut the renderer's
 // own keydown handler already owns — that shows the shortcut text in the menu but
 // lets the keystroke flow to the renderer, so nothing fires twice.
-export function buildAppMenu(win: BrowserWindow): void {
+export function buildAppMenu(win: BrowserWindow, onNewWindow?: () => void): void {
   const isMac = process.platform === 'darwin';
-  const send = (id: string) => () => win.webContents.send('menu:command', id);
+  // Route commands to the FOCUSED window (multi-window: each window has its own
+  // project); fall back to the window the menu was built with.
+  const send = (id: string) => () => {
+    const target = ElectronBrowserWindow.getFocusedWindow() ?? win;
+    if (!target.isDestroyed()) target.webContents.send('menu:command', id);
+  };
 
   // Item that sends a command but leaves the shortcut to the renderer.
   const cmd = (
@@ -49,6 +55,16 @@ export function buildAppMenu(win: BrowserWindow): void {
         cmd('New Project…', 'file.newProject'),
         cmd('New File…', 'file.newFile'),
         cmd('New Folder…', 'file.newFolder'),
+        // Multi-project workflow: a second Strix window with its own project.
+        ...(onNewWindow
+          ? [
+              {
+                label: 'New Window',
+                accelerator: 'CmdOrCtrl+Shift+N',
+                click: () => onNewWindow(),
+              } as MenuItemConstructorOptions,
+            ]
+          : []),
         { type: 'separator' },
         cmd('Open File…', 'workspace.openFile', 'CmdOrCtrl+O'),
         cmd('Open Folder…', 'workspace.openFolder'),

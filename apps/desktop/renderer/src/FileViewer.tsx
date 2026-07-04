@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type * as Monaco from 'monaco-editor';
 import { CodeEditor, languageForPath, type EditorOptions } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
@@ -11,9 +11,13 @@ import {
   hoverToMarkdown,
   normalizeLocations,
   normalizeSymbols,
+  normalizeWorkspaceEdit,
+  normalizeTextEdits,
   LSP_COMPLETION_KIND,
   LSP_SYMBOL_KIND,
   type LspPosition,
+  type LspDiagnostic,
+  type LspRange,
   type NormalizedSymbol,
 } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
@@ -127,6 +131,164 @@ function ensureLspProviders(monaco: typeof import('monaco-editor'), languageId: 
       return normalizeSymbols(await client.documentSymbols()).map(toMonacoSymbol);
     },
   });
+
+  // --- Rename Symbol (F2) ---------------------------------------------------
+  monaco.languages.registerRenameProvider(languageId, {
+    provideRenameEdits: async (model, position, newName) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return { edits: [] };
+      const wedit = normalizeWorkspaceEdit(await client.rename(toLspPos(position), newName));
+      const edits: Monaco.languages.IWorkspaceTextEdit[] = [];
+      for (const [uri, textEdits] of wedit) {
+        for (const te of textEdits) {
+          edits.push({
+            resource: monaco.Uri.parse(uri),
+            textEdit: {
+              range: new monaco.Range(
+                te.range.start.line + 1,
+                te.range.start.character + 1,
+                te.range.end.line + 1,
+                te.range.end.character + 1,
+              ),
+              text: te.newText,
+            },
+            versionId: undefined,
+          });
+        }
+      }
+      return { edits };
+    },
+    resolveRenameLocation: async (model, position) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return null;
+      const prep = await client.prepareRename(toLspPos(position)) as {
+        range?: LspRange;
+        placeholder?: string;
+        defaultBehavior?: boolean;
+      } | null;
+      if (!prep) return null;
+      if (prep.defaultBehavior) {
+        const word = model.getWordAtPosition(position);
+        if (!word) return null;
+        return {
+          range: new monaco.Range(
+            position.lineNumber, word.startColumn,
+            position.lineNumber, word.endColumn,
+          ),
+          text: word.word,
+        };
+      }
+      if (!prep.range) return null;
+      return {
+        range: new monaco.Range(
+          prep.range.start.line + 1,
+          prep.range.start.character + 1,
+          prep.range.end.line + 1,
+          prep.range.end.character + 1,
+        ),
+        text: prep.placeholder ?? model.getWordAtPosition(position)?.word ?? '',
+      };
+    },
+  });
+
+  // --- Find All References (Shift+F12) --------------------------------------
+  monaco.languages.registerReferenceProvider(languageId, {
+    provideReferences: async (model, position) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return [];
+      return normalizeLocations(await client.references(toLspPos(position))).map((l) => ({
+        uri: monaco.Uri.parse(l.uri),
+        range: new monaco.Range(
+          l.range.start.line + 1,
+          l.range.start.character + 1,
+          l.range.end.line + 1,
+          l.range.end.character + 1,
+        ),
+      }));
+    },
+  });
+
+  // --- Code Actions / Quick Fix (Ctrl+.) -----------------------------------
+  monaco.languages.registerCodeActionProvider(languageId, {
+    provideCodeActions: async (model, range) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return { actions: [], dispose: () => {} };
+      const lspRange: LspRange = {
+        start: { line: range.startLineNumber - 1, character: range.startColumn - 1 },
+        end: { line: range.endLineNumber - 1, character: range.endColumn - 1 },
+      };
+      // Collect LSP diagnostics overlapping the range.
+      const markers = monaco.editor.getModelMarkers({ resource: model.uri });
+      const diags: LspDiagnostic[] = markers
+        .filter(
+          (m) =>
+            m.startLineNumber - 1 <= lspRange.end.line &&
+            m.endLineNumber - 1 >= lspRange.start.line,
+        )
+        .map((m) => ({
+          range: {
+            start: { line: m.startLineNumber - 1, character: m.startColumn - 1 },
+            end: { line: m.endLineNumber - 1, character: m.endColumn - 1 },
+          },
+          message: m.message,
+          severity: m.severity === monaco.MarkerSeverity.Error ? 1 : 2,
+        }));
+      const raw = await client.codeAction(lspRange, { diagnostics: diags });
+      const items = Array.isArray(raw) ? raw : [];
+      const actions: Monaco.languages.CodeAction[] = items.map((ca: Record<string, unknown>) => ({
+        title: String(ca.title ?? 'Code Action'),
+        kind: typeof ca.kind === 'string' ? ca.kind : undefined,
+        isPreferred: ca.isPreferred === true,
+        edit: ca.edit
+          ? {
+              edits: (() => {
+                const wedit = normalizeWorkspaceEdit(ca.edit);
+                const out: Monaco.languages.IWorkspaceTextEdit[] = [];
+                for (const [uri, textEdits] of wedit) {
+                  for (const te of textEdits) {
+                    out.push({
+                      resource: monaco.Uri.parse(uri),
+                      textEdit: {
+                        range: new monaco.Range(
+                          te.range.start.line + 1,
+                          te.range.start.character + 1,
+                          te.range.end.line + 1,
+                          te.range.end.character + 1,
+                        ),
+                        text: te.newText,
+                      },
+                      versionId: undefined,
+                    });
+                  }
+                }
+                return out;
+              })(),
+            }
+          : undefined,
+      }));
+      return { actions, dispose: () => {} };
+    },
+  });
+
+  // --- LSP Document Formatting (Shift+Alt+F) --------------------------------
+  monaco.languages.registerDocumentFormattingEditProvider(languageId, {
+    provideDocumentFormattingEdits: async (model, options) => {
+      const client = lspClients.get(model.uri.toString());
+      if (!client) return [];
+      const edits = normalizeTextEdits(
+        await client.formatting({ tabSize: options.tabSize, insertSpaces: options.insertSpaces }),
+      );
+      return edits.map((te) => ({
+        range: new monaco.Range(
+          te.range.start.line + 1,
+          te.range.start.character + 1,
+          te.range.end.line + 1,
+          te.range.end.character + 1,
+        ),
+        text: te.newText,
+      }));
+    },
+  });
 }
 
 // A single diagnostic surfaced in the Problems view.
@@ -194,6 +356,15 @@ export function FileViewer({
   const [previewNonce, setPreviewNonce] = useState(0);
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
   const isHtml = path ? /\.html?$/i.test(path) : false;
+
+  // Live preview: the HTML iframe serves from DISK, so reload it whenever the
+  // on-disk content changes — a clean buffer update (AI apply / agent write /
+  // external edit reloading the draft) or a save (dirty → false). Typing alone
+  // (dirty draft) must NOT reload the iframe on every keystroke.
+  const cleanDraft = buffer && !buffer.dirty ? buffer.draft : null;
+  useEffect(() => {
+    if (cleanDraft !== null) setPreviewNonce((n) => n + 1);
+  }, [cleanDraft]);
 
   // Open the current HTML file in the system browser via the local host server.
   const openHtmlInBrowser = async () => {
@@ -546,6 +717,7 @@ export function FileViewer({
                 // Use Monaco to build the root URI so its encoding matches the
                 // document URIs the server receives (drive-letter casing, etc.).
                 rootUri: rootPath ? monaco.Uri.file(rootPath).toString() : null,
+                rootPath,
                 onDiagnostics: (diags) =>
                   monaco.editor.setModelMarkers(
                     model,

@@ -144,7 +144,7 @@ describe('LspClient', () => {
     });
 
     await client.start();
-    expect(transport.start).toHaveBeenCalledWith('python');
+    expect(transport.start).toHaveBeenCalledWith('python', undefined);
     expect(sent[0].message).toMatchObject({ id: 1, method: 'initialize' });
 
     // server replies to initialize → client opens the document

@@ -65,7 +65,7 @@ export function languageForLsp(path: string): Language | null {
 
 // --- LSP client over the window.strix.lsp bridge -------------------------
 export interface LspTransport {
-  start(language: Language): Promise<string>;
+  start(language: Language, root?: string): Promise<string>;
   send(id: string, message: JsonRpcMessage): void;
   stop(id: string): void;
   onMessage(cb: (e: { id: string; message: JsonRpcMessage }) => void): () => void;
@@ -79,6 +79,9 @@ export interface LspClientOptions {
   // Workspace root as a file:// URI, so the server loads the project config
   // (tsconfig.json, etc.) instead of analysing the file in isolation.
   rootUri?: string | null;
+  // Plain workspace root path — the server process's cwd. Passed per window so
+  // multiple Strix windows spawn their LSPs in their OWN project.
+  rootPath?: string | null;
   onDiagnostics: (diagnostics: LspDiagnostic[]) => void;
 }
 
@@ -100,7 +103,7 @@ export class LspClient {
   ) {}
 
   async start(): Promise<void> {
-    this.id = await this.transport.start(this.opts.language);
+    this.id = await this.transport.start(this.opts.language, this.opts.rootPath ?? undefined);
     this.off = this.transport.onMessage(({ id, message }) => {
       if (id !== this.id) return;
       if (message.id === this.initId && 'result' in message) {
@@ -138,6 +141,10 @@ export class LspClient {
           completion: { completionItem: { snippetSupport: false } },
           hover: { contentFormat: ['markdown', 'plaintext'] },
           definition: {},
+          rename: { prepareSupport: true },
+          references: {},
+          codeAction: { codeActionLiteralSupport: { codeActionKind: { valueSet: [] } } },
+          formatting: {},
         },
       },
     });
@@ -186,6 +193,53 @@ export class LspClient {
     return this.sendRequest('textDocument/documentSymbol', {
       textDocument: { uri: this.opts.uri },
     });
+  }
+
+  // Rename a symbol at `position` to `newName`. Returns a WorkspaceEdit.
+  rename(position: LspPosition, newName: string): Promise<unknown> {
+    return this.sendRequest(
+      'textDocument/rename',
+      { textDocument: { uri: this.opts.uri }, position, newName },
+      6000,
+    );
+  }
+
+  // Prepare rename: validate the word under cursor before showing the inline
+  // rename input. Returns { range, placeholder } or null if not renameable.
+  prepareRename(position: LspPosition): Promise<unknown> {
+    return this.sendRequest(
+      'textDocument/prepareRename',
+      { textDocument: { uri: this.opts.uri }, position },
+    );
+  }
+
+  // Find all references to the symbol at `position`.
+  references(position: LspPosition): Promise<unknown> {
+    return this.sendRequest(
+      'textDocument/references',
+      {
+        textDocument: { uri: this.opts.uri },
+        position,
+        context: { includeDeclaration: true },
+      },
+    );
+  }
+
+  // Request code actions (quick fixes, refactors) for `range` in the document.
+  codeAction(range: LspRange, context: { diagnostics: LspDiagnostic[] }): Promise<unknown> {
+    return this.sendRequest(
+      'textDocument/codeAction',
+      { textDocument: { uri: this.opts.uri }, range, context },
+    );
+  }
+
+  // Format the entire document. Returns TextEdit[] or null.
+  formatting(options: { tabSize: number; insertSpaces: boolean }): Promise<unknown> {
+    return this.sendRequest(
+      'textDocument/formatting',
+      { textDocument: { uri: this.opts.uri }, options },
+      10000,
+    );
   }
 
   didChange(text: string): void {
@@ -290,6 +344,47 @@ export function normalizeLocations(result: unknown): LspLocation[] {
     }
   }
   return out;
+}
+
+// --- WorkspaceEdit normalizer (rename) -----------------------------------
+export interface LspTextEdit {
+  range: LspRange;
+  newText: string;
+}
+
+export interface LspWorkspaceEdit {
+  // file URI → edits to apply
+  changes?: Record<string, LspTextEdit[]>;
+  // LSP 3.13 documentChanges (optional; we fall back to changes)
+  documentChanges?: Array<{
+    textDocument: { uri: string };
+    edits: LspTextEdit[];
+  }>;
+}
+
+// Flatten a WorkspaceEdit into a map of file URI → TextEdit[]
+export function normalizeWorkspaceEdit(result: unknown): Map<string, LspTextEdit[]> {
+  const out = new Map<string, LspTextEdit[]>();
+  if (!result || typeof result !== 'object') return out;
+  const edit = result as LspWorkspaceEdit;
+  if (Array.isArray(edit.documentChanges)) {
+    for (const dc of edit.documentChanges) {
+      if (dc.textDocument?.uri && Array.isArray(dc.edits)) {
+        out.set(dc.textDocument.uri, dc.edits as LspTextEdit[]);
+      }
+    }
+  } else if (edit.changes) {
+    for (const [uri, edits] of Object.entries(edit.changes)) {
+      if (Array.isArray(edits)) out.set(uri, edits as LspTextEdit[]);
+    }
+  }
+  return out;
+}
+
+// --- TextEdit[] normalizer (formatting) ----------------------------------
+export function normalizeTextEdits(result: unknown): LspTextEdit[] {
+  if (!Array.isArray(result)) return [];
+  return result as LspTextEdit[];
 }
 
 export interface LspRange {

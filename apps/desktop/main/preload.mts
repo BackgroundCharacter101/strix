@@ -71,7 +71,7 @@ const api: StrixApi = {
     exec: (command, cwd) => ipcRenderer.invoke('terminal:exec', command, cwd),
   },
   lsp: {
-    start: (language) => ipcRenderer.invoke('lsp:start', language),
+    start: (language, root) => ipcRenderer.invoke('lsp:start', language, root),
     send: (id, message) => ipcRenderer.send('lsp:send', { id, message }),
     stop: (id) => ipcRenderer.send('lsp:stop', { id }),
     onMessage: (cb) => {
@@ -108,6 +108,24 @@ const api: StrixApi = {
       const h = (_e: unknown, payload: { id: number; error?: string }) => cb(payload);
       ipcRenderer.on('ai:directError', h);
       return () => ipcRenderer.removeListener('ai:directError', h);
+    },
+    // FreeLLMAPI proxy: key fetched in main; renderer only sends the prompt.
+    freellmStart: (id, params) => ipcRenderer.send('ai:freellmStart', { id, params }),
+    freellmCancel: (id) => ipcRenderer.send('ai:freellmCancel', { id }),
+    onFreellmToken: (cb) => {
+      const h = (_e: unknown, payload: { id: number; token: string }) => cb(payload);
+      ipcRenderer.on('ai:freellmToken', h);
+      return () => ipcRenderer.removeListener('ai:freellmToken', h);
+    },
+    onFreellmDone: (cb) => {
+      const h = (_e: unknown, payload: { id: number }) => cb(payload);
+      ipcRenderer.on('ai:freellmDone', h);
+      return () => ipcRenderer.removeListener('ai:freellmDone', h);
+    },
+    onFreellmError: (cb) => {
+      const h = (_e: unknown, payload: { id: number; error?: string }) => cb(payload);
+      ipcRenderer.on('ai:freellmError', h);
+      return () => ipcRenderer.removeListener('ai:freellmError', h);
     },
   },
   collab: {

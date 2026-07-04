@@ -7,9 +7,14 @@ import * as path from 'node:path';
 // Explorer. Recursive watch is supported on Windows/macOS; on Linux it may throw
 // (caught) and the renderer's periodic Explorer poll covers that case.
 
-let watcher: FSWatcher | null = null;
-let timer: ReturnType<typeof setTimeout> | null = null;
-const pending = new Set<string>();
+// One watcher per owner (window webContents id), so multiple Strix windows can
+// each watch their own workspace without stealing each other's events.
+interface WatchEntry {
+  watcher: FSWatcher;
+  timer: ReturnType<typeof setTimeout> | null;
+  pending: Set<string>;
+}
+const entries = new Map<number, WatchEntry>();
 
 // Noise we never care about (build output, VCS internals, deps, temp files).
 // Matches the fs-tree ignore list so a big repo's generated dirs don't fire
@@ -24,36 +29,48 @@ export function shouldIgnore(rel: string): boolean {
   return /\.tmp$|~$|\.swp$|\.DS_Store$/i.test(rel);
 }
 
-export function startWatching(root: string, onChange: (paths: string[]) => void): void {
-  stopWatching();
+export function startWatching(
+  owner: number,
+  root: string,
+  onChange: (paths: string[]) => void,
+): void {
+  stopWatching(owner);
   if (!root) return;
   try {
-    watcher = watch(root, { recursive: true }, (_event, filename) => {
+    const entry: WatchEntry = { watcher: null as unknown as FSWatcher, timer: null, pending: new Set() };
+    entry.watcher = watch(root, { recursive: true }, (_event, filename) => {
       if (!filename) return;
       const rel = filename.toString();
       if (shouldIgnore(rel)) return;
-      pending.add(path.join(root, rel));
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        const paths = [...pending];
-        pending.clear();
-        timer = null;
+      entry.pending.add(path.join(root, rel));
+      if (entry.timer) clearTimeout(entry.timer);
+      entry.timer = setTimeout(() => {
+        const paths = [...entry.pending];
+        entry.pending.clear();
+        entry.timer = null;
         if (paths.length) onChange(paths);
       }, 250);
     });
+    entries.set(owner, entry);
   } catch {
     /* recursive watch unsupported here — Explorer poll is the fallback */
   }
 }
 
-export function stopWatching(): void {
-  if (watcher) {
-    watcher.close();
-    watcher = null;
+export function stopWatching(owner?: number): void {
+  const stop = (e: WatchEntry) => {
+    e.watcher.close();
+    if (e.timer) clearTimeout(e.timer);
+    e.pending.clear();
+  };
+  if (owner === undefined) {
+    for (const e of entries.values()) stop(e);
+    entries.clear();
+    return;
   }
-  if (timer) {
-    clearTimeout(timer);
-    timer = null;
+  const e = entries.get(owner);
+  if (e) {
+    stop(e);
+    entries.delete(owner);
   }
-  pending.clear();
 }

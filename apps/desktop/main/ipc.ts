@@ -1,6 +1,6 @@
 import { ipcMain, shell } from 'electron';
 import * as os from 'os';
-import { streamChat, detectLocalModels } from './aiProxy.js';
+import { streamChat, streamFreeLLM, detectLocalModels } from './aiProxy.js';
 import {
   buildFileTree,
   readDir,
@@ -56,7 +56,7 @@ import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
 import { installServer, uninstallServer } from './languageServers.js';
 import { startStaticServer, stopStaticServer, staticServerInfo } from './staticServer.js';
-import { startWatching } from './watcher.js';
+import { startWatching, stopWatching } from './watcher.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
@@ -74,8 +74,14 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('file:rename', (_event, from: string, to: string) => renameEntry(from, to));
   ipcMain.handle('file:remove', (_event, targetPath: string) => removeEntry(targetPath));
   // Watch the workspace for external changes → push debounced paths to renderer.
+  // Watchers are keyed per window (sender), so several Strix windows can each
+  // watch their own workspace; a window's watcher dies with it.
   ipcMain.on('fs:watch', (event, root: string) => {
-    startWatching(root, (paths) => event.sender.send('fs:changed', paths));
+    const owner = event.sender.id;
+    startWatching(owner, root, (paths) => {
+      if (!event.sender.isDestroyed()) event.sender.send('fs:changed', paths);
+    });
+    event.sender.once('destroyed', () => stopWatching(owner));
   });
   ipcMain.handle('workspace:root', () => getRoot());
   ipcMain.handle('workspace:open', (event) =>
@@ -198,10 +204,10 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   );
 
   const lsp = new LspManager();
-  ipcMain.handle('lsp:start', (event, language: Language) =>
-    // Run the server in the workspace root so it finds tsconfig.json / node_modules
-    // and resolves project + builtin modules (otherwise files analyse in isolation).
-    lsp.start(language, { cwd: getRoot() || undefined }, (id, message) =>
+  ipcMain.handle('lsp:start', (event, language: Language, root?: string) =>
+    // Run the server in the WINDOW'S workspace root so it finds tsconfig.json /
+    // node_modules (falls back to the last-opened root for old callers).
+    lsp.start(language, { cwd: root || getRoot() || undefined }, (id, message) =>
       event.sender.send('lsp:message', { id, message }),
     ),
   );
@@ -363,5 +369,40 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('ai:detectLocal', () => detectLocalModels());
   ipcMain.on('ai:directCancel', (_event, payload: { id: number }) => {
     if (directCancels.has(payload.id)) directCancels.set(payload.id, true);
+  });
+
+  // --- FreeLLMAPI streaming proxy (keeps API key inside main process) -------
+  // The renderer sends the prompt + serverUrl; we fetch the key here and stream
+  // tokens back as `ai:freellmToken` events (same pattern as ai:directToken).
+  const freellmCancels = new Map<number, boolean>();
+  ipcMain.on(
+    'ai:freellmStart',
+    (event, payload: { id: number; params: Parameters<typeof streamFreeLLM>[0] }) => {
+      const { id, params } = payload;
+      freellmCancels.set(id, false);
+      streamFreeLLM(
+        params,
+        (token) => {
+          if (!event.sender.isDestroyed()) event.sender.send('ai:freellmToken', { id, token });
+        },
+        () => freellmCancels.get(id) === true,
+      )
+        .then((r) => {
+          if (event.sender.isDestroyed()) return;
+          if (r.ok) event.sender.send('ai:freellmDone', { id });
+          else event.sender.send('ai:freellmError', { id, error: r.error });
+        })
+        .catch((e: unknown) => {
+          if (!event.sender.isDestroyed())
+            event.sender.send('ai:freellmError', {
+              id,
+              error: e instanceof Error ? e.message : String(e),
+            });
+        })
+        .finally(() => freellmCancels.delete(id));
+    },
+  );
+  ipcMain.on('ai:freellmCancel', (_event, payload: { id: number }) => {
+    if (freellmCancels.has(payload.id)) freellmCancels.set(payload.id, true);
   });
 }

@@ -50,6 +50,7 @@ import { useAgents } from './src/agents/useAgents';
 import { buildKeymap, eventAccelerator } from './src/keybindings';
 import { applySaveTransforms } from './src/saveTransforms';
 import { buildFreebuffEnv } from './src/freebuffEnv';
+import { stripAnsi } from './src/freebuffUsage';
 
 export default function App() {
   const [root, setRoot] = useState<string | null>(null);
@@ -1188,6 +1189,16 @@ export default function App() {
                       fontFamily={settings.terminalFontFamily || settings.fontFamily || undefined}
                       cursorStyle={settings.terminalCursorStyle}
                       shell={settings.terminalShell || undefined}
+                      onFixWithAi={(output, command) => {
+                        // Continue the session after a run: hand the captured
+                        // output to the AI composer (user reviews, then sends).
+                        const tail = stripAnsi(output).trim().slice(-4000);
+                        setShowAi(true);
+                        setAiSeed({
+                          nonce: Date.now(),
+                          text: `I ran \`${command}\` and got this output:\n\n${tail || '(no output captured)'}\n\nFind the problem and fix it.`,
+                        });
+                      }}
                     />
                   </section>
                 </>
@@ -1226,10 +1237,14 @@ export default function App() {
                       setSettingsOpen(true);
                     }}
                     onOpenPath={(p) => {
-                      // close+open forces a fresh read so AI-written changes show
-                      // live even if the file was already open.
-                      activeTabs.close(p);
-                      activeTabs.open(p);
+                      // Reload IN PLACE (not close+open) so the viewer keeps its
+                      // state — the HTML preview stays open and refreshes live.
+                      if (activeTabs.tabs.includes(p)) {
+                        activeTabs.reload(p);
+                        activeTabs.activate(p);
+                      } else {
+                        activeTabs.open(p);
+                      }
                       setTreeNonce((n) => n + 1);
                     }}
                     onShowDiff={(p, original, modified) =>
