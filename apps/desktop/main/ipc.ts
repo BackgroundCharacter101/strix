@@ -61,6 +61,13 @@ import { startWatching, stopWatching } from './watcher.js';
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
 // (ARCHITECTURE §6.7) to the corresponding main-process services.
 export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void {
+  // Per-window workspace root (keyed by sender id). The process-wide getRoot()
+  // is a single value, so with multiple windows it points at whichever opened
+  // last — search/replace/exec must use THIS window's root instead. Updated
+  // whenever a window (re)starts watching its workspace.
+  const windowRoots = new Map<number, string>();
+  const rootFor = (event: Electron.IpcMainEvent | Electron.IpcMainInvokeEvent): string =>
+    windowRoots.get(event.sender.id) || getRoot();
   ipcMain.handle('file:read', (_event, filePath: string) => readFileContents(filePath));
   ipcMain.handle('file:write', (_event, filePath: string, content: string) =>
     writeFileContents(filePath, content),
@@ -78,10 +85,14 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   // watch their own workspace; a window's watcher dies with it.
   ipcMain.on('fs:watch', (event, root: string) => {
     const owner = event.sender.id;
+    windowRoots.set(owner, root);
     startWatching(owner, root, (paths) => {
       if (!event.sender.isDestroyed()) event.sender.send('fs:changed', paths);
     });
-    event.sender.once('destroyed', () => stopWatching(owner));
+    event.sender.once('destroyed', () => {
+      stopWatching(owner);
+      windowRoots.delete(owner);
+    });
   });
   ipcMain.handle('workspace:root', () => getRoot());
   ipcMain.handle('workspace:open', (event) =>
@@ -106,8 +117,8 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('workspace:newProject', (event, name: string) =>
     newProjectDialog(BrowserWindow.fromWebContents(event.sender), name),
   );
-  ipcMain.handle('search:find', (_event, query: string, opts?: MatchOptions) =>
-    searchInFiles(getRoot(), query, opts),
+  ipcMain.handle('search:find', (event, query: string, opts?: MatchOptions) =>
+    searchInFiles(rootFor(event), query, opts),
   );
   // Streaming search: results arrive in batches and a newer query (or cancel)
   // aborts the in-flight walk so we don't waste CPU on superseded searches.
@@ -117,7 +128,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
     (event, { id, query, opts }: { id: number; query: string; opts?: MatchOptions }) => {
       searchToken = id;
       void searchInFilesStream(
-        getRoot(),
+        rootFor(event),
         query,
         (matches) => {
           if (searchToken === id) event.sender.send('search:match', { id, matches });
@@ -132,8 +143,8 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.on('search:cancel', () => {
     searchToken += 1;
   });
-  ipcMain.handle('search:replace', (_event, query: string, replacement: string, opts?: MatchOptions) =>
-    replaceInFiles(getRoot(), query, replacement, opts),
+  ipcMain.handle('search:replace', (event, query: string, replacement: string, opts?: MatchOptions) =>
+    replaceInFiles(rootFor(event), query, replacement, opts),
   );
 
   // --- Custom title bar: window controls + menu popups ---
@@ -184,7 +195,7 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
     // Never fall back to process.cwd() (the install dir for a packaged build).
     // Prefer the open workspace, else the user's home directory.
     terminals.create(
-      { ...opts, cwd: opts.cwd || getRoot() || os.homedir() },
+      { ...opts, cwd: opts.cwd || rootFor(event) || os.homedir() },
       (id, data) => event.sender.send('terminal:data', { id, data }),
       (id, exitCode) => event.sender.send('terminal:exit', { id, exitCode }),
     ),
@@ -199,8 +210,8 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   );
   ipcMain.on('terminal:kill', (_event, { id }: { id: string }) => terminals.kill(id));
   ipcMain.handle('terminal:hasCommand', (_event, command: string) => commandExists(command));
-  ipcMain.handle('terminal:exec', (_event, command: string, cwd?: string) =>
-    execCommand(command, cwd || getRoot() || undefined),
+  ipcMain.handle('terminal:exec', (event, command: string, cwd?: string) =>
+    execCommand(command, cwd || rootFor(event) || undefined),
   );
 
   const lsp = new LspManager();

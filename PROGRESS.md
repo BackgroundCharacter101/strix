@@ -710,7 +710,12 @@ strix/ (folder: tabea)
   window's root** (`lsp.start(language, root?)` through bridge/preload/ipc;
   lspClient passes `rootPath`), menu commands route to the **focused** window, and
   window controls/dialogs were already per-sender. Tabs/AI history are per-project
-  (localStorage keys include the root).
+  (localStorage keys include the root). **Pre-handoff audit fix:** Search / Replace /
+  `terminal:exec` / terminal-cwd used the process-wide `getRoot()` (single value), so a
+  second window searched the *last-opened* project. Added a per-window root map in
+  `ipc.ts` (keyed by `sender.id`, set on `fs:watch`, cleaned on window destroy) — these
+  now use `rootFor(event)`. IPC handlers register once (not per window), menu `send`
+  targets the focused window → no double-registration.
 - **Live HTML preview after AI Apply:** applying AI changes previously did
   close+open on the file (remounted the viewer → preview panel reset) and the
   preview iframe only refreshed manually. Now `onOpenPath` **reloads the buffer in
