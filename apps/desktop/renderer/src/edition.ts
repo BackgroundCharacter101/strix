@@ -34,8 +34,20 @@ export const EDITION_LABEL = IS_COMPETITION ? 'M1 Competition' : 'M1';
 
 /**
  * Default GitHub OAuth App client ID for browser "Sign in with GitHub"
- * (Device Flow). Public/shareable. Fill this once with a registered OAuth App
- * (Device Flow enabled) and the whole team gets one-click sign-in with no
- * setup. Empty = users register/paste their own in the Clone dialog.
+ * (Device Flow). Public / shareable — the client ID is not a secret.
+ *
+ * HOW TO FILL THIS IN:
+ *   1. Go to https://github.com/settings/developers → "New OAuth App"
+ *   2. Set Homepage URL to https://github.com/BackgroundCharacter101/strix
+ *   3. Set Authorization callback URL to http://localhost  (Device Flow
+ *      never redirects; any URL works but localhost is conventional)
+ *   4. Under "Additional settings" enable Device Flow
+ *   5. Copy the "Client ID" (looks like Ov23liXXXXXXXXXXXXXX)
+ *   6. Paste it as the value below and remove this TODO comment
+ *
+ * Until this is filled in, the "Sign in with GitHub" button in the Clone
+ * dialog is hidden and users must paste a personal-access token manually.
+ *
+ * TODO: register the Strix GitHub OAuth App and paste the client_id here.
  */
 export const GITHUB_CLIENT_ID = '';

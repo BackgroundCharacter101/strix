@@ -3,6 +3,9 @@
 // completion here in the main process and forward tokens over IPC. Works with
 // any OpenAI-compatible endpoint (OpenAI, OpenRouter, Groq, Together, Mistral,
 // DeepSeek, local Ollama/LM Studio, …) — no FreeLLMAPI involved.
+//
+// `streamFreeLLM` routes through the self-hosted FreeLLMAPI instance, keeping
+// the unified API key inside the main process at all times.
 
 export interface DirectChatParams {
   baseURL: string;
@@ -143,4 +146,41 @@ export async function streamChat(
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
   return { ok: true };
+}
+
+// --- FreeLLMAPI proxy: keeps the unified key inside main process -----------
+// The renderer sends the FreeLLMAPI base URL + a chat payload; we fetch the
+// key from the server here and stream the response back over IPC exactly like
+// streamChat above. The API key never reaches renderer memory.
+
+export interface FreeLLMChatParams {
+  /** FreeLLMAPI base URL, e.g. http://192.168.1.50:3001 */
+  serverUrl: string;
+  model: string;
+  messages: { role: string; content: unknown }[];
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export async function streamFreeLLM(
+  params: FreeLLMChatParams,
+  onToken: (token: string) => void,
+  isCancelled: () => boolean,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = params.serverUrl.trim().replace(/\/+$/, '');
+  // Fetch the unified key from the FreeLLMAPI settings endpoint (main process only).
+  let apiKey = '';
+  try {
+    const keyRes = await fetch(`${base}/api/settings/api-key`);
+    const keyBody = (await keyRes.json()) as { apiKey?: string };
+    apiKey = keyBody.apiKey ?? '';
+  } catch (e) {
+    return { ok: false, error: `Could not reach AI server: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  return streamChat(
+    { baseURL: `${base}/v1`, apiKey, model: params.model, messages: params.messages, temperature: params.temperature, maxTokens: params.maxTokens },
+    onToken,
+    isCancelled,
+  );
 }
