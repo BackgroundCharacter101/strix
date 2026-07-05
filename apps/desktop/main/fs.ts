@@ -41,9 +41,13 @@ const DEFAULT_IGNORE = [
   '.idea',
 ];
 
-// Safety caps so opening a giant project can't build an unbounded tree.
-const DEFAULT_MAX_DEPTH = 12;
-const DEFAULT_MAX_NODES = 60_000;
+// Safety caps so opening a giant project can't build a truly unbounded tree
+// (the crash was Infinity depth walking node_modules/.venv — millions of nodes).
+// Set generously so any realistic project shows in FULL; the cap only trips on
+// pathological trees, after which the Explorer shows a "list capped" banner.
+// Collapsed folders don't render, so the RAM cost is ~the node objects only.
+const DEFAULT_MAX_DEPTH = 40;
+const DEFAULT_MAX_NODES = 250_000;
 
 // Extra folder names the user excludes (Settings → Editor → Exclude folders).
 // Applied to every tree walk so all features (explorer, AI gather, map) benefit.
@@ -138,16 +142,20 @@ export async function buildFileTree(
     }
     const sorted = sortEntries(entries.filter((e) => !ignoreSet.has(e.name)));
 
-    const children: FileNode[] = [];
+    // Take up to the remaining node budget, then walk siblings in parallel (fast
+    // on a large tree) — the budget is a safety net, minor overshoot is fine.
+    const take: typeof sorted = [];
     for (const e of sorted) {
       if (count >= maxNodes) {
         truncated = true;
         break;
       }
       count += 1;
-      children.push(await walk(path.join(currentPath, e.name), e.name, e.isDirectory(), depth + 1));
+      take.push(e);
     }
-    node.children = children;
+    node.children = await Promise.all(
+      take.map((e) => walk(path.join(currentPath, e.name), e.name, e.isDirectory(), depth + 1)),
+    );
     return node;
   }
 

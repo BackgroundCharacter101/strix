@@ -696,6 +696,23 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Explorer shows the whole project:** the tree caps were far too tight (a venv
+  named `open-webui-env` got walked and tripped the 60k-node cap → "list capped"
+  banner). Raised to **depth 40 / 250k nodes** and parallelised the walk, so any
+  realistic project renders in full (collapsed folders don't render → RAM ~the node
+  objects only). Banner now only trips on pathological trees; users can still
+  exclude a folder in Settings → Editor.
+- **AI run auto-fix loop (bounded):** the AI run path only auto-fixed on a non-zero
+  exit — but a script can print errors and exit 0 (e.g. "'…Opera' is not
+  recognized"). Now `runPending` flags failure from **exit code OR error patterns
+  in the output** (`OUTPUT_ERROR_RE`) and runs a **capped 3-round fix→re-run loop**:
+  on failure it asks the agent to fix, and (with "apply without confirming" on)
+  re-runs the corrected command automatically until it passes or 3 attempts are
+  spent; otherwise each fix waits for approval then Run continues. Stops with a
+  clear message after the cap.
+- **More agents:** added **Performance auditor**, **Accessibility auditor**,
+  **Error-handling auditor** (report-only, like the others). Roster is now 13
+  monitors/auditors + custom.
 - **Agents: Findings inbox** (`AgentsView` `FindingsInbox`): an aggregated section at
   the top of the Agents panel showing every auditor's latest findings (count badge,
   newest first). Each entry expands to the report and has per-entry **→ AI** /

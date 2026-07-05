@@ -1241,7 +1241,15 @@ export function AiPanel({
       toOpen.reverse().forEach((p) => onOpenPath?.(p));
       setScaffold(null);
       setExpandedFile(null);
-      if (run && workspaceKey) setPendingRun({ command: run, cwd: workspaceKey });
+      if (run && workspaceKey) {
+        const pending = { command: run, cwd: workspaceKey };
+        setPendingRun(pending);
+        // Hands-off + mid auto-fix: re-run immediately to continue the loop.
+        // Otherwise the user reviews then clicks Run.
+        if (autoApply && autoFixRound.current > 0) {
+          setTimeout(() => void runPendingRef.current(pending), 400);
+        }
+      }
     } catch (e) {
       showToast(`Write failed: ${e instanceof Error ? e.message : String(e)}`, 'error', 7000);
     } finally {
@@ -1290,10 +1298,19 @@ export function AiPanel({
     }
   };
 
-  // Run the agent's suggested command (with the user's click), capture its
-  // output, show it in the thread, and on failure auto-propose a fix.
-  const runPending = async () => {
-    const pr = pendingRun;
+  // Errors that don't always set a non-zero exit code (a script can print an
+  // error and still exit 0) — so we scan the output too.
+  const OUTPUT_ERROR_RE =
+    /\b(traceback|exception|modulenotfound|no such file|not recognized|command not found|cannot find|is not defined|referenceerror|syntaxerror|typeerror|segmentation fault|fatal error|unhandled|panic:)\b|(^|\n)\s*error[: ]/i;
+  const MAX_AUTOFIX = 3;
+  const autoFixRound = useRef(0);
+
+  // Run a suggested command, capture output, and on FAILURE (non-zero exit OR an
+  // error in the output) auto-propose a fix + retry — a bounded loop (MAX_AUTOFIX
+  // rounds). With "apply without confirming" on, the whole loop runs hands-off;
+  // otherwise each fix waits for your approval, then Run continues the loop.
+  const runPending = async (override?: { command: string; cwd: string }) => {
+    const pr = override ?? pendingRun;
     if (!pr || busy) return;
     const { command: cmd, cwd } = pr;
     setPendingRun(null);
@@ -1308,26 +1325,43 @@ export function AiPanel({
     }
     setBusy(false);
     const out = (res.output || '').slice(-4000);
-    const ok = res.exitCode === 0;
+    const ok = res.exitCode === 0 && !OUTPUT_ERROR_RE.test(out);
     setHistory((h) => [
       ...h,
       {
         role: 'assistant',
         content:
-          `${ok ? '✅' : '❌'} Ran \`${cmd}\` — exit code ${res.exitCode}.\n\n` +
+          `${ok ? '✅' : '⚠️'} Ran \`${cmd}\` — exit code ${res.exitCode}${res.exitCode === 0 && !ok ? ' (but the output shows errors)' : ''}.\n\n` +
           '```\n' +
           (out || '(no output)') +
           '\n```',
       },
     ]);
-    if (!ok) {
-      // The agent sees the failure and proposes a fix (which the user approves).
-      await buildProject(
-        `The command \`${cmd}\` failed with exit code ${res.exitCode}. Output:\n${out}\n\n` +
-          'Fix the project so this command succeeds, then provide the corrected "run" command to retry.',
-      );
+    if (ok) {
+      autoFixRound.current = 0;
+      return;
     }
+    if (autoFixRound.current >= MAX_AUTOFIX) {
+      autoFixRound.current = 0;
+      setHistory((h) => [
+        ...h,
+        {
+          role: 'assistant',
+          content: `Stopped auto-fixing after ${MAX_AUTOFIX} attempts — the command still fails. Take a look, or ask me for a different approach.`,
+        },
+      ]);
+      return;
+    }
+    autoFixRound.current += 1;
+    // The agent sees the failure and proposes a fix. applyFiles re-runs the
+    // command automatically (hands-off mode) to continue the loop.
+    await buildProject(
+      `The command \`${cmd}\` failed (exit ${res.exitCode}) — attempt ${autoFixRound.current} of ${MAX_AUTOFIX}. Output:\n${out}\n\n` +
+        'Diagnose and fix the project so this command succeeds, then set the corrected "run" command to retry.',
+    );
   };
+  const runPendingRef = useRef(runPending);
+  runPendingRef.current = runPending;
 
   const clearHistory = () => {
     setHistory([]);

@@ -163,6 +163,48 @@ export const PRESET_AGENTS: AgentDef[] = [
     trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
     builtin: true,
   },
+  {
+    id: 'perf',
+    name: 'Performance auditor',
+    description: 'Flags slow patterns / hotspots in changed code (report).',
+    persona:
+      'You audit for performance problems in the changed code: nested loops over large data (O(n²)+), ' +
+      'work repeated inside loops that could be hoisted, synchronous/blocking I/O on hot paths, N+1 ' +
+      'queries, unbounded caches/leaks, and heavy re-renders (React). Report each as file:line, the cost, ' +
+      'and a concrete optimisation. Ignore micro-optimisations that do not matter.' + REPORT_OUTPUT_HINT,
+    outputMode: 'report',
+    watch: CODE_WATCH,
+    trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
+    builtin: true,
+  },
+  {
+    id: 'a11y',
+    name: 'Accessibility auditor',
+    description: 'Checks UI code for a11y issues (report only).',
+    persona:
+      'You audit UI code (HTML/JSX/TSX/Vue/Svelte) for accessibility problems: missing alt text, ' +
+      'unlabelled inputs/buttons, poor colour contrast, missing ARIA roles/labels, non-semantic ' +
+      'elements used as controls, keyboard traps, and focus-order issues. Report each as file:line, ' +
+      'the WCAG concern, and the fix. If the UI looks accessible, say so.' + REPORT_OUTPUT_HINT,
+    outputMode: 'report',
+    watch: ['**/*.{html,htm,jsx,tsx,vue,svelte}'],
+    trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
+    builtin: true,
+  },
+  {
+    id: 'errorhandling',
+    name: 'Error-handling auditor',
+    description: 'Flags swallowed errors / missing handling (report).',
+    persona:
+      'You audit error handling in the changed code: empty catch blocks, swallowed/ignored errors, ' +
+      'unhandled promise rejections, missing await, unchecked return codes, resources not closed on ' +
+      'the error path, and user-facing operations with no failure feedback. Report each as file:line, ' +
+      'the risk, and how to handle it properly.' + REPORT_OUTPUT_HINT,
+    outputMode: 'report',
+    watch: CODE_WATCH,
+    trigger: { on: 'change', cooldownMs: DEFAULT_COOLDOWN },
+    builtin: true,
+  },
 ];
 
 export const PRESET_IDS = new Set(PRESET_AGENTS.map((a) => a.id));
