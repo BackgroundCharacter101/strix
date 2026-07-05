@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-06-20
+> Last updated: 2026-07-05
 
 ---
 

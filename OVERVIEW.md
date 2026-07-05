@@ -2,7 +2,19 @@
 
 > A shareable snapshot of **what Strix is, how it's built, and where it stands** —
 > written for a fellow developer to review and suggest features/changes.
-> _Snapshot date: 2026-05-30 · ~94 commits · 166 tests passing._
+> _Snapshot date: 2026-07-05 · ~265 commits · 387 tests passing (56 files)._
+>
+> **See [README.md](README.md) for the current feature list + how to run.** This
+> file keeps the reviewer-oriented narrative; day-to-day status lives in
+> [PROGRESS.md](PROGRESS.md).
+>
+> **Since the 2026-05-30 snapshot below,** Strix gained: two build-time editions
+> (M1 / M1 Competition), bring-your-own direct API-key models + Ollama/LM Studio
+> auto-detect, a coding-agents panel (monitors/auditors + Findings inbox), FreeBuff
+> embedded in the AI panel, Run→auto-fix loop, multi-window (one project per
+> window), Black/OLED theme + more accents, a custom Inno Setup installer, and big
+> file-tree/perf work. The narrative below predates those — treat README/PROGRESS
+> as current.
 
 ---
 
@@ -39,7 +51,7 @@ see §6).
 | Git | **isomorphic-git** (pure JS, no native git dependency) |
 | AI | **OpenAI SDK** → a self-hosted router (**FreeLLMAPI**) |
 | Collab | **Yjs** + y-websocket (opt-in) |
-| Tests | **Vitest** + Testing Library (166 tests) |
+| Tests | **Vitest** + Testing Library (387 tests) |
 | Tooling | npm workspaces + Turborepo, ESLint (flat) + typescript-eslint |
 | Target | **Windows** primarily (also cross-platform-capable) |
 
@@ -158,7 +170,7 @@ scripts/       security-scan.mjs (commit gate), ai-setup.mjs
 
 ## 5. Quality, performance, security
 
-- **166 automated tests** (Vitest), all green. Pure logic (search, hex dump,
+- **387 automated tests** (Vitest), all green. Pure logic (search, hex dump,
   git, fuzzy match, secret rules) and React components are tested against a
   mocked IPC bridge.
 - **Quality gate before every commit**: `typecheck` + `lint` + `tests`.
