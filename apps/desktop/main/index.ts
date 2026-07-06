@@ -47,7 +47,10 @@ process.on('uncaughtException', (err) => logError('uncaughtException:', err));
 process.on('unhandledRejection', (reason) => logError('unhandledRejection:', reason));
 log('--- main start --- packaged=' + app.isPackaged + ' execPath=' + process.execPath);
 
-function createWindow() {
+// `blank` = a second/New Window: start on the welcome screen with NO folder,
+// instead of inheriting the process-wide "current root" (which made every new
+// window reopen the project the first window has open).
+function createWindow(blank = false) {
     const mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
@@ -130,11 +133,14 @@ function createWindow() {
     });
     mainWindow.webContents.on('did-finish-load', () => log('renderer loaded'));
 
+    const hash = blank ? 'blank' : undefined;
     if (DEV_URL) {
-        mainWindow.loadURL(DEV_URL).catch((error) => logError('loadURL error:', error));
+        mainWindow
+            .loadURL(DEV_URL + (blank ? '#blank' : ''))
+            .catch((error) => logError('loadURL error:', error));
         log('loading dev server', DEV_URL);
     } else {
-        mainWindow.loadFile(BUILT_INDEX).catch((error) => logError('loadFile error:', error));
+        mainWindow.loadFile(BUILT_INDEX, { hash }).catch((error) => logError('loadFile error:', error));
         log('loading built renderer', BUILT_INDEX);
     }
     // DevTools is a full second renderer process — heavy on CPU/RAM. Only
@@ -143,7 +149,7 @@ function createWindow() {
     if (process.env.STRIX_DEVTOOLS === '1' || DEV_URL) {
         mainWindow.webContents.openDevTools({ mode: 'right' });
     }
-    buildAppMenu(mainWindow, () => createWindow());
+    buildAppMenu(mainWindow, () => createWindow(true));
 
     // Tell the renderer's custom title bar when the maximize state changes.
     const sendMax = () => mainWindow.webContents.send('win:maximized', mainWindow.isMaximized());
@@ -160,7 +166,7 @@ if (!gotLock) {
 } else {
     app.on('second-instance', () => {
         try {
-            createWindow();
+            createWindow(true);
         } catch (e) {
             logError('second-instance createWindow failed:', e);
             const win = BrowserWindow.getAllWindows()[0];

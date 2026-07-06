@@ -518,6 +518,7 @@ export function AiPanel({
         messages,
         temperature: task === 'autocomplete' ? undefined : aiTemperature,
         maxTokens,
+        provider: direct.provider,
       });
     });
   };
@@ -1524,6 +1525,13 @@ export function AiPanel({
             </optgroup>
           )}
         </select>
+        {/* On Auto (FreeLLMAPI's router picks a provider each call), show which
+            model actually answered last so the user isn't guessing. */}
+        {!selectedDirect && model === 'auto' && routedVia && routedVia !== 'unknown' && (
+          <span className="ai-routed-chip" title="Model FreeLLMAPI routed your last message to">
+            {routedVia}
+          </span>
+        )}
       </div>
 
       {hasKeys === false && (

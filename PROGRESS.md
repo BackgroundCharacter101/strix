@@ -696,6 +696,21 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **BYOK provider presets + native Anthropic (VS Code-parity, both editions):** the
+  direct-models add form now has a **Provider** dropdown (OpenRouter / OpenAI /
+  Anthropic / Gemini / Groq / Mistral / DeepSeek / Custom) that **prefills base URL +
+  model** — paste key, done (matches VS Code's BYOK picker; OpenRouter = one key →
+  every model). **Native Anthropic adapter** (`aiProxy.streamAnthropic` — `/v1/messages`,
+  `x-api-key`, system split out, required `max_tokens`, `content_block_delta` SSE) so a
+  raw Claude API key works, not just OpenAI-shaped endpoints. `DirectModel.provider`
+  (`'anthropic'` | undefined) routes via `streamDirect`; passed through directStart from
+  AiPanel + agents. Tests: streamAnthropic parse/headers/system + streamDirect routing.
+  (Consumer Plus/Pro *chat* subscriptions have no API — only API keys, or a vendor CLI;
+  the CLI-agent registry for that is the next pass.)
+- **Active model shown:** on FreeLLMAPI **Auto**, a chip next to the model picker shows
+  which model actually answered your last message (`routedVia`).
+- **Fix: new window no longer inherits the current project** — a second/New Window loads
+  with `#blank` and starts on the welcome screen instead of reading the process-wide root.
 - **Explorer shows the whole project:** the tree caps were far too tight (a venv
   named `open-webui-env` got walked and tripped the 60k-node cap → "list capped"
   banner). Raised to **depth 40 / 250k nodes** and parallelised the walk, so any

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { streamChat, detectLocalModels } from './aiProxy';
+import { streamChat, streamAnthropic, streamDirect, detectLocalModels } from './aiProxy';
 
 function sseStream(chunks: string[]): unknown {
   const enc = new TextEncoder();
@@ -90,6 +90,58 @@ describe('streamChat', () => {
     const r = await streamChat(params, (t) => tokens.push(t), () => true);
     expect(r.ok).toBe(true);
     expect(tokens).toEqual([]);
+  });
+});
+
+describe('streamAnthropic', () => {
+  it('POSTs the native Messages API (system split out) and parses content_block_delta', async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      body: sseStream([
+        'event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"text":"Hel"}}\n\n',
+        'data: {"type":"content_block_delta","delta":{"text":"lo"}}\n\n',
+        'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+      ]),
+    }) as unknown as Response) as unknown as typeof fetch;
+    vi.stubGlobal('fetch', fetchMock);
+    const tokens: string[] = [];
+    const r = await streamAnthropic(
+      {
+        baseURL: 'https://api.anthropic.com',
+        apiKey: 'sk-ant',
+        model: 'claude-3-5-sonnet',
+        messages: [
+          { role: 'system', content: 'be brief' },
+          { role: 'user', content: 'hi' },
+        ],
+      },
+      (t) => tokens.push(t),
+      () => false,
+    );
+    expect(r.ok).toBe(true);
+    expect(tokens.join('')).toBe('Hello');
+    const [url, init] = (fetchMock as unknown as { mock: { calls: [string, RequestInit][] } }).mock
+      .calls[0];
+    expect(url).toBe('https://api.anthropic.com/v1/messages');
+    expect((init.headers as Record<string, string>)['x-api-key']).toBe('sk-ant');
+    const sent = JSON.parse(init.body as string);
+    expect(sent.system).toBe('be brief'); // system message pulled out
+    expect(sent.messages).toEqual([{ role: 'user', content: 'hi' }]);
+    expect(sent.max_tokens).toBeGreaterThan(0); // required by Anthropic
+  });
+});
+
+describe('streamDirect', () => {
+  it('routes provider:anthropic to the native adapter (Messages API)', async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, body: sseStream(['data: {}\n\n']) }) as unknown as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    await streamDirect(
+      { baseURL: 'https://api.anthropic.com', apiKey: 'k', model: 'claude', messages: [], provider: 'anthropic' },
+      () => {},
+      () => false,
+    );
+    expect((fetchMock.mock.calls[0] as unknown as [string])[0]).toContain('/v1/messages');
   });
 });
 

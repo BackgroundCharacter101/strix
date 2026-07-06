@@ -1,6 +1,6 @@
 import { ipcMain, shell } from 'electron';
 import * as os from 'os';
-import { streamChat, streamFreeLLM, detectLocalModels } from './aiProxy.js';
+import { streamDirect, streamFreeLLM, detectLocalModels } from './aiProxy.js';
 import {
   buildFileTree,
   readDir,
@@ -352,10 +352,10 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   const directCancels = new Map<number, boolean>();
   ipcMain.on(
     'ai:directStart',
-    (event, payload: { id: number; params: Parameters<typeof streamChat>[0] }) => {
+    (event, payload: { id: number; params: Parameters<typeof streamDirect>[0] }) => {
       const { id, params } = payload;
       directCancels.set(id, false);
-      streamChat(
+      streamDirect(
         params,
         (token) => {
           if (!event.sender.isDestroyed()) event.sender.send('ai:directToken', { id, token });

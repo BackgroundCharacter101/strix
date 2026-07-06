@@ -122,6 +122,25 @@ function ProviderKeys({ serverUrl }: { serverUrl?: string }) {
   );
 }
 
+// One-click provider presets (like VS Code's BYOK picker). `kind:'anthropic'`
+// uses the native Claude Messages API; everything else is OpenAI-compatible.
+const PROVIDER_PRESETS: {
+  id: string;
+  label: string;
+  baseURL: string;
+  modelHint: string;
+  kind?: string;
+}[] = [
+  { id: 'openrouter', label: 'OpenRouter — one key, every model', baseURL: 'https://openrouter.ai/api/v1', modelHint: 'anthropic/claude-3.5-sonnet' },
+  { id: 'openai', label: 'OpenAI', baseURL: 'https://api.openai.com/v1', modelHint: 'gpt-4o-mini' },
+  { id: 'anthropic', label: 'Anthropic (Claude)', baseURL: 'https://api.anthropic.com', modelHint: 'claude-3-5-sonnet-20241022', kind: 'anthropic' },
+  { id: 'gemini', label: 'Google Gemini', baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai', modelHint: 'gemini-2.0-flash' },
+  { id: 'groq', label: 'Groq', baseURL: 'https://api.groq.com/openai/v1', modelHint: 'llama-3.3-70b-versatile' },
+  { id: 'mistral', label: 'Mistral', baseURL: 'https://api.mistral.ai/v1', modelHint: 'mistral-large-latest' },
+  { id: 'deepseek', label: 'DeepSeek', baseURL: 'https://api.deepseek.com', modelHint: 'deepseek-chat' },
+  { id: 'custom', label: 'Custom (OpenAI-compatible)', baseURL: '', modelHint: '' },
+];
+
 // Friendly host label for a base URL (so the list reads "api.openai.com").
 function hostOf(url: string): string {
   try {
@@ -148,12 +167,24 @@ function DirectModels({
   const [baseURL, setBaseURL] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('');
+  const [presetId, setPresetId] = useState('');
   const [detecting, setDetecting] = useState(false);
 
   const genId = () =>
     typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
       : `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  // Picking a provider prefills the base URL + model placeholder so adding a key
+  // is one field. `custom` clears them for a manual OpenAI-compatible endpoint.
+  const applyPreset = (id: string) => {
+    setPresetId(id);
+    const p = PROVIDER_PRESETS.find((x) => x.id === id);
+    if (!p) return;
+    setBaseURL(p.baseURL);
+    setModel(p.modelHint);
+    if (!label.trim()) setLabel(p.label.split(' — ')[0].replace(/\(.*\)/, '').trim());
+  };
 
   const add = () => {
     const l = label.trim();
@@ -164,11 +195,13 @@ function DirectModels({
       showToast('Base URL, API key and model are all required', 'error', 5000);
       return;
     }
-    onChange([...models, { id: genId(), label: l || m, baseURL: b, apiKey: k, model: m }]);
+    const provider = PROVIDER_PRESETS.find((x) => x.id === presetId)?.kind;
+    onChange([...models, { id: genId(), label: l || m, baseURL: b, apiKey: k, model: m, provider }]);
     setLabel('');
     setBaseURL('');
     setApiKey('');
     setModel('');
+    setPresetId('');
     showToast(`Added "${l || m}"`, 'success');
   };
 
@@ -219,6 +252,18 @@ function DirectModels({
         </div>
       )}
       <div className="set-directmodels-add">
+        <select
+          aria-label="Provider"
+          value={presetId}
+          onChange={(e) => applyPreset(e.target.value)}
+        >
+          <option value="">Provider…</option>
+          {PROVIDER_PRESETS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           aria-label="Model label"

@@ -107,6 +107,7 @@ function streamDirect(
       messages,
       temperature: opts.temperature,
       maxTokens: opts.maxTokens,
+      provider: direct.provider,
     });
   });
 }

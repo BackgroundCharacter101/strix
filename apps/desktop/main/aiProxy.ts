@@ -14,6 +14,107 @@ export interface DirectChatParams {
   messages: { role: string; content: unknown }[];
   temperature?: number;
   maxTokens?: number;
+  // 'anthropic' → the native Claude Messages API (not OpenAI-shaped). Anything
+  // else (undefined) → an OpenAI-compatible endpoint (streamChat).
+  provider?: string;
+}
+
+// Route a direct request to the right adapter (native Anthropic vs the
+// OpenAI-compatible default). Used by the ai:directStart IPC handler.
+export function streamDirect(
+  params: DirectChatParams,
+  onToken: (token: string) => void,
+  isCancelled: () => boolean,
+): Promise<{ ok: boolean; error?: string }> {
+  return params.provider === 'anthropic'
+    ? streamAnthropic(params, onToken, isCancelled)
+    : streamChat(params, onToken, isCancelled);
+}
+
+// Native Anthropic Messages API (https://api.anthropic.com/v1/messages). Differs
+// from OpenAI: x-api-key header, required max_tokens, a top-level `system` string
+// (not a system message), and a content_block_delta SSE stream.
+export async function streamAnthropic(
+  params: DirectChatParams,
+  onToken: (token: string) => void,
+  isCancelled: () => boolean,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = params.baseURL.trim().replace(/\/+$/, '') || 'https://api.anthropic.com';
+  const url = `${base}/v1/messages`;
+
+  // Split OpenAI-style messages into Anthropic's system string + user/assistant turns.
+  const systemParts: string[] = [];
+  const msgs: { role: 'user' | 'assistant'; content: string }[] = [];
+  for (const m of params.messages) {
+    const text = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+    if (m.role === 'system') systemParts.push(text);
+    else if (m.role === 'assistant') msgs.push({ role: 'assistant', content: text });
+    else msgs.push({ role: 'user', content: text });
+  }
+
+  const body: Record<string, unknown> = {
+    model: params.model,
+    max_tokens: params.maxTokens && params.maxTokens > 0 ? params.maxTokens : 4096,
+    messages: msgs,
+    stream: true,
+  };
+  if (systemParts.length) body.system = systemParts.join('\n\n');
+  if (typeof params.temperature === 'number') body.temperature = params.temperature;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': params.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    return { ok: false, error: `Anthropic error (HTTP ${res.status}) ${t.slice(0, 300)}`.trim() };
+  }
+  if (!res.body) return { ok: false, error: 'Anthropic returned no response body.' };
+
+  const reader = (res.body as ReadableStream<Uint8Array>).getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  try {
+    for (;;) {
+      if (isCancelled()) {
+        await reader.cancel().catch(() => {});
+        return { ok: true };
+      }
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line.startsWith('data:')) continue;
+        const data = line.slice(5).trim();
+        if (data === '[DONE]') return { ok: true };
+        try {
+          const json = JSON.parse(data) as {
+            type?: string;
+            delta?: { text?: string };
+          };
+          if (json.type === 'content_block_delta' && json.delta?.text) onToken(json.delta.text);
+        } catch {
+          /* event: lines / keep-alives — ignore */
+        }
+      }
+    }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+  return { ok: true };
 }
 
 // A locally-running model discovered on the machine, ready to add as a direct

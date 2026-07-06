@@ -11,6 +11,9 @@ export interface DirectModel {
   baseURL: string;
   apiKey: string;
   model: string;
+  // API shape: 'anthropic' → native Claude Messages API; else (undefined)
+  // OpenAI-compatible. Set from the provider preset when the model is added.
+  provider?: string;
 }
 
 export interface Settings {

@@ -191,6 +191,8 @@ export interface DirectChatParams {
   messages: { role: string; content: unknown }[];
   temperature?: number;
   maxTokens?: number;
+  // 'anthropic' → native Claude Messages API; else OpenAI-compatible.
+  provider?: string;
 }
 
 export interface StrixCollabApi {

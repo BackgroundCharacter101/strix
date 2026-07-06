@@ -454,6 +454,12 @@ export default function App() {
   const terminal = useResizable(260, { axis: 'y', direction: -1, min: 72, max: 800, persistKey: 'strix.size.terminal' });
 
   useEffect(() => {
+    // A second/New Window (#blank) starts on the welcome screen — it must NOT
+    // inherit the first window's project (the process-wide root is shared).
+    if (typeof location !== 'undefined' && location.hash.includes('blank')) {
+      setRoot(null);
+      return;
+    }
     // Empty root → no workspace open. Optionally reopen the most-recent folder
     // (its tabs restore via the per-folder session), else show the welcome
     // screen (not the app's own install directory).

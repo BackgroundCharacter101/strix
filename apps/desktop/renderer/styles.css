@@ -2814,6 +2814,20 @@ kbd {
   gap: 6px;
   align-items: center;
 }
+/* The model FreeLLMAPI's Auto router actually used for the last message. */
+.ai-routed-chip {
+  flex: 0 0 auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 1px 9px;
+}
 
 .ai-toolbar select {
   flex: 1 1 auto;
