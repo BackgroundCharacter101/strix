@@ -312,20 +312,25 @@ body {
   flex-wrap: wrap;
   margin-bottom: var(--space-3);
 }
-/* Direct-model add row: several inputs that wrap on narrow widths. */
+/* Direct-model add form: a tidy 2-column grid so fields don't cram onto one
+   overflowing line. Provider spans the top; the Add button spans the bottom. */
 .set-directmodels-add {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  align-items: center;
   margin-bottom: var(--space-4);
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.set-directmodels-add > select,
+.set-directmodels-add > .set-save-btn {
+  grid-column: 1 / -1;
 }
 .set-directmodels-add input {
-  flex: 1 1 160px;
   min-width: 0;
-}
-.set-directmodels-add .set-save-btn {
-  flex: 0 0 auto;
+  width: 100%;
 }
 .set-keys-list {
   list-style: none;
@@ -544,25 +549,56 @@ body {
 }
 
 .settings-body > .set-section {
-  /* Left-aligned next to the nav (wider column) so the page doesn't read as a
-     narrow strip floating in empty space. */
-  max-width: 920px;
-  margin: 0;
+  /* Each section is a calm card on the page — grouped, with breathing room,
+     instead of a dense wall of rows. */
+  max-width: 860px;
+  margin: 0 0 var(--space-6);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 4px var(--space-8) var(--space-4);
 }
 
-/* Roomier rows on the full-screen page. */
+/* Roomier rows on the full-screen page + a hairline between them so each setting
+   reads as its own line. */
 .settings-body .set-row {
-  padding: var(--space-4) 0;
+  padding: 14px 0;
+  align-items: center;
+}
+.settings-body .set-row + .set-row {
+  border-top: 1px solid var(--border);
 }
 .settings-body .set-control {
-  min-width: 230px;
+  min-width: 240px;
   display: flex;
   justify-content: flex-end;
 }
 .settings-body .set-control select,
 .settings-body .set-control input[type='text'],
 .settings-body .set-control input[type='number'] {
-  min-width: 180px;
+  min-width: 200px;
+}
+/* Comfortable, tappable inputs. */
+.settings-body input[type='text'],
+.settings-body input[type='number'],
+.settings-body input[type='password'],
+.settings-body select,
+.settings-body textarea {
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+}
+.settings-body input:focus,
+.settings-body select:focus,
+.settings-body textarea:focus {
+  border-color: var(--focus);
+}
+/* Block rows (keys / direct models) shouldn't get the between-row divider on
+   their inner controls. */
+.settings-body .set-row-block + .set-keys,
+.settings-body .set-keys + .set-row {
+  border-top: none;
 }
 
 .set-section {

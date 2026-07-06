@@ -707,8 +707,14 @@ strix/ (folder: tabea)
   AiPanel + agents. Tests: streamAnthropic parse/headers/system + streamDirect routing.
   (Consumer Plus/Pro *chat* subscriptions have no API — only API keys, or a vendor CLI;
   the CLI-agent registry for that is the next pass.)
-- **Active model shown:** on FreeLLMAPI **Auto**, a chip next to the model picker shows
-  which model actually answered your last message (`routedVia`).
+- **Active model shown (always):** a chip next to the AI model picker now always shows
+  the model answering this session — the direct model / picked FreeLLMAPI model, or on
+  Auto the router's last-used model (falls back to "Auto · router" before the first
+  reply or when the provider omits `chunk.model`).
+- **Settings page comfort pass:** each section is now a calm card (elevated bg, rounded,
+  padded) with hairline dividers between rows, roomier focus-ringed inputs, and the
+  direct-model add form laid out as a tidy 2-column grid (provider + Add span full
+  width) instead of a cramped overflowing single line.
 - **Fix: new window no longer inherits the current project** — a second/New Window loads
   with `#blank` and starts on the welcome screen instead of reading the process-wide root.
 - **Explorer shows the whole project:** the tree caps were far too tight (a venv
