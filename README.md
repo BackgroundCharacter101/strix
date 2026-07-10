@@ -46,10 +46,13 @@ large-file guard (minified bundles no longer lock the editor).
 
 **AI Assistant** — chat / explain / fix / refactor / vuln-check with a **model picker**:
 FreeLLMAPI **Auto** (free-provider router with failover) plus **your own direct API-key models**
-(OpenAI, OpenRouter, Groq, DeepSeek, …) and **auto-detected local models** (Ollama / LM Studio,
-Competition). Agentic build/edit from chat, diff-proposal apply with **one-click rollback**, and a
-**Run → auto-fix loop**: runs a command, and on failure (exit code *or* errors in the output)
-proposes a fix and re-runs — bounded to 3 rounds.
+(OpenAI, OpenRouter, Groq, DeepSeek, …) — added via **provider presets** (baseURL/model prefilled)
+with a **native Anthropic** adapter — and **auto-detected local models** (Ollama / LM Studio,
+Competition). The **active model answering this session is always shown** next to the picker. Agentic
+build/edit from chat, diff-proposal apply with **one-click rollback**, **edit / delete previous chat
+turns** (revert the thread like VS Code), and a **Run → auto-fix loop**: runs a command, and on
+failure (exit code *or* errors in the output) proposes a fix and re-runs — bounded to 3 rounds, and
+**stops immediately on environment errors** (missing tool / command not found — no code fix helps).
 
 **Coding agents** — a panel of single-purpose agents that watch the project and **monitor/audit only
 (never edit your code)**: README/Progress/Changelog/TODO/Architecture doc-writers, plus Security,
@@ -101,11 +104,11 @@ local models*.
 ```powershell
 npm run typecheck    # tsc --build (strict)
 npm run lint         # eslint (flat) + typescript-eslint
-npm test             # vitest — 387 tests / 56 files
+npm test             # vitest — 391 tests / 56 files
 npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 ```
 
-Current: typecheck + lint clean · **387 tests** pass · **0 prod vulns** · both editions build.
+Current: typecheck + lint clean · **391 tests** pass · **0 prod vulns** · both editions build.
 
 ## Repo layout
 
@@ -127,7 +130,7 @@ PROGRESS.md          living status + handoff (read this when resuming work)
 
 ## Status
 
-Active development on branch `feat/editions-m1` (265 commits). Test build — shipping to the team;
+Active development on branch `feat/editions-m1` (269 commits). Test build — shipping to the team;
 open items are choices, not blockers: code signing (paid cert), the GitHub OAuth client ID
 (one-time), auto-update, and first-run onboarding. A **Tauri/Rust rewrite (Strix 2.0)** is scoped
 for after the competition build ships.
