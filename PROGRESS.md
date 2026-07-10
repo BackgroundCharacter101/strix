@@ -696,6 +696,15 @@ strix/ (folder: tabea)
   or bake into `GITHUB_CLIENT_ID` (`edition.ts`, currently empty).
 
 **Features**
+- **Edit / delete chat turns (VS Code-style):** hovering a user message in the AI panel
+  shows **✎ Edit** (loads it into the composer + truncates the thread to before it, so
+  re-sending replaces that turn onward) and **× Delete** (removes the turn + its reply).
+  `editTurn`/`deleteTurn` in `AiPanel`. Tests: edit loads+truncates, delete removes both.
+- **Auto-fix loop skips environment errors:** the run→fix loop was retrying identical
+  commands 3× when a tool wasn't installed (e.g. `'docker' is not recognized`). Now an
+  `ENV_ERROR_RE` (not-recognized / command-not-found / not-installed / EACCES) **stops
+  immediately** with actionable advice (names the missing tool; for Docker offers the
+  non-Docker `npm run dev` path) instead of burning attempts on an unfixable code "bug".
 - **BYOK provider presets + native Anthropic (VS Code-parity, both editions):** the
   direct-models add form now has a **Provider** dropdown (OpenRouter / OpenAI /
   Anthropic / Gemini / Groq / Mistral / DeepSeek / Custom) that **prefills base URL +

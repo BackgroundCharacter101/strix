@@ -1303,6 +1303,10 @@ export function AiPanel({
   // error and still exit 0) — so we scan the output too.
   const OUTPUT_ERROR_RE =
     /\b(traceback|exception|modulenotfound|no such file|not recognized|command not found|cannot find|is not defined|referenceerror|syntaxerror|typeerror|segmentation fault|fatal error|unhandled|panic:)\b|(^|\n)\s*error[: ]/i;
+  // Missing-tool / environment errors — NOT fixable by editing code, so the
+  // auto-fix loop stops instead of retrying identically.
+  const ENV_ERROR_RE =
+    /is not recognized as an internal or external command|command not found|: not found|no such file or directory.*(docker|npm|node|python|yarn|pnpm)|is not installed|could not be found|EACCES|permission denied/i;
   const MAX_AUTOFIX = 3;
   const autoFixRound = useRef(0);
 
@@ -1340,6 +1344,25 @@ export function AiPanel({
     ]);
     if (ok) {
       autoFixRound.current = 0;
+      return;
+    }
+    // Environment failures (a tool isn't installed / not on PATH) can't be fixed
+    // by editing project code — retrying the same command 3× is pointless. Stop
+    // immediately with actionable advice instead of burning the loop.
+    if (ENV_ERROR_RE.test(out)) {
+      autoFixRound.current = 0;
+      const tool = out.match(/'([^']+)'\s+is not recognized/i)?.[1] || /(\w[\w-]*)\s*:?\s*command not found/i.exec(out)?.[1];
+      setHistory((h) => [
+        ...h,
+        {
+          role: 'assistant',
+          content:
+            `⚠️ This isn't a code bug — **${tool ? `\`${tool}\`` : 'a required tool'} isn't installed or on your PATH**, so no code change will fix it.\n\n` +
+            (tool && /docker/i.test(tool)
+              ? 'This project uses Docker. Either install **Docker Desktop** and retry, or — if it just needs to be served — I can start it a simpler way (e.g. `npm install` then `npm run dev`). Want me to try the non-Docker path?'
+              : `Install ${tool ? `\`${tool}\`` : 'the missing tool'} (or add it to PATH) and run again, or ask me for an approach that doesn't need it.`),
+        },
+      ]);
       return;
     }
     if (autoFixRound.current >= MAX_AUTOFIX) {
@@ -1433,6 +1456,21 @@ export function AiPanel({
   };
 
   // Send: in an open project, route to run / agent-edit / chat by intent.
+  // Edit a previous message: load it into the composer and truncate the thread
+  // to before it, so re-sending replaces that turn onward (VS Code-style).
+  const editTurn = (i: number) => {
+    const msg = history[i];
+    if (!msg || msg.role !== 'user' || busy) return;
+    setInput(String(msg.content));
+    setHistory(history.slice(0, i));
+    requestAnimationFrame(() => composerRef.current?.focus());
+  };
+  // Delete a turn (and its assistant reply, if the next message is one).
+  const deleteTurn = (i: number) => {
+    if (busy) return;
+    setHistory(history.filter((_, idx) => idx !== i && !(idx === i + 1 && history[i + 1]?.role === 'assistant')));
+  };
+
   const send = () => {
     const text = input.trim();
     if ((!text && attachments.length === 0) || busy) return;
@@ -1684,6 +1722,26 @@ export function AiPanel({
                       m.content
                     )}
                   </div>
+                  {m.role === 'user' && !busy && (
+                    <div className="ai-msg-actions">
+                      <button
+                        type="button"
+                        title="Edit & resend from here"
+                        aria-label="Edit message"
+                        onClick={() => editTurn(i)}
+                      >
+                        ✎
+                      </button>
+                      <button
+                        type="button"
+                        title="Delete this message"
+                        aria-label="Delete message"
+                        onClick={() => deleteTurn(i)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
               {streaming && (

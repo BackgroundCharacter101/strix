@@ -356,6 +356,38 @@ describe('AiPanel', () => {
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('earlier question');
   });
 
+  it('edits a previous message into the composer and truncates the thread', () => {
+    localStorage.setItem(
+      'strix.ai.history:global',
+      JSON.stringify([
+        { role: 'user', content: 'first ask' },
+        { role: 'assistant', content: 'a reply' },
+      ]),
+    );
+    render(<AiPanel filePath={null} fileContent="" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+    // The message text loads into the composer…
+    expect((screen.getByLabelText('Ask AI') as HTMLTextAreaElement).value).toBe('first ask');
+    // …and the thread is truncated (that turn + its reply removed).
+    const thread = screen.getByLabelText('AI conversation');
+    expect(thread).not.toHaveTextContent('a reply');
+  });
+
+  it('deletes a message (and its assistant reply) from the thread', () => {
+    localStorage.setItem(
+      'strix.ai.history:global',
+      JSON.stringify([
+        { role: 'user', content: 'kill me' },
+        { role: 'assistant', content: 'the reply' },
+      ]),
+    );
+    render(<AiPanel filePath={null} fileContent="" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete message' }));
+    const thread = screen.getByLabelText('AI conversation');
+    expect(thread).not.toHaveTextContent('kill me');
+    expect(thread).not.toHaveTextContent('the reply');
+  });
+
   it('suggests files for an @mention and accepts one into the composer', async () => {
     window.strix = makeStrixApi({
       fs: {

@@ -2992,6 +2992,34 @@ kbd {
 .ai-row-user {
   align-self: flex-end;
   max-width: 92%;
+  align-items: center;
+}
+/* Edit / delete actions on a user turn — appear on hover (VS Code-style). */
+.ai-msg-actions {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity var(--ease, 0.12s);
+}
+.ai-row-user:hover .ai-msg-actions,
+.ai-msg-actions:focus-within {
+  opacity: 1;
+}
+.ai-msg-actions button {
+  all: unset;
+  cursor: pointer;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.ai-msg-actions button:hover {
+  background: var(--bg-hover);
+  color: var(--text);
 }
 .ai-row-assistant .ai-msg {
   flex: 1 1 auto;
