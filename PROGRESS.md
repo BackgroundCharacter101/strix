@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-07-05
+> Last updated: 2026-07-10
 
 ---
 
@@ -162,11 +162,18 @@ Builds main + renderer, opens the Electron window, **and auto-starts FreeLLMAPI
 on :3001**. For the AI panel to answer you must add a provider key once: open
 http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRouter).
 
-- A **main-process change** (anything in `apps/desktop/main/**`) needs a full
-  restart; a renderer-only change can be picked up with **Ctrl+R** if a dev
-  server is running, otherwise rebuild.
-- Other entry points: `npm run dev` (Vite hot-reload; set
-  `STRIX_DEV_URL=http://localhost:3000` + run `start` in a 2nd terminal),
+**Live-reload dev loop (preferred while developing) — `npm run dev:app`:**
+`scripts/dev.mjs` runs all three tiers from one process: FreeLLMAPI (:3001,
+started once and kept alive across restarts — Electron gets `STRIX_NO_AI_SERVER=1`
+so a main restart never double-binds :3001), the Vite dev server (:3000), and
+Electron (main+preload bundled by esbuild in **watch** mode, loaded via
+`STRIX_DEV_URL`). Renderer edits **hot-reload instantly** (Vite HMR); saving any
+`apps/desktop/main/**` file rebuilds (~0.3 s) and **relaunches only the window**.
+Ctrl+C or closing the window tears the loop down. `dev:app:competition` for the
+Competition edition. No installer rebuild needed for day-to-day work.
+
+- Other entry points: `npm --workspace @strix/desktop run start` (one-shot
+  build+launch, no watch), `npm run dev:renderer` (Vite only),
   `npm run ai:setup` (install+build FreeLLMAPI), `npm run ai:start` (server only),
   `npm run collab:start` (Yjs websocket server for opt-in collaboration).
 
@@ -175,7 +182,7 @@ http://localhost:3001 → **Keys** → paste a free key (Groq / Gemini / OpenRou
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 284 tests / 51 files.**
+  **`npm test`** (vitest) — **all green: 391 tests / 56 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.

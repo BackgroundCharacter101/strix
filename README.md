@@ -93,6 +93,17 @@ npm run ai:setup                       # install + build the vendored FreeLLMAPI
 npm --workspace @strix/desktop run start   # build + launch (auto-starts FreeLLMAPI on :3001)
 ```
 
+**Live-reload dev loop** — while developing, skip the installer entirely:
+
+```powershell
+npm run dev:app                 # (or dev:app:competition)
+```
+
+One command runs FreeLLMAPI (:3001, kept alive across restarts), the Vite dev
+server (:3000), and Electron. **Renderer edits hot-reload instantly** (Vite HMR);
+saving any `main/*.ts` rebuilds and **relaunches just the window** in ~0.3 s. No
+rebuild, no reinstall. Ctrl+C (or closing the window) tears the whole loop down.
+
 For AI answers, add a provider key once — Settings → AI → provider keys (Groq / Gemini / OpenRouter
 are free), **or** add a direct API-key model, **or** (Competition) run Ollama and click *Detect
 local models*.

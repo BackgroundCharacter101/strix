@@ -27,3 +27,6 @@ pid
 
 # FreeLLMAPI single-file bundle (build artifact)
 freellmapi/.bundle/
+
+# Live-reload dev loop scratch (FreeLLMAPI db, etc.)
+.dev-data/

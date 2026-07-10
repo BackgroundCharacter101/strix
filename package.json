@@ -7,7 +7,10 @@
         "packages/*"
     ],
     "scripts": {
-        "dev": "npm --workspace @strix/desktop run dev",
+        "dev": "node scripts/dev.mjs m1",
+        "dev:app": "node scripts/dev.mjs m1",
+        "dev:app:competition": "node scripts/dev.mjs competition",
+        "dev:renderer": "npm --workspace @strix/desktop run dev",
         "start:m1": "node scripts/edition.mjs m1 start",
         "start:competition": "node scripts/edition.mjs competition start",
         "build:m1": "node scripts/edition.mjs m1 build",
