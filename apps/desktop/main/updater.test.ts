@@ -8,6 +8,7 @@ import {
   parseManifest,
   checkForUpdate,
   downloadAndVerify,
+  isSystemInstall,
 } from './updater';
 
 // A Response-like with a real ReadableStream body (mirrors aiProxy.test.ts).
@@ -38,6 +39,22 @@ describe('compareVersions', () => {
   it('tolerates missing segments + pre-release suffixes', () => {
     expect(compareVersions('1.2', '1.2.0')).toBe(0);
     expect(compareVersions('0.2.0-beta', '0.1.0')).toBe(1);
+  });
+});
+
+describe('isSystemInstall', () => {
+  const PF = ['C:\\Program Files', 'C:\\Program Files (x86)'];
+  it('is true for an all-users (Program Files) install', () => {
+    expect(isSystemInstall('C:\\Program Files\\Strix M1\\Strix M1.exe', PF)).toBe(true);
+    expect(isSystemInstall('C:/Program Files (x86)/Strix M1/Strix M1.exe', PF)).toBe(true);
+  });
+  it('is false for a per-user (LocalAppData) install', () => {
+    expect(
+      isSystemInstall('C:\\Users\\kavee\\AppData\\Local\\Programs\\Strix M1\\Strix M1.exe', PF),
+    ).toBe(false);
+  });
+  it('ignores undefined Program Files env entries', () => {
+    expect(isSystemInstall('C:\\Program Files\\Strix\\a.exe', [undefined, 'C:\\Program Files'])).toBe(true);
   });
 });
 

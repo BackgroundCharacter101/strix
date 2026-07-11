@@ -182,7 +182,7 @@ Competition edition. No installer rebuild needed for day-to-day work.
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 408 tests / 59 files.**
+  **`npm test`** (vitest) — **all green: 411 tests / 59 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -531,10 +531,14 @@ strix/ (folder: tabea)
     `STRIX_UPDATE_URL` env → `__STRIX_UPDATE_URL__` build define → localhost:8787.
   - **UI** `renderer/src/UpdateBanner.tsx` (self-contained state machine; launch
     check silent on error, manual check via Help → *Check for Updates…*).
-  - **Installer** `build/installer.iss` switched to **per-user** (`{localappdata}\
-    Programs`, `PrivilegesRequired=lowest`, `CloseApplications=yes`) + a
-    `skipifnotsilent` `[Run]` entry that relaunches after a silent update.
-    (Existing admin installs need one manual reinstall to migrate.)
+  - **Installer** `build/installer.iss`: `PrivilegesRequired=lowest` +
+    `PrivilegesRequiredOverridesAllowed=dialog` → a startup **"all users vs just
+    me"** chooser. `{autopf}` resolves per-mode (Program Files vs
+    `{localappdata}\Programs`); "Open with" keys use `HKA`. `CloseApplications=yes`
+    + a `skipifnotsilent` `[Run]` entry relaunches after a silent update.
+    Per-user updates apply silently; **all-users (Program Files) installs elevate
+    on apply** (`isSystemInstall` → PowerShell `Start-Process -Verb RunAs`, one
+    UAC per update). (Existing 0.1.0 installs need one manual reinstall to migrate.)
   - **Feed scripts**: `npm run update:serve` (static server for `dist-updates/`),
     `npm run update:publish [m1|competition]` (copies the built installer, writes
     `latest-<edition>.json` + sha256). `dist-updates/` is gitignored.

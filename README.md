@@ -85,8 +85,10 @@ gold/violet/teal/emerald/blue/red/white/black; opt-in Liquid Glass.
 ## Install
 
 Prebuilt Windows installers are produced by `npm run package:m1` / `package:competition` (custom
-**Inno Setup** installer: **per-user** install under `%LOCALAPPDATA%\Programs` — no UAC, so live
-auto-update applies silently — with opt-in desktop shortcut / add-to-PATH / "Open with Strix"). The apps are **not code-signed** yet, so Windows SmartScreen shows an "unknown publisher"
+**Inno Setup** installer). At startup it offers **"install for all users vs just me"**: *just me*
+(default) installs per-user under `%LOCALAPPDATA%\Programs` with no UAC — so live auto-update applies
+silently; *all users* installs into Program Files (UAC) and self-updates with one UAC prompt per
+update. Opt-in desktop shortcut / add-to-PATH / "Open with Strix" either way. The apps are **not code-signed** yet, so Windows SmartScreen shows an "unknown publisher"
 warning — click **More info → Run anyway** (see [PROGRESS.md](PROGRESS.md) for the code-signing plan).
 
 ## Develop
@@ -122,11 +124,11 @@ local models*.
 ```powershell
 npm run typecheck    # tsc --build (strict)
 npm run lint         # eslint (flat) + typescript-eslint
-npm test             # vitest — 408 tests / 59 files
+npm test             # vitest — 411 tests / 59 files
 npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 ```
 
-Current: typecheck + lint clean · **408 tests** pass · **0 prod vulns** · both editions build.
+Current: typecheck + lint clean · **411 tests** pass · **0 prod vulns** · both editions build.
 
 ## Repo layout
 
@@ -150,5 +152,6 @@ PROGRESS.md          living status + handoff (read this when resuming work)
 
 Active development on branch `feat/editions-m1` (269 commits). Test build — shipping to the team;
 open items are choices, not blockers: code signing (paid cert), the GitHub OAuth client ID
-(one-time), auto-update, and first-run onboarding. A **Tauri/Rust rewrite (Strix 2.0)** is scoped
+(one-time), hosting the update feed on a real https host, and first-run onboarding. A **Tauri/Rust
+rewrite (Strix 2.0)** is scoped
 for after the competition build ships.

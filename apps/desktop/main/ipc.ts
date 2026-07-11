@@ -6,6 +6,7 @@ import { streamDirect, streamFreeLLM, detectLocalModels } from './aiProxy.js';
 import {
   checkForUpdate,
   downloadAndVerify,
+  isSystemInstall,
   DEFAULT_FEED_URL,
   type UpdateManifest,
 } from './updater.js';
@@ -476,14 +477,32 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('update:apply', async () => {
     if (!stagedInstaller) return { ok: false, error: 'no update downloaded' };
     try {
-      // Inno silent upgrade over the existing per-user install. The installer's
-      // [Run] entry with `skipifnotsilent` relaunches Strix once files are
-      // swapped, so we just launch it detached and quit to release file locks.
-      const child = spawn(stagedInstaller, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'], {
-        detached: true,
-        stdio: 'ignore',
-      });
-      child.unref();
+      const args = ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'];
+      // An all-users (Program Files) install needs admin rights to overwrite its
+      // files, so launch the installer elevated (one UAC prompt). A per-user
+      // install under the profile updates silently — no elevation. The Inno
+      // `skipifnotsilent` [Run] entry relaunches Strix either way.
+      const elevated = isSystemInstall(app.getPath('exe'), [
+        process.env['ProgramFiles'],
+        process.env['ProgramFiles(x86)'],
+        process.env['ProgramW6432'],
+      ]);
+      if (elevated) {
+        // ShellExecute "runas" via PowerShell triggers the UAC consent dialog,
+        // then runs the installer silently under the elevated token.
+        const list = args.map((a) => `'${a}'`).join(',');
+        spawn(
+          'powershell.exe',
+          [
+            '-NoProfile',
+            '-Command',
+            `Start-Process -FilePath '${stagedInstaller.replace(/'/g, "''")}' -ArgumentList ${list} -Verb RunAs`,
+          ],
+          { detached: true, stdio: 'ignore' },
+        ).unref();
+      } else {
+        spawn(stagedInstaller, args, { detached: true, stdio: 'ignore' }).unref();
+      }
       // Quit shortly after so our exe/handles are free for the installer to
       // overwrite (Inno also closes us via Restart Manager as a fallback).
       setTimeout(() => app.quit(), 400);

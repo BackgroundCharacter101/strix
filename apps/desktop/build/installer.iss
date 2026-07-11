@@ -38,17 +38,21 @@ AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyVersion}
 AppPublisher=Strix
-DefaultDirName={localappdata}\Programs\{#MyAppName}
+; {autopf} is install-mode-aware: %LOCALAPPDATA%\Programs for a per-user install,
+; Program Files for an all-users install — so one line serves both choices.
+DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 DisableDirPage=no
 ; Inno 6 hides the Welcome page by default; show it so the glass art appears.
 DisableWelcomePage=no
-; Per-USER install under %LOCALAPPDATA%\Programs — no UAC prompt. This is what
-; makes live auto-update fully silent: the app can replace its own install with
-; no elevation. (Was admin/Program Files; existing admin installs need one
-; manual reinstall to migrate.)
+; Default to a per-USER install (%LOCALAPPDATA%\Programs, no UAC) — that's what
+; makes live auto-update fully silent. `...OverridesAllowed=dialog` adds the
+; "Install for all users / just me" chooser: picking all-users elevates (UAC)
+; and installs into Program Files (that install then updates with one UAC per
+; update — see main/ipc.ts update:apply).
 PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
 ; Let Inno close a running Strix (via Restart Manager) so a silent self-update
 ; can overwrite the in-use exe; we relaunch it ourselves from [Run].
 CloseApplications=yes
@@ -88,12 +92,12 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyExe}"; Tasks: desktopic
 Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
   ValueData: "{olddata};{app}"; Tasks: addtopath; Check: NeedsAddPath('{app}'); Flags: preservestringtype
 ; "Open with Strix" on folders + folder background (per-user, no admin).
-Root: HKCU; Subkey: "Software\Classes\Directory\shell\OpenWithStrix"; ValueType: string; ValueData: "Open with {#MyAppName}"; Tasks: openwith; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\Directory\shell\OpenWithStrix"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyExe}"; Tasks: openwith
-Root: HKCU; Subkey: "Software\Classes\Directory\shell\OpenWithStrix\command"; ValueType: string; ValueData: """{app}\{#MyExe}"" ""%1"""; Tasks: openwith
-Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix"; ValueType: string; ValueData: "Open with {#MyAppName}"; Tasks: openwith; Flags: uninsdeletekey
-Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyExe}"; Tasks: openwith
-Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix\command"; ValueType: string; ValueData: """{app}\{#MyExe}"" ""%V"""; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\Directory\shell\OpenWithStrix"; ValueType: string; ValueData: "Open with {#MyAppName}"; Tasks: openwith; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Directory\shell\OpenWithStrix"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyExe}"; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\Directory\shell\OpenWithStrix\command"; ValueType: string; ValueData: """{app}\{#MyExe}"" ""%1"""; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix"; ValueType: string; ValueData: "Open with {#MyAppName}"; Tasks: openwith; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix"; ValueType: string; ValueName: "Icon"; ValueData: "{app}\{#MyExe}"; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix\command"; ValueType: string; ValueData: """{app}\{#MyExe}"" ""%V"""; Tasks: openwith
 
 [Run]
 ; Interactive install: offer a "Launch now" checkbox on the finish page.

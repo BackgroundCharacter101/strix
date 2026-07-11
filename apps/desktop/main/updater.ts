@@ -69,6 +69,19 @@ export function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+/**
+ * Whether the app is installed system-wide (an all-users / Program Files
+ * install) rather than per-user. All-users installs live under a Program Files
+ * dir and need elevation to self-update; per-user installs (under the user
+ * profile) update silently. Case-insensitive prefix match (Windows paths).
+ */
+export function isSystemInstall(exePath: string, programFilesDirs: (string | undefined)[]): boolean {
+  const exe = exePath.replace(/\//g, '\\').toLowerCase();
+  return programFilesDirs
+    .filter((d): d is string => !!d)
+    .some((dir) => exe.startsWith(dir.replace(/\//g, '\\').toLowerCase() + '\\'));
+}
+
 /** Parse + validate a manifest document. Throws on missing/invalid fields. */
 export function parseManifest(text: string): UpdateManifest {
   let raw: unknown;
