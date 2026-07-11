@@ -64,6 +64,38 @@ describe('AiPanel', () => {
     expect(models).toHaveBeenCalledTimes(2);
   });
 
+  it('shows the /agent menu and runs the picked agent in chat', async () => {
+    runTask.mockImplementation(async (_task, _opts, cb) => {
+      cb.onToken('report');
+      cb.onDone('groq/llama-3.3-70b');
+    });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey={null} />);
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: '/sec' } });
+
+    const option = await screen.findByText('/security');
+    fireEvent.mouseDown(option);
+
+    await waitFor(() => expect(runTask).toHaveBeenCalled());
+    const opts = runTask.mock.calls.at(-1)![1] as { userMessage?: string };
+    expect(String(opts.userMessage)).toMatch(/Security auditor/i);
+  });
+
+  it('Plan mode injects a plan-only directive without polluting the message', async () => {
+    runTask.mockImplementation(async (_task, _opts, cb) => {
+      cb.onToken('here is the plan');
+      cb.onDone('groq/llama-3.3-70b');
+    });
+    render(<AiPanel filePath={null} fileContent="" workspaceKey={null} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Plan' }));
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'add a feature' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(runTask).toHaveBeenCalled());
+    const opts = runTask.mock.calls.at(-1)![1] as { projectContext?: string; userMessage?: string };
+    expect(opts.projectContext).toContain('[PLAN MODE]');
+    expect(opts.userMessage).toBe('add a feature'); // visible message stays clean
+  });
+
   it('configures the AI client from the bridge on mount', async () => {
     render(<AiPanel filePath={null} fileContent="" />);
     await waitFor(() =>

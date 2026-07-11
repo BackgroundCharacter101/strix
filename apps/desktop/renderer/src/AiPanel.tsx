@@ -37,6 +37,7 @@ import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
 import { isSafeRelPath, pickBuildModel } from '@strix/ai-gateway';
 import { DiffViewer, languageForPath } from '@strix/editor';
+import { PRESET_AGENTS } from './agents/presets';
 
 // AI history is scoped per workspace so each project keeps its own conversation.
 function historyKeyFor(workspaceKey: string | null | undefined): string {
@@ -400,6 +401,11 @@ export function AiPanel({
   // `@file` typeahead: all workspace paths + the currently-shown candidates.
   const [allPaths, setAllPaths] = useState<string[]>([]);
   const [mentionItems, setMentionItems] = useState<string[]>([]);
+  // `/agent` slash menu — pick a coding agent to run against the project in chat.
+  const [slashItems, setSlashItems] = useState<{ id: string; name: string; description: string }[]>(
+    [],
+  );
+  const [slashIndex, setSlashIndex] = useState(0);
   const [mentionIndex, setMentionIndex] = useState(0);
   // Which assistant the panel shows: the built-in Strix chat, or FreeBuff
   // embedded in this panel (a real in-panel terminal session). Persisted.
@@ -432,6 +438,14 @@ export function AiPanel({
     }
   }, [freebuffSeed]);
   const [model, setModel] = useState(aiDefaultModel);
+  // Agent mode (like Claude Code): 'manual' proposes edits you apply; 'accept'
+  // auto-applies (the old autoApply); 'plan' answers with a plan and makes NO
+  // file edits until you switch out of Plan. Seeded from the Settings default.
+  const [agentMode, setAgentMode] = useState<'manual' | 'accept' | 'plan'>(
+    autoApply ? 'accept' : 'manual',
+  );
+  const autoApplyOn = agentMode === 'accept';
+  const planOnly = agentMode === 'plan';
   // Merge the per-session model with the tuned temperature/maxTokens for every
   // AI call (one place so all actions honour Settings → AI).
   const tuned = (signal: AbortSignal) => ({
@@ -767,11 +781,17 @@ export function AiPanel({
       }
     }
 
+    // Plan mode: ask for a plan and forbid edits. Injected via context so the
+    // visible user message stays clean.
+    const planCtx = planOnly
+      ? `${ctx}\n\n[PLAN MODE] Respond with a concise, numbered plan only: the approach, which files you'd change and why. Do NOT output code, diffs, or file edits — the user will switch out of Plan mode to apply anything.`
+      : ctx;
+
     let acc = '';
     try {
       await runTaskAny(
         task,
-        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext: ctx, securityMode, securityStance, securityPersonaText, attachments: task === 'chat' ? attachments : undefined },
+        { filePath: filePath ?? '', fileContent, userMessage, history: priorHistory, projectContext: planCtx, securityMode, securityStance, securityPersonaText, attachments: task === 'chat' ? attachments : undefined },
         {
           onToken: (token) => {
             acc += token;
@@ -1200,8 +1220,8 @@ export function AiPanel({
       if (plan.run && workspaceKey) setPendingRun({ command: plan.run, cwd: workspaceKey });
       return;
     }
-    // Hands-off mode applies immediately; otherwise open the review panel.
-    if (autoApply) {
+    // Accept-edits mode applies immediately; otherwise open the review panel.
+    if (autoApplyOn) {
       await applyFiles(changed, plan.notes, plan.run);
     } else {
       setScaffold({ files: changed, notes: plan.notes, run: plan.run });
@@ -1260,7 +1280,7 @@ export function AiPanel({
         setPendingRun(pending);
         // Hands-off + mid auto-fix: re-run immediately to continue the loop.
         // Otherwise the user reviews then clicks Run.
-        if (autoApply && autoFixRound.current > 0) {
+        if (autoApplyOn && autoFixRound.current > 0) {
           setTimeout(() => void runPendingRef.current(pending), 400);
         }
       }
@@ -1495,6 +1515,31 @@ export function AiPanel({
       void run('chat');
     }
   };
+  // Ref so the slash-run can send() after setInput commits (send() reads `input`).
+  const sendRef = useRef(send);
+  sendRef.current = send;
+
+  // `/` slash menu: filter the coding agents by what's typed after the slash.
+  const refreshSlash = (value: string) => {
+    if (!value.startsWith('/')) {
+      if (slashItems.length) setSlashItems([]);
+      return;
+    }
+    const q = value.slice(1).toLowerCase();
+    const items = PRESET_AGENTS.filter(
+      (a) => a.id.toLowerCase().includes(q) || a.name.toLowerCase().includes(q),
+    ).map((a) => ({ id: a.id, name: a.name, description: a.description }));
+    setSlashItems(items);
+    setSlashIndex(0);
+  };
+
+  // Run a picked agent in chat: seed a task from its persona and send it. The
+  // chat path gathers project context, so the AI reviews the whole project.
+  const runAgent = (agent: { id: string; name: string; description: string }) => {
+    setSlashItems([]);
+    setInput(`Act as the "${agent.name}" agent — ${agent.description} Review the project and report your findings.`);
+    setTimeout(() => sendRef.current(), 0);
+  };
 
   return (
     <section
@@ -1586,6 +1631,28 @@ export function AiPanel({
               : routedVia && routedVia !== 'unknown'
                 ? routedVia
                 : 'Auto · router'}
+        </span>
+        {/* Agent mode: how the AI's file changes are handled. */}
+        <span className="ai-mode" role="radiogroup" aria-label="Agent mode">
+          {(
+            [
+              ['manual', 'Manual', 'Propose edits — you apply them'],
+              ['accept', 'Accept edits', 'Auto-apply the AI’s edits'],
+              ['plan', 'Plan', 'Plan only — makes no file edits'],
+            ] as const
+          ).map(([m, label, title]) => (
+            <button
+              key={m}
+              type="button"
+              className={`ai-mode-btn${agentMode === m ? ' is-active' : ''}`}
+              role="radio"
+              aria-checked={agentMode === m}
+              title={title}
+              onClick={() => setAgentMode(m)}
+            >
+              {label}
+            </button>
+          ))}
         </span>
       </div>
 
@@ -1913,6 +1980,26 @@ export function AiPanel({
           }}
         />
         <div className="ai-mention-wrap">
+          {slashItems.length > 0 && (
+            <ul className="ai-mention-menu ai-slash-menu" role="listbox" aria-label="Agents">
+              {slashItems.map((a, i) => (
+                <li
+                  key={a.id}
+                  role="option"
+                  aria-selected={i === slashIndex}
+                  className={`ai-mention-item${i === slashIndex ? ' active' : ''}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    runAgent(a);
+                  }}
+                  onMouseEnter={() => setSlashIndex(i)}
+                >
+                  <span className="ai-slash-name">/{a.id}</span>
+                  <span className="ai-slash-desc">{a.name} — {a.description}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           {mentionItems.length > 0 && (
             <ul className="ai-mention-menu" role="listbox" aria-label="File suggestions">
               {mentionItems.map((p, i) => (
@@ -1947,8 +2034,32 @@ export function AiPanel({
             onChange={(e) => {
               setInput(e.target.value);
               refreshMentions(e.target.value, e.target.selectionStart);
+              refreshSlash(e.target.value);
             }}
             onKeyDown={(e) => {
+              // When the /agent menu is open, arrow/enter/esc keys drive it.
+              if (slashItems.length > 0) {
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setSlashIndex((i) => (i + 1) % slashItems.length);
+                  return;
+                }
+                if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setSlashIndex((i) => (i - 1 + slashItems.length) % slashItems.length);
+                  return;
+                }
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                  e.preventDefault();
+                  runAgent(slashItems[slashIndex]);
+                  return;
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setSlashItems([]);
+                  return;
+                }
+              }
               // When the @file menu is open, the arrow/enter/tab/esc keys drive it.
               if (mentionItems.length > 0) {
                 if (e.key === 'ArrowDown') {
@@ -1984,7 +2095,10 @@ export function AiPanel({
               refreshMentions(e.currentTarget.value, e.currentTarget.selectionStart);
             }}
             onClick={(e) => refreshMentions(e.currentTarget.value, e.currentTarget.selectionStart)}
-            onBlur={() => setMentionItems([])}
+            onBlur={() => {
+              setMentionItems([]);
+              setSlashItems([]);
+            }}
             onPaste={(e) => {
               const files = Array.from(e.clipboardData.files);
               if (files.length) {

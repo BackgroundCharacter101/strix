@@ -4759,3 +4759,43 @@ a:focus-visible,
   color: var(--accent-ink);
   border-radius: var(--radius-sm);
 }
+
+/* Agent mode segmented control (Manual / Accept edits / Plan). */
+.ai-mode {
+  display: inline-flex;
+  gap: 1px;
+  margin-left: auto;
+  background: var(--border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.ai-mode-btn {
+  padding: 2px 9px;
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 0;
+  cursor: pointer;
+}
+.ai-mode-btn:hover {
+  color: var(--text);
+}
+.ai-mode-btn.is-active {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+/* `/agent` slash menu rows (name + description). */
+.ai-slash-menu .ai-mention-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: flex-start;
+}
+.ai-slash-name {
+  font-weight: 600;
+}
+.ai-slash-desc {
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
