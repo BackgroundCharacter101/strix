@@ -362,6 +362,19 @@ export default function App() {
       insertFinalNewline: settings.insertFinalNewline,
       eol: settings.eol,
     });
+    // Untitled buffer (Ctrl+N): ask where to save in the project, write it, then
+    // swap the untitled tab for the real file.
+    const p = activeTabs.activePath;
+    if (p && p.startsWith('untitled:')) {
+      const base = `${p.slice('untitled:'.length)}.txt`;
+      const dest = await window.strix.workspace.saveAs(base);
+      if (!dest) return;
+      await window.strix.fs.write(dest, text);
+      activeTabs.open(dest);
+      activeTabs.close(p);
+      setTreeNonce((n) => n + 1);
+      return;
+    }
     await t.save(text);
   };
 
@@ -561,6 +574,12 @@ export default function App() {
         }, 1500);
         return;
       }
+      // Ctrl+N — open a blank (untitled) buffer in the editor.
+      if (e.key.toLowerCase() === 'n' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        activeTabs.openUntitled();
+        return;
+      }
       // Remappable shortcuts: match the pressed accelerator to a command.
       const cmd = keymap.get(eventAccelerator(e));
       if (!cmd) return;
@@ -730,6 +749,7 @@ export default function App() {
     { id: 'workspace.clone', label: 'Git: Clone Repository…', detail: '', run: () => setCloneOpen(true) },
     { id: 'file.newProject', label: 'File: New Project…', detail: '', run: newProject },
     { id: 'file.newFile', label: 'File: New File…', detail: '', run: newFileAtRoot },
+    { id: 'file.newUntitled', label: 'File: New Untitled File', detail: 'Ctrl+N', run: () => activeTabs.openUntitled() },
     { id: 'file.newFolder', label: 'File: New Folder…', detail: '', run: newFolderAtRoot },
     { id: 'view.explorer', label: 'View: Explorer', detail: 'Ctrl+B', run: () => selectView('explorer') },
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },

@@ -24,6 +24,20 @@ describe('useEditorTabs', () => {
     await waitFor(() => expect(result.current.active?.draft).toBe('contents of /a.ts'));
   });
 
+  it('openUntitled adds a blank in-memory tab without reading from disk', async () => {
+    const { result } = renderHook(() => useEditorTabs());
+    let path = '';
+    act(() => {
+      path = result.current.openUntitled();
+    });
+    expect(path).toMatch(/^untitled:Untitled-1$/);
+    expect(result.current.tabs).toEqual([path]);
+    expect(result.current.activePath).toBe(path);
+    expect(result.current.active?.draft).toBe('');
+    expect(result.current.active?.loading).toBe(false);
+    expect(read).not.toHaveBeenCalled(); // never hits the filesystem
+  });
+
   it('keeps each tab’s unsaved edits when switching between them', async () => {
     const { result } = renderHook(() => useEditorTabs());
     act(() => result.current.open('/a.ts'));

@@ -42,6 +42,7 @@ import {
   getRoot,
   openFolderDialog,
   openFileDialog,
+  saveFileDialog,
   cloneRepo,
   newProjectDialog,
 } from './workspace.js';
@@ -111,6 +112,9 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   );
   ipcMain.handle('workspace:openFile', (event) =>
     openFileDialog(BrowserWindow.fromWebContents(event.sender)),
+  );
+  ipcMain.handle('workspace:saveAs', (event, defaultName: string) =>
+    saveFileDialog(BrowserWindow.fromWebContents(event.sender), defaultName),
   );
   ipcMain.handle('workspace:clone', (event, url: string) =>
     cloneRepo(BrowserWindow.fromWebContents(event.sender), url),

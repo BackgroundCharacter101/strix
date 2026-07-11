@@ -54,6 +54,20 @@ export async function openFileDialog(win: BrowserWindow | null): Promise<string 
   return res.canceled || res.filePaths.length === 0 ? null : res.filePaths[0];
 }
 
+// Save-as dialog (Ctrl+S on an untitled buffer). Defaults into the workspace so
+// the user is prompted where in the project to save. Returns the chosen path.
+export async function saveFileDialog(
+  win: BrowserWindow | null,
+  defaultName: string,
+): Promise<string | null> {
+  const opts = {
+    title: 'Save As',
+    defaultPath: currentRoot ? path.join(currentRoot, defaultName) : defaultName,
+  };
+  const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
+  return res.canceled || !res.filePath ? null : res.filePath;
+}
+
 export async function cloneRepo(win: BrowserWindow | null, url: string): Promise<string | null> {
   const parent = await pickDirectory(win, 'Choose a folder to clone into');
   if (!parent) return null;

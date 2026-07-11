@@ -14,6 +14,8 @@ export interface EditorTabsApi {
   active: FileBuffer | null;
   isDirty(path: string): boolean;
   open(path: string): void;
+  /** Open a blank in-memory buffer (Ctrl+N). Returns its `untitled:` path. */
+  openUntitled(): string;
   activate(path: string): void;
   close(path: string): void;
   /** Re-read an open file from disk (skips if not open or has unsaved edits). */
@@ -60,6 +62,20 @@ export function useEditorTabs(): EditorTabsApi {
           },
         })),
       );
+  }, []);
+
+  // Ctrl+N: a blank in-memory buffer with a synthetic `untitled:` path (never
+  // read from disk). Ctrl+S on it triggers save-as (see App), which writes a real
+  // file and swaps this tab for it.
+  const untitledSeq = useRef(0);
+  const openUntitled = useCallback(() => {
+    untitledSeq.current += 1;
+    const path = `untitled:Untitled-${untitledSeq.current}`;
+    loaded.current.add(path); // mark loaded so open()/reload() never fs.read it
+    setBufs((prev) => ({ ...prev, [path]: { draft: '', saved: '', loading: false, error: null } }));
+    setTabs((prev) => (prev.includes(path) ? prev : [...prev, path]));
+    setActivePath(path);
+    return path;
   }, []);
 
   const activate = useCallback((path: string) => setActivePath(path), []);
@@ -209,5 +225,5 @@ export function useEditorTabs(): EditorTabsApi {
       }
     : null;
 
-  return { tabs, activePath, active, isDirty, open, activate, close, reload, saveAll, replaceAll };
+  return { tabs, activePath, active, isDirty, open, openUntitled, activate, close, reload, saveAll, replaceAll };
 }

@@ -23,6 +23,7 @@ const api: StrixApi = {
     root: () => ipcRenderer.invoke('workspace:root'),
     open: () => ipcRenderer.invoke('workspace:open'),
     openFile: () => ipcRenderer.invoke('workspace:openFile'),
+    saveAs: (defaultName) => ipcRenderer.invoke('workspace:saveAs', defaultName),
     clone: (url) => ipcRenderer.invoke('workspace:clone', url),
     newProject: (name) => ipcRenderer.invoke('workspace:newProject', name),
   },

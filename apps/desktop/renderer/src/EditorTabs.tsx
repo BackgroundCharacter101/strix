@@ -4,6 +4,9 @@ import { FileIcon } from './FileTree';
 import { SplitIcon } from './icons';
 
 function basename(path: string): string {
+  // Untitled (Ctrl+N) buffers use an `untitled:Name` synthetic path — show just
+  // the name.
+  if (path.startsWith('untitled:')) return path.slice('untitled:'.length);
   const i = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
   return i === -1 ? path : path.slice(i + 1);
 }

@@ -31,6 +31,9 @@ export interface StrixWorkspaceApi {
   open(): Promise<string | null>;
   // Opens a native file picker; returns the chosen file path, or null if cancelled.
   openFile(): Promise<string | null>;
+  // Native Save-As dialog (Ctrl+S on an untitled buffer); returns the chosen
+  // absolute path (defaults into the workspace), or null if cancelled.
+  saveAs(defaultName: string): Promise<string | null>;
   // Clones a git repo into a chosen parent dir; returns the new repo root, or null.
   clone(url: string): Promise<string | null>;
   // Creates a named project folder under a chosen parent; returns its path, or null.

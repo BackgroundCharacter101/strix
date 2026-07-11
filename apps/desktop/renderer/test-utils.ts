@@ -57,6 +57,7 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       root: vi.fn(async (): Promise<string> => '/'),
       open: vi.fn(async (): Promise<string | null> => null),
       openFile: vi.fn(async (): Promise<string | null> => null),
+      saveAs: vi.fn(async (): Promise<string | null> => null),
       clone: vi.fn(async (): Promise<string | null> => null),
       newProject: vi.fn(async (): Promise<string | null> => null),
     },

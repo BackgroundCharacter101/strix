@@ -12,6 +12,7 @@ function api(overrides: Partial<EditorTabsApi> = {}): EditorTabsApi {
     active: null,
     isDirty: () => false,
     open: vi.fn(),
+    openUntitled: vi.fn(() => 'untitled:Untitled-1'),
     activate: vi.fn(),
     close: vi.fn(),
     reload: vi.fn(),
