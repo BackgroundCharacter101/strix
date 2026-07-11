@@ -105,14 +105,21 @@ interface TreeRowProps {
   onToggle: (path: string) => void;
   onSelectFile?: (node: FileNode) => void;
   onContext: (node: FileNode, e: React.MouseEvent) => void;
+  onMove?: (src: string, destDir: string) => void;
   style: React.CSSProperties;
 }
 
 // One flat tree row. Indentation comes from depth (inline padding) instead of
 // nested <ul>s, so a row can be rendered in isolation by the virtual window.
-function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext, style }: TreeRowProps) {
+function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext, onMove, style }: TreeRowProps) {
   const { node, depth } = row;
   const indent = { paddingLeft: 8 + depth * 12 };
+  // Drag payload is the source path; a file drop on the editor opens it, a drop
+  // on a folder MOVES it (copyMove lets both effects work).
+  const onDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData('text/strix-path', node.path);
+    e.dataTransfer.effectAllowed = 'copyMove';
+  };
   if (node.type === 'file') {
     const active = node.path === activePath;
     return (
@@ -123,12 +130,8 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
           style={indent}
           data-active={active}
           aria-current={active ? 'true' : undefined}
-          // Drag a file onto an editor group to open it / split there.
           draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData('text/strix-path', node.path);
-            e.dataTransfer.effectAllowed = 'copy';
-          }}
+          onDragStart={onDragStart}
           onClick={() => onSelectFile?.(node)}
           onContextMenu={(e) => onContext(node, e)}
         >
@@ -140,6 +143,7 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
   }
 
   const isOpen = expanded.has(node.path);
+  const [dragOver, setDragOver] = useState(false);
   return (
     <li data-type="directory" style={style}>
       <button
@@ -147,8 +151,26 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
         className="tree-row tree-folder"
         style={indent}
         aria-expanded={isOpen}
+        data-dragover={dragOver || undefined}
+        draggable
+        onDragStart={onDragStart}
         onClick={() => onToggle(node.path)}
         onContextMenu={(e) => onContext(node, e)}
+        // Folder = drop target: accept a dragged path and move it in here.
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes('text/strix-path')) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (!dragOver) setDragOver(true);
+          }
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const src = e.dataTransfer.getData('text/strix-path');
+          if (src) onMove?.(src, node.path);
+        }}
       >
         <span className="tree-chevron">{isOpen ? '▾' : '▸'}</span>
         <span className="tree-folder-icon">
@@ -210,6 +232,19 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
   // The directory a new entry should be created in for the given node.
   const targetDir = (node: FileNode) =>
     node.type === 'directory' ? node.path : dirnameOf(node.path);
+
+  // Move a file/folder into destDir (drag & drop). No-ops when already there or
+  // when dropping a folder into itself/its own descendant.
+  const moveEntry = (src: string, destDir: string) => {
+    if (dirnameOf(src) === destDir) return;
+    const sep = destDir.includes('\\') ? '\\' : '/';
+    if (destDir === src || destDir.startsWith(src + sep)) return;
+    const dest = joinPath(destDir, src.split(/[\\/]/).pop() ?? src);
+    void window.strix.fs.rename(src, dest).then(() => {
+      setExpanded((prev) => new Set(prev).add(destDir));
+      reload();
+    });
+  };
 
   const remove = (node: FileNode) => {
     if (window.confirm(`Delete '${node.name}'? This cannot be undone.`)) {
@@ -309,6 +344,7 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
               onToggle={toggle}
               onSelectFile={onSelectFile}
               onContext={onContext}
+              onMove={moveEntry}
               style={{
                 position: 'absolute',
                 top: (start + slice.indexOf(row)) * ROW_H,

@@ -164,4 +164,26 @@ describe('FileTree', () => {
 
     expect(create).toHaveBeenCalledWith('/root/pkg', 'directory'); // created at ROOT
   });
+
+  it('moves a file into a folder via drag & drop', async () => {
+    tree.mockResolvedValue(sample);
+    render(<FileTree rootPath="/root" />);
+    const folderBtn = (await screen.findByText('src')).closest('button')!;
+
+    fireEvent.drop(folderBtn, {
+      dataTransfer: { getData: () => '/root/readme.md', types: ['text/strix-path'] },
+    });
+    expect(rename).toHaveBeenCalledWith('/root/readme.md', '/root/src/readme.md');
+  });
+
+  it('ignores a drop of a folder into itself', async () => {
+    tree.mockResolvedValue(sample);
+    render(<FileTree rootPath="/root" />);
+    const folderBtn = (await screen.findByText('src')).closest('button')!;
+
+    fireEvent.drop(folderBtn, {
+      dataTransfer: { getData: () => '/root/src', types: ['text/strix-path'] },
+    });
+    expect(rename).not.toHaveBeenCalled();
+  });
 });
