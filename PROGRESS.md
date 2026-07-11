@@ -182,7 +182,7 @@ Competition edition. No installer rebuild needed for day-to-day work.
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 423 tests / 62 files.**
+  **`npm test`** (vitest) — **all green: 436 tests / 64 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -516,6 +516,27 @@ strix/ (folder: tabea)
 | 8 | Packaging / installers | 🚧 electron-builder config + AI-server-as-node fix (`docs/PACKAGING.md`); needs a real Windows build + freellmapi writable-DB fix |
 
 ---
+
+## 9g. Session update — 2026-07-11 (workbench + AI-panel batch)
+
+- **Commit-message AI generate** — was CORS-blocked: `complete()` ran in the
+  renderer against localhost:3001 (blocked from the packaged `file://` origin).
+  New `aiComplete.freellmComplete()` routes one-shot completions through the main
+  process (`ai.freellmStart` IPC). (Same latent issue affects autocomplete /
+  Ctrl+G — candidates to reroute next.)
+- **Empty-explorer root actions** — click/right-click the empty file tree → root
+  New File / New Folder.
+- **Git dirty-diff gutter** — changed lines vs HEAD in the editor margin
+  (`dirtyDiff.computeLineHunks`, pure LCS, tested) + overview-ruler marks.
+- **Drag & drop** files/folders into folders to move them (`fs.rename`), with a
+  drop highlight; guards self/descendant drops.
+- **Agent modes** (Manual / Accept-edits / Plan) in the AI toolbar; Plan injects
+  a plan-only directive and makes no edits. Apply/auto-fix gates key off the mode.
+- **`/agent` slash menu** in the composer — pick a coding-agent preset to run it
+  against the project in chat.
+- **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
+  `workspace.saveAs` (native Save dialog, defaults into the workspace).
+- Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
 
 ## 9f. Session update — 2026-07-11 (perf: git-status polling)
 
