@@ -182,7 +182,7 @@ Competition edition. No installer rebuild needed for day-to-day work.
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 420 tests / 61 files.**
+  **`npm test`** (vitest) — **all green: 423 tests / 62 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -516,6 +516,17 @@ strix/ (folder: tabea)
 | 8 | Packaging / installers | 🚧 electron-builder config + AI-server-as-node fix (`docs/PACKAGING.md`); needs a real Windows build + freellmapi writable-DB fix |
 
 ---
+
+## 9f. Session update — 2026-07-11 (perf: git-status polling)
+
+- **Fix — high CPU/RAM while editing / in preview.** Root cause: `useGitStatus`
+  ran `git.statusMatrix` (re-hashes the whole working tree) on a **blind 4s
+  `setInterval`**, mounted app-wide always — so Strix re-hashed the repo every 4s
+  even with SCM closed while editing (and during HTML preview, since it's global).
+  Now event-driven: refresh on `fs:changed` (800ms debounce) + window focus +
+  visibility, with an in-flight guard and a slow 30s safety net **skipped while
+  the window is hidden**. `useGitStatus.test.tsx` locks in: no blind poll,
+  debounced fs-refresh, hidden-skip.
 
 ## 9e. Session update — 2026-07-11 (live web preview + two fixes)
 
