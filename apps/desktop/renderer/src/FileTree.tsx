@@ -16,7 +16,7 @@ const dirnameOf = (p: string) => {
 const joinPath = (dir: string, name: string) => `${dir}${sepOf(dir)}${name}`;
 
 type Dialog = { kind: 'newFile' | 'newFolder' | 'rename'; node: FileNode };
-type Menu = { node: FileNode; x: number; y: number };
+type Menu = { node: FileNode; x: number; y: number; root?: boolean };
 
 // Map a filename to a normalized file-kind key (drives the badge colour in CSS).
 export function fileKind(name: string): string {
@@ -237,6 +237,20 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
     setDialog(null);
   };
 
+  // Root actions — shown when clicking/right-clicking the empty explorer area,
+  // so the user can create a file/folder at the project root without a node.
+  const rootMenuItems = (root: FileNode) => [
+    { label: 'New File…', onClick: () => setDialog({ kind: 'newFile', node: root }) },
+    { label: 'New Folder…', onClick: () => setDialog({ kind: 'newFolder', node: root }) },
+  ];
+
+  // Open the root menu when the click/context is on empty space (not a row).
+  const onEmptyArea = (e: React.MouseEvent) => {
+    if (!tree || (e.target as HTMLElement).closest('.tree-row')) return;
+    e.preventDefault();
+    setMenu({ node: tree, x: e.clientX, y: e.clientY, root: true });
+  };
+
   const menuItems = (node: FileNode) => [
     ...(node.type === 'file' && onOpenToSide
       ? [{ label: 'Open to the Side', onClick: () => onOpenToSide(node) }]
@@ -282,6 +296,8 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
         className="tree-scroll"
         ref={scrollRef}
         onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+        onClick={onEmptyArea}
+        onContextMenu={onEmptyArea}
       >
         <ul aria-label="File tree" className="tree" style={{ height: total * ROW_H }}>
           {slice.map((row) => (
@@ -307,7 +323,7 @@ export function FileTree({ rootPath, activePath, onSelectFile, onOpenToSide }: F
         <ContextMenu
           x={menu.x}
           y={menu.y}
-          items={menuItems(menu.node)}
+          items={menu.root ? rootMenuItems(menu.node) : menuItems(menu.node)}
           onClose={() => setMenu(null)}
         />
       )}

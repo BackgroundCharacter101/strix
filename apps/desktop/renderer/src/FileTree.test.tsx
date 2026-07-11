@@ -149,4 +149,19 @@ describe('FileTree', () => {
 
     expect(create).toHaveBeenCalledWith('/root/src/x.ts', 'file');
   });
+
+  it('offers root New File/New Folder when the empty explorer area is clicked', async () => {
+    tree.mockResolvedValue(sample);
+    render(<FileTree rootPath="/root" />);
+    await screen.findByText('readme.md'); // tree loaded
+
+    // Click empty space (the scroll container, not a row) → root menu.
+    fireEvent.click(screen.getByLabelText('File tree'));
+    expect(screen.getByRole('menuitem', { name: 'New File…' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Folder…' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'pkg' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    expect(create).toHaveBeenCalledWith('/root/pkg', 'directory'); // created at ROOT
+  });
 });

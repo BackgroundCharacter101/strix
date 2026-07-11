@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { complete, configureAi } from '@strix/ai-gateway';
 import type { GitBranches, GitLogEntry } from '../../main/git';
 import { useGitStatusState } from './useGitStatus';
 import { FileIcon } from './FileTree';
 import { showToast } from './toast';
 import { SparkleIcon } from './icons';
 import { COMMIT_MESSAGE_INSTRUCTION, cleanCommitMessage } from './commitMessage';
+import { freellmComplete } from './aiComplete';
 
 function basename(p: string): string {
   const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
@@ -145,11 +145,17 @@ export function SourceControlView({
         return;
       }
       await window.strix.ai.ensure(aiServerUrl || undefined);
-      configureAi(await window.strix.ai.config(aiServerUrl || undefined));
-      const reply = await complete('chat', {
-        filePath: '',
-        fileContent: diff,
-        userMessage: COMMIT_MESSAGE_INSTRUCTION,
+      // Route through the main process (FreeLLMAPI proxy). A renderer-direct
+      // completion is CORS-blocked from the packaged file:// origin, which is why
+      // "Generate" silently did nothing in shipped builds.
+      const reply = await freellmComplete({
+        serverUrl: aiServerUrl || '',
+        model: 'auto',
+        messages: [
+          { role: 'system', content: COMMIT_MESSAGE_INSTRUCTION },
+          { role: 'user', content: diff },
+        ],
+        maxTokens: 512,
       });
       const msg = cleanCommitMessage(reply);
       if (msg) setMessage(msg);
