@@ -182,7 +182,7 @@ Competition edition. No installer rebuild needed for day-to-day work.
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 411 tests / 59 files.**
+  **`npm test`** (vitest) — **all green: 420 tests / 61 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -516,6 +516,29 @@ strix/ (folder: tabea)
 | 8 | Packaging / installers | 🚧 electron-builder config + AI-server-as-node fix (`docs/PACKAGING.md`); needs a real Windows build + freellmapi writable-DB fix |
 
 ---
+
+## 9e. Session update — 2026-07-11 (live web preview + two fixes)
+
+- **Live web preview** (spec: `docs/superpowers/specs/2026-07-11-live-web-preview-design.md`).
+  A dedicated **Live Preview** tab (editor-area overlay) runs the project's dev
+  server and embeds the running app in an Electron `<webview>`, live-updating via
+  the dev server's own HMR — the whole functional site, not the static HTML render.
+  - **`main/devServer.ts`**: one managed dev-server child per root; scans stdout
+    line-by-line for the served URL (`detectServerUrl`, pure + tested), emits
+    `preview:url/log/exit`, kills the process tree on stop. `webviewTag: true` in
+    index.ts; webview external links routed to the OS browser.
+  - **IPC** `preview:start/stop/status` (+ events); **`renderer/src/LivePreview.tsx`**
+    with reload · open-external · responsive Desktop/Tablet/Mobile · DevTools · logs.
+    Plain HTML/JS (no dev script) → static-host fallback + reload-on-save.
+  - Opened from **Run & Serve** ("Open Live Preview") or the command palette
+    ("Preview: Open Live Preview"). Verified end-to-end (real child process:
+    spawn → URL scrape → tree-kill).
+- **Fix — terminal/FreeBuff resize smear** (commit e7383da): the terminal resized
+  ConPTY every animation frame during a resize drag, smearing the TUI; now a
+  trailing debounce fits once the drag settles.
+- **Fix — new FreeLLMAPI key not picked up** (e7383da): Settings is an overlay
+  over the mounted AI panel, so an added key never refreshed it; Settings now
+  broadcasts `strix:ai-keys-changed` and the panel re-loads config/models/keys.
 
 ## 9d. Session update — 2026-07-11 (live auto-update)
 

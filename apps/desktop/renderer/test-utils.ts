@@ -17,6 +17,7 @@ interface StrixApiOverrides {
   menu?: Partial<StrixApi['menu']>;
   win?: Partial<StrixApi['win']>;
   update?: Partial<StrixApi['update']>;
+  preview?: Partial<StrixApi['preview']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -154,6 +155,14 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       onReady: vi.fn(() => () => {}),
       onError: vi.fn(() => () => {}),
     },
+    preview: {
+      start: vi.fn(async () => ({ running: true, url: null, command: 'npm run dev', root: '/ws' })),
+      stop: vi.fn(async () => {}),
+      status: vi.fn(async () => ({ running: false, url: null, command: null, root: null })),
+      onUrl: vi.fn(() => () => {}),
+      onLog: vi.fn(() => () => {}),
+      onExit: vi.fn(() => () => {}),
+    },
   };
 
   return {
@@ -170,5 +179,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     menu: { ...base.menu, ...overrides.menu },
     win: { ...base.win, ...overrides.win },
     update: { ...base.update, ...overrides.update },
+    preview: { ...base.preview, ...overrides.preview },
   };
 }

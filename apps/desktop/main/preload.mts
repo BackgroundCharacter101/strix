@@ -199,6 +199,26 @@ const api: StrixApi = {
       return () => ipcRenderer.removeListener('update:error', h);
     },
   },
+  preview: {
+    start: (command) => ipcRenderer.invoke('preview:start', command),
+    stop: () => ipcRenderer.invoke('preview:stop'),
+    status: () => ipcRenderer.invoke('preview:status'),
+    onUrl: (cb) => {
+      const h = (_e: unknown, url: string) => cb(url);
+      ipcRenderer.on('preview:url', h);
+      return () => ipcRenderer.removeListener('preview:url', h);
+    },
+    onLog: (cb) => {
+      const h = (_e: unknown, chunk: string) => cb(chunk);
+      ipcRenderer.on('preview:log', h);
+      return () => ipcRenderer.removeListener('preview:log', h);
+    },
+    onExit: (cb) => {
+      const h = (_e: unknown, code: number | null) => cb(code);
+      ipcRenderer.on('preview:exit', h);
+      return () => ipcRenderer.removeListener('preview:exit', h);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);

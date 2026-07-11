@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 import { registerIpcHandlers } from './ipc.js';
 import { startAiServer, stopAiServer } from './aiServer.js';
+import { stopDevServer } from './devServer.js';
 import { buildAppMenu } from './menu.js';
 import { EDITION } from './edition.js';
 
@@ -68,6 +69,10 @@ function createWindow(blank = false) {
             sandbox: false,
             // Native spell-check for the AI prompt and other text inputs.
             spellcheck: true,
+            // Live Preview embeds the running dev-server app in a <webview>
+            // (isolated from the renderer's CSP). We only ever load localhost/dev
+            // URLs and route external navigations to the OS browser.
+            webviewTag: true,
         },
     });
 
@@ -220,8 +225,20 @@ if (!gotLock) {
     }).catch((e) => logError('whenReady failed:', e));
 }
 
+// Live Preview <webview> guests: open external (non-localhost) links and any
+// window.open/target=_blank in the OS browser instead of spawning child windows.
+app.on('web-contents-created', (_event, contents) => {
+    if (contents.getType() === 'webview') {
+        contents.setWindowOpenHandler(({ url }) => {
+            if (/^https?:\/\//i.test(url)) void shell.openExternal(url);
+            return { action: 'deny' };
+        });
+    }
+});
+
 app.on('will-quit', () => {
     stopAiServer();
+    stopDevServer();
 });
 
 app.on('window-all-closed', () => {

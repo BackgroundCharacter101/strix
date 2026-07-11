@@ -20,10 +20,12 @@ export function RunView({
   rootPath,
   activeFilePath,
   onRun,
+  onOpenLivePreview,
 }: {
   rootPath: string | null;
   activeFilePath: string | null;
   onRun: (command: string, label: string) => void;
+  onOpenLivePreview: () => void;
 }) {
   const [targets, setTargets] = useState<RunTarget[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,6 +129,23 @@ export function RunView({
 
   return (
     <div className="run-view" aria-label="run and serve">
+      <div className="scm-group-head">
+        <span>Live preview</span>
+      </div>
+      <ul className="run-list">
+        <li className="run-row">
+          <button
+            type="button"
+            className="run-target"
+            title="Run the dev server and preview the live app inside Strix"
+            onClick={onOpenLivePreview}
+          >
+            <PlayIcon size={13} />
+            <span className="run-label">Open Live Preview</span>
+            <span className="run-cmd">runs your dev server, embeds the app</span>
+          </button>
+        </li>
+      </ul>
       <div className="scm-group-head">
         <span>Local server</span>
       </div>

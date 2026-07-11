@@ -66,6 +66,7 @@ import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
 import { installServer, uninstallServer } from './languageServers.js';
 import { startStaticServer, stopStaticServer, staticServerInfo } from './staticServer.js';
+import { startDevServer, stopDevServer, devServerStatus } from './devServer.js';
 import { startWatching, stopWatching } from './watcher.js';
 
 // Maps the file:*, workspace:*, git:*, and terminal:* channels
@@ -473,6 +474,24 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
       return { ok: false, error };
     }
   });
+
+  // ── Live Preview (managed dev server) ────────────────────────────────────
+  ipcMain.handle('preview:start', (event, command: string) => {
+    const root = rootFor(event);
+    if (!root) throw new Error('No workspace folder open to preview.');
+    const send = (channel: string, payload: unknown) => {
+      if (!event.sender.isDestroyed()) event.sender.send(channel, payload);
+    };
+    return startDevServer(root, command, {
+      onUrl: (url) => send('preview:url', url),
+      onLog: (chunk) => send('preview:log', chunk),
+      onExit: (code) => send('preview:exit', code),
+    });
+  });
+  ipcMain.handle('preview:stop', () => {
+    stopDevServer();
+  });
+  ipcMain.handle('preview:status', () => devServerStatus());
 
   ipcMain.handle('update:apply', async () => {
     if (!stagedInstaller) return { ok: false, error: 'no update downloaded' };

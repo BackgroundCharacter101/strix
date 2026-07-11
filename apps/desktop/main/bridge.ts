@@ -276,6 +276,26 @@ export interface StrixWindowApi {
   popupMenu(label: string, x: number, y: number): void;
 }
 
+export interface DevServerStatus {
+  running: boolean;
+  url: string | null;
+  command: string | null;
+  root: string | null;
+}
+
+// Live Preview: run the project's dev server (or a static host) and stream its
+// served URL + logs so the renderer can embed the running app in a <webview>.
+export interface StrixPreviewApi {
+  // Start the dev command in the workspace root; resolves with the initial status
+  // (url arrives later via onUrl). Pass a static-host url to just track it.
+  start(command: string): Promise<DevServerStatus>;
+  stop(): Promise<void>;
+  status(): Promise<DevServerStatus>;
+  onUrl(cb: (url: string) => void): () => void;
+  onLog(cb: (chunk: string) => void): () => void;
+  onExit(cb: (code: number | null) => void): () => void;
+}
+
 export interface StrixApi {
   fs: StrixFsApi;
   workspace: StrixWorkspaceApi;
@@ -290,4 +310,5 @@ export interface StrixApi {
   menu: StrixMenuApi;
   win: StrixWindowApi;
   update: StrixUpdateApi;
+  preview: StrixPreviewApi;
 }

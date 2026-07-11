@@ -68,6 +68,14 @@ Control (stage/commit/**Sync**/branch/history/PR, AI commit messages), Problems,
 local static host + live HTML preview, integrated terminal (PowerShell/CMD/pwsh/Git Bash), command
 palette, Quick Open, Zen mode, Project Map (Competition).
 
+**Live web preview** — a **Live Preview** tab that runs your project's dev server
+(`npm run dev` / Vite / Next / …), captures its localhost URL, and embeds the
+**running app** in an in-IDE mini-browser (Electron `<webview>`) with the dev
+server's own **HMR/live-update** — the whole functional site, not just the static
+HTML render. Reload · open-in-browser · responsive Desktop/Tablet/Mobile · logs.
+Plain HTML/JS sites fall back to the static host and reload on save. Open it from
+Run & Serve or the command palette ("Preview: Open Live Preview").
+
 **Live auto-update** — on launch Strix checks an update server; if a newer build
 exists a banner offers it (**Update now** → download + **sha256-verify** →
 **Restart to apply**). Updates install **silently** (per-user, no UAC) and
@@ -124,11 +132,11 @@ local models*.
 ```powershell
 npm run typecheck    # tsc --build (strict)
 npm run lint         # eslint (flat) + typescript-eslint
-npm test             # vitest — 411 tests / 59 files
+npm test             # vitest — 420 tests / 61 files
 npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 ```
 
-Current: typecheck + lint clean · **411 tests** pass · **0 prod vulns** · both editions build.
+Current: typecheck + lint clean · **420 tests** pass · **0 prod vulns** · both editions build.
 
 ## Repo layout
 

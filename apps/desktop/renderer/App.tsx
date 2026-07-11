@@ -42,6 +42,7 @@ import {
   TerminalIcon,
 } from './src/icons';
 import { RunView } from './src/RunView';
+import { LivePreview } from './src/LivePreview';
 import { extractLocalUrl } from './src/runTargets';
 import { CLAUDE_ENABLED, CYBERSEC_ENABLED, GITHUB_CLIENT_ID, IS_COMPETITION } from './src/edition';
 import { ProjectMapView } from './src/ProjectMapView';
@@ -93,6 +94,7 @@ export default function App() {
   const [treeNonce, setTreeNonce] = useState(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [livePreviewOpen, setLivePreviewOpen] = useState(false);
   // Which Settings section to open at (deep-link, e.g. from the AI panel).
   const [settingsSection, setSettingsSection] = useState<
     'appearance' | 'editor' | 'ai' | 'security'
@@ -733,6 +735,7 @@ export default function App() {
     { id: 'view.search', label: 'View: Search', detail: 'Ctrl+Shift+F', run: () => selectView('search') },
     { id: 'view.scm', label: 'View: Source Control', detail: '', run: () => selectView('scm') },
     { id: 'view.run', label: 'View: Run & Serve', detail: '', run: () => selectView('run') },
+    { id: 'preview.live', label: 'Preview: Open Live Preview', detail: '', run: () => setLivePreviewOpen(true) },
     { id: 'view.problems', label: 'View: Problems', detail: '', run: () => selectView('problems') },
     { id: 'view.ai', label: 'View: Toggle AI Panel', detail: '', run: () => setShowAi((v) => !v) },
     { id: 'view.terminal', label: 'View: Toggle Terminal', detail: 'Ctrl+`', run: () => setShowTerminal((v) => !v) },
@@ -1062,6 +1065,11 @@ export default function App() {
         </nav>
         )}
         <div className="app-main">
+          {livePreviewOpen && (
+            <div className="live-overlay">
+              <LivePreview workspaceKey={root} onClose={() => setLivePreviewOpen(false)} />
+            </div>
+          )}
           <div className="workbench">
             {showSidebar && !zen && (
               <>
@@ -1115,6 +1123,7 @@ export default function App() {
                       rootPath={root}
                       activeFilePath={activeTabs.activePath}
                       onRun={runTarget}
+                      onOpenLivePreview={() => setLivePreviewOpen(true)}
                     />
                   ) : sidebarView === 'extensions' ? (
                     <ExtensionsView />
