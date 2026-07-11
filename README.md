@@ -68,6 +68,13 @@ Control (stage/commit/**Sync**/branch/history/PR, AI commit messages), Problems,
 local static host + live HTML preview, integrated terminal (PowerShell/CMD/pwsh/Git Bash), command
 palette, Quick Open, Zen mode, Project Map (Competition).
 
+**Live auto-update** — on launch Strix checks an update server; if a newer build
+exists a banner offers it (**Update now** → download + **sha256-verify** →
+**Restart to apply**). Updates install **silently** (per-user, no UAC) and
+relaunch. Publish a release with `npm run update:publish`; serve it locally with
+`npm run update:serve` (Phase 1) or from any https host (Phase 2). Help → *Check
+for Updates…* checks on demand.
+
 **Multi-window** — open several windows, **one project per window** (own watcher, LSP, search).
 
 **Themes** — clean dark (violet accent) + **Black (OLED)**, midnight, high-contrast, light; accents
@@ -78,8 +85,8 @@ gold/violet/teal/emerald/blue/red/white/black; opt-in Liquid Glass.
 ## Install
 
 Prebuilt Windows installers are produced by `npm run package:m1` / `package:competition` (custom
-**Inno Setup** installer: per-machine install, opt-in desktop shortcut / add-to-PATH / "Open with
-Strix"). The apps are **not code-signed** yet, so Windows SmartScreen shows an "unknown publisher"
+**Inno Setup** installer: **per-user** install under `%LOCALAPPDATA%\Programs` — no UAC, so live
+auto-update applies silently — with opt-in desktop shortcut / add-to-PATH / "Open with Strix"). The apps are **not code-signed** yet, so Windows SmartScreen shows an "unknown publisher"
 warning — click **More info → Run anyway** (see [PROGRESS.md](PROGRESS.md) for the code-signing plan).
 
 ## Develop
@@ -115,11 +122,11 @@ local models*.
 ```powershell
 npm run typecheck    # tsc --build (strict)
 npm run lint         # eslint (flat) + typescript-eslint
-npm test             # vitest — 391 tests / 56 files
+npm test             # vitest — 408 tests / 59 files
 npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 ```
 
-Current: typecheck + lint clean · **391 tests** pass · **0 prod vulns** · both editions build.
+Current: typecheck + lint clean · **408 tests** pass · **0 prod vulns** · both editions build.
 
 ## Repo layout
 

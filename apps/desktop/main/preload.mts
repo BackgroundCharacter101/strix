@@ -174,6 +174,31 @@ const api: StrixApi = {
     },
     popupMenu: (label, x, y) => ipcRenderer.send('win:popupMenu', { label, x, y }),
   },
+  update: {
+    check: () => ipcRenderer.invoke('update:check'),
+    download: (info) => ipcRenderer.invoke('update:download', info),
+    apply: () => ipcRenderer.invoke('update:apply'),
+    onAvailable: (cb) => {
+      const h = (_e: unknown, info: Parameters<typeof cb>[0]) => cb(info);
+      ipcRenderer.on('update:available', h);
+      return () => ipcRenderer.removeListener('update:available', h);
+    },
+    onProgress: (cb) => {
+      const h = (_e: unknown, p: Parameters<typeof cb>[0]) => cb(p);
+      ipcRenderer.on('update:progress', h);
+      return () => ipcRenderer.removeListener('update:progress', h);
+    },
+    onReady: (cb) => {
+      const h = (_e: unknown, p: Parameters<typeof cb>[0]) => cb(p);
+      ipcRenderer.on('update:ready', h);
+      return () => ipcRenderer.removeListener('update:ready', h);
+    },
+    onError: (cb) => {
+      const h = (_e: unknown, p: Parameters<typeof cb>[0]) => cb(p);
+      ipcRenderer.on('update:error', h);
+      return () => ipcRenderer.removeListener('update:error', h);
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld('strix', api);

@@ -16,6 +16,7 @@ interface StrixApiOverrides {
   search?: Partial<StrixApi['search']>;
   menu?: Partial<StrixApi['menu']>;
   win?: Partial<StrixApi['win']>;
+  update?: Partial<StrixApi['update']>;
 }
 
 // Builds a complete fake StrixApi with no-op defaults. Tests pass section
@@ -144,6 +145,15 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       onMaximizeChange: vi.fn(() => () => {}),
       popupMenu: vi.fn(),
     },
+    update: {
+      check: vi.fn(async () => ({ available: false, current: '0.1.0' })),
+      download: vi.fn(async () => ({ ok: true })),
+      apply: vi.fn(async () => ({ ok: true })),
+      onAvailable: vi.fn(() => () => {}),
+      onProgress: vi.fn(() => () => {}),
+      onReady: vi.fn(() => () => {}),
+      onError: vi.fn(() => () => {}),
+    },
   };
 
   return {
@@ -159,5 +169,6 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
     search: { ...base.search, ...overrides.search },
     menu: { ...base.menu, ...overrides.menu },
     win: { ...base.win, ...overrides.win },
+    update: { ...base.update, ...overrides.update },
   };
 }

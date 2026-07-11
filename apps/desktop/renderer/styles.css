@@ -4537,3 +4537,79 @@ a:focus-visible,
   border-radius: 50%;
   animation: agent-pulse 1.2s ease-in-out infinite;
 }
+
+/* ── Live auto-update banner ─────────────────────────────────────────────────
+   A slim strip under the title bar. Accent-tinted so it reads as an offer, not
+   an error; the error state switches to the danger token. Sits in normal flow
+   (pushes the workbench down) so it never covers content. */
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 14px;
+  font-size: var(--text-sm);
+  color: var(--text);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.update-banner[data-kind='error'] {
+  background: var(--danger-bg);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+.update-msg {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.update-msg-error {
+  color: var(--danger);
+}
+.update-notes {
+  color: var(--text-muted);
+}
+.update-actions {
+  display: inline-flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.update-btn {
+  padding: 3px 12px;
+  font-size: var(--text-xs);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.update-btn:hover {
+  border-color: var(--accent);
+}
+.update-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.update-btn-primary {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: transparent;
+}
+.update-btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: transparent;
+}
+.update-progress {
+  flex: 0 0 140px;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+  overflow: hidden;
+}
+.update-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.15s ease;
+}

@@ -130,6 +130,8 @@ export function buildAppMenu(win: BrowserWindow, onNewWindow?: () => void): void
     {
       label: 'Help',
       submenu: [
+        { label: 'Check for Updates…', click: send('help.updates') },
+        { type: 'separator' },
         { label: 'About Strix', click: send('help.about') },
         {
           label: 'Strix on GitHub',

@@ -30,3 +30,6 @@ freellmapi/.bundle/
 
 # Live-reload dev loop scratch (FreeLLMAPI db, etc.)
 .dev-data/
+
+# Update feed (published installers + manifests)
+dist-updates/

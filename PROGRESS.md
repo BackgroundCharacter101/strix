@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-07-10
+> Last updated: 2026-07-11
 
 ---
 
@@ -182,7 +182,7 @@ Competition edition. No installer rebuild needed for day-to-day work.
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 391 tests / 56 files.**
+  **`npm test`** (vitest) — **all green: 408 tests / 59 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -516,6 +516,30 @@ strix/ (folder: tabea)
 | 8 | Packaging / installers | 🚧 electron-builder config + AI-server-as-node fix (`docs/PACKAGING.md`); needs a real Windows build + freellmapi writable-DB fix |
 
 ---
+
+## 9d. Session update — 2026-07-11 (live auto-update)
+
+- **Live auto-update** (spec: `docs/superpowers/specs/2026-07-11-live-auto-update-design.md`).
+  On launch the app checks an update server; a newer version shows a banner
+  (**Update now** → download + **sha256-verify** → **Restart to apply**). Updates
+  install silently (per-user, no UAC) and relaunch.
+  - **Pure core** `apps/desktop/main/updater.ts` (no electron import →
+    unit-tested): `compareVersions`, `parseManifest`, `checkForUpdate`,
+    `downloadAndVerify` (streams + verifies, deletes + throws on mismatch).
+  - **IPC** in `ipc.ts`: `update:check` / `:download` / `:apply` + pushed
+    `update:available/progress/ready/error` events. Feed URL =
+    `STRIX_UPDATE_URL` env → `__STRIX_UPDATE_URL__` build define → localhost:8787.
+  - **UI** `renderer/src/UpdateBanner.tsx` (self-contained state machine; launch
+    check silent on error, manual check via Help → *Check for Updates…*).
+  - **Installer** `build/installer.iss` switched to **per-user** (`{localappdata}\
+    Programs`, `PrivilegesRequired=lowest`, `CloseApplications=yes`) + a
+    `skipifnotsilent` `[Run]` entry that relaunches after a silent update.
+    (Existing admin installs need one manual reinstall to migrate.)
+  - **Feed scripts**: `npm run update:serve` (static server for `dist-updates/`),
+    `npm run update:publish [m1|competition]` (copies the built installer, writes
+    `latest-<edition>.json` + sha256). `dist-updates/` is gitignored.
+  - Also fixed a pre-existing flaky assertion in `AiPanel.test.tsx` (localStorage
+    persistence is a post-commit effect → now awaited via `waitFor`).
 
 ## 9c. Session update — 2026-06-05 (feature batch)
 

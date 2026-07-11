@@ -88,9 +88,12 @@ describe('AiPanel', () => {
       expect.any(Object),
       expect.objectContaining({ model: 'groq/llama-3.3-70b' }),
     );
-    // user message persisted to the thread + localStorage
+    // user message persisted to the thread + localStorage. Persistence runs in a
+    // post-commit effect, so await it rather than reading synchronously.
     expect(screen.getByLabelText('AI conversation')).toHaveTextContent('what is this?');
-    expect(localStorage.getItem('strix.ai.history:global')).toContain('what is this?');
+    await waitFor(() =>
+      expect(localStorage.getItem('strix.ai.history:global')).toContain('what is this?'),
+    );
   });
 
   it('sends on Enter and inserts a newline on Shift+Enter', async () => {

@@ -38,16 +38,21 @@ AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyVersion}
 AppPublisher=Strix
-DefaultDirName={autopf}\{#MyAppName}
+DefaultDirName={localappdata}\Programs\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 DisableDirPage=no
 ; Inno 6 hides the Welcome page by default; show it so the glass art appears.
 DisableWelcomePage=no
-; Per-machine install into Program Files (asks for UAC elevation). Users without
-; admin can still fall back to a per-user install via the dialog.
-PrivilegesRequired=admin
-PrivilegesRequiredOverridesAllowed=dialog
+; Per-USER install under %LOCALAPPDATA%\Programs — no UAC prompt. This is what
+; makes live auto-update fully silent: the app can replace its own install with
+; no elevation. (Was admin/Program Files; existing admin installs need one
+; manual reinstall to migrate.)
+PrivilegesRequired=lowest
+; Let Inno close a running Strix (via Restart Manager) so a silent self-update
+; can overwrite the in-use exe; we relaunch it ourselves from [Run].
+CloseApplications=yes
+RestartApplications=no
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 ArchitecturesAllowed=x64compatible
@@ -91,7 +96,11 @@ Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix";
 Root: HKCU; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix\command"; ValueType: string; ValueData: """{app}\{#MyExe}"" ""%V"""; Tasks: openwith
 
 [Run]
+; Interactive install: offer a "Launch now" checkbox on the finish page.
 Filename: "{app}\{#MyExe}"; Description: "Launch {#MyAppName} now"; Flags: nowait postinstall skipifsilent
+; Silent install (a live auto-update): relaunch Strix automatically once files
+; are swapped, since there's no finish page to click.
+Filename: "{app}\{#MyExe}"; Flags: nowait skipifnotsilent
 
 [Code]
 // Only append to PATH when our dir isn't already present.

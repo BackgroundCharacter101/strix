@@ -1,6 +1,15 @@
-import { ipcMain, shell } from 'electron';
+import { ipcMain, shell, app } from 'electron';
 import * as os from 'os';
+import * as path from 'node:path';
+import { spawn } from 'node:child_process';
 import { streamDirect, streamFreeLLM, detectLocalModels } from './aiProxy.js';
+import {
+  checkForUpdate,
+  downloadAndVerify,
+  DEFAULT_FEED_URL,
+  type UpdateManifest,
+} from './updater.js';
+import { EDITION } from './edition.js';
 import {
   buildFileTree,
   readDir,
@@ -415,5 +424,72 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   );
   ipcMain.on('ai:freellmCancel', (_event, payload: { id: number }) => {
     if (freellmCancels.has(payload.id)) freellmCancels.set(payload.id, true);
+  });
+
+  // ── Live auto-update ─────────────────────────────────────────────────────
+  // Feed URL: build-time default, overridable at runtime (Phase 2 real host).
+  const feedURL = process.env.STRIX_UPDATE_URL || DEFAULT_FEED_URL;
+  // The verified installer path from the last successful download, consumed by
+  // update:apply. Held in the closure so it survives across the two IPC calls.
+  let stagedInstaller: string | null = null;
+
+  ipcMain.handle('update:check', async (event) => {
+    try {
+      const result = await checkForUpdate({
+        feedURL,
+        edition: EDITION,
+        currentVersion: app.getVersion(),
+      });
+      if (result.available && result.manifest && !event.sender.isDestroyed()) {
+        event.sender.send('update:available', result.manifest);
+      }
+      return result;
+    } catch (e) {
+      const error = e instanceof Error ? e.message : String(e);
+      if (!event.sender.isDestroyed()) event.sender.send('update:error', { error });
+      return { available: false, current: app.getVersion() };
+    }
+  });
+
+  ipcMain.handle('update:download', async (event, manifest: UpdateManifest) => {
+    try {
+      const destPath = path.join(app.getPath('temp'), `strix-update-${manifest.version}.exe`);
+      await downloadAndVerify({
+        url: manifest.url,
+        sha256: manifest.sha256,
+        destPath,
+        onProgress: (p) => {
+          if (!event.sender.isDestroyed()) event.sender.send('update:progress', p);
+        },
+      });
+      stagedInstaller = destPath;
+      if (!event.sender.isDestroyed())
+        event.sender.send('update:ready', { version: manifest.version });
+      return { ok: true, path: destPath };
+    } catch (e) {
+      const error = e instanceof Error ? e.message : String(e);
+      if (!event.sender.isDestroyed()) event.sender.send('update:error', { error });
+      return { ok: false, error };
+    }
+  });
+
+  ipcMain.handle('update:apply', async () => {
+    if (!stagedInstaller) return { ok: false, error: 'no update downloaded' };
+    try {
+      // Inno silent upgrade over the existing per-user install. The installer's
+      // [Run] entry with `skipifnotsilent` relaunches Strix once files are
+      // swapped, so we just launch it detached and quit to release file locks.
+      const child = spawn(stagedInstaller, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+      // Quit shortly after so our exe/handles are free for the installer to
+      // overwrite (Inno also closes us via Restart Manager as a fallback).
+      setTimeout(() => app.quit(), 400);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
   });
 }

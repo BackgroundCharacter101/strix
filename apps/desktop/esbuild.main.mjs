@@ -27,6 +27,11 @@ const common = {
   external: ['electron', 'node-pty'],
   define: {
     __STRIX_EDITION__: JSON.stringify(edition),
+    // Update feed URL baked at build time; runtime STRIX_UPDATE_URL still wins.
+    // Phase 1 default = the local update server; Phase 2 = set this at build.
+    __STRIX_UPDATE_URL__: JSON.stringify(
+      process.env.STRIX_UPDATE_URL ?? 'http://localhost:8787',
+    ),
     // CJS output has no `import.meta.url`; code uses it (createRequire,
     // fileURLToPath). Map every occurrence to a banner const derived from the
     // CJS __filename, or createRequire(undefined) throws ERR_INVALID_ARG_VALUE.

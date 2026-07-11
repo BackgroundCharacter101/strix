@@ -13,6 +13,7 @@ import { ExtensionsView } from './src/ExtensionsView';
 import { DiffView } from './src/DiffView';
 import { SettingsPage } from './src/SettingsPage';
 import { AboutDialog } from './src/AboutDialog';
+import { UpdateBanner } from './src/UpdateBanner';
 import { ShortcutsDialog } from './src/ShortcutsDialog';
 import { Toaster } from './src/Toaster';
 import { TitleBar } from './src/TitleBar';
@@ -958,6 +959,7 @@ export default function App() {
   return (
     <div className="app" data-zen={zen}>
       {!zen && <TitleBar />}
+      <UpdateBanner />
       <div className="app-body">
         {!zen && (
         <nav className="activity-bar" aria-label="panels">

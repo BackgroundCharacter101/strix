@@ -232,6 +232,35 @@ export interface StrixMenuApi {
   onCommand(cb: (id: string) => void): () => void;
 }
 
+export interface UpdateInfo {
+  version: string;
+  url: string;
+  sha256: string;
+  notes?: string;
+  mandatory?: boolean;
+  pubDate?: string;
+}
+
+export interface UpdateProgress {
+  received: number;
+  total: number;
+  percent: number;
+}
+
+// Live auto-update. `check` asks the update server whether a newer build exists
+// (also pushes `onAvailable` when it does); `download` fetches + sha256-verifies
+// the installer (streaming `onProgress`, ending in `onReady`/`onError`);
+// `apply` runs the verified installer silently and quits so it can relaunch.
+export interface StrixUpdateApi {
+  check(): Promise<{ available: boolean; current: string; manifest?: UpdateInfo }>;
+  download(info: UpdateInfo): Promise<{ ok: boolean; path?: string; error?: string }>;
+  apply(): Promise<{ ok: boolean; error?: string }>;
+  onAvailable(cb: (info: UpdateInfo) => void): () => void;
+  onProgress(cb: (p: UpdateProgress) => void): () => void;
+  onReady(cb: (p: { version: string }) => void): () => void;
+  onError(cb: (p: { error: string }) => void): () => void;
+}
+
 // Window controls for the custom (frameless) title bar.
 export interface StrixWindowApi {
   minimize(): void;
@@ -260,4 +289,5 @@ export interface StrixApi {
   search: StrixSearchApi;
   menu: StrixMenuApi;
   win: StrixWindowApi;
+  update: StrixUpdateApi;
 }
