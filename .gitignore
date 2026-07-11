@@ -33,3 +33,6 @@ freellmapi/.bundle/
 
 # Update feed (published installers + manifests)
 dist-updates/
+
+# graphify knowledge-graph output (generated)
+graphify-out/
