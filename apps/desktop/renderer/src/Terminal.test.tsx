@@ -92,6 +92,17 @@ describe('Terminal', () => {
     await waitFor(() => expect(window.strix.terminal.resize).toHaveBeenCalledWith('term-1', 80, 24));
   });
 
+  it('coalesces a burst of resizes (a drag) into a single PTY resize', async () => {
+    render(<Terminal />);
+    await waitFor(() => expect(create).toHaveBeenCalled());
+
+    // A resize drag fires many events in quick succession; the trailing debounce
+    // must collapse them to ONE ConPTY resize so the TUI doesn't smear mid-drag.
+    for (let i = 0; i < 6; i++) window.dispatchEvent(new Event('resize'));
+    await waitFor(() => expect(window.strix.terminal.resize).toHaveBeenCalled());
+    expect(window.strix.terminal.resize).toHaveBeenCalledTimes(1);
+  });
+
   it('kills the session and disposes the terminal on unmount', async () => {
     const { unmount } = render(<Terminal />);
     await waitFor(() => expect(create).toHaveBeenCalled());

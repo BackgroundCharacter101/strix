@@ -204,19 +204,22 @@ export function Terminal({
     // catches every cause (panel drag, tab show/hide, window resize, late
     // layout) — a window 'resize' listener alone missed panel/tab changes, so
     // TUI apps like FreeBuff rendered at the wrong size.
-    // Coalesce bursts of resize events (panel drag fires many) into one fit +
-    // PTY resize per frame — resizing ConPTY mid-stream repeatedly is what
-    // smears box-drawing / leaves stray characters.
-    let resizeRaf = 0;
+    // Debounce (trailing) so a resize DRAG — which fires a continuous burst of
+    // events — produces exactly ONE fit + PTY resize once the drag settles.
+    // Resizing ConPTY repeatedly mid-drag is what smears box-drawing / leaves
+    // stray characters in FreeBuff and the shell; a per-frame refit still hit
+    // ConPTY ~60×/s during a drag. The terminal briefly keeps its old size while
+    // dragging (the container just clips), then snaps to fit on release.
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const syncSize = () => {
-      if (resizeRaf) return;
-      resizeRaf = requestAnimationFrame(() => {
-        resizeRaf = 0;
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resizeTimer = null;
         fit.fit();
         if (sessionRef.current) {
           window.strix.terminal.resize(sessionRef.current, term.cols, term.rows);
         }
-      });
+      }, 120);
     };
     // ResizeObserver isn't available in some test (jsdom) environments. Only
     // refit from it when the element is actually visible (a hidden/display:none
@@ -232,7 +235,7 @@ export function Terminal({
 
     return () => {
       disposed = true;
-      if (resizeRaf) cancelAnimationFrame(resizeRaf);
+      if (resizeTimer) clearTimeout(resizeTimer);
       ro?.disconnect();
       window.removeEventListener('resize', syncSize);
       offData();

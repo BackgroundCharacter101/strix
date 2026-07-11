@@ -544,6 +544,10 @@ export function AiPanel({
   const [proposal, setProposal] = useState<{ original: string; suggested: string } | null>(null);
   // null = unknown/checking; true/false = whether any provider key is configured.
   const [hasKeys, setHasKeys] = useState<boolean | null>(null);
+  // Bumped when provider keys change in the Settings overlay (which renders OVER
+  // this still-mounted panel, so no remount/focus fires). Re-runs the config,
+  // model-list, and hasKeys effects so a freshly added key is picked up at once.
+  const [keysNonce, setKeysNonce] = useState(0);
   // Compact whole-project context (name + file tree) so the AI can answer
   // questions about the project even with no file open. Loaded per workspace.
   const [projectContext, setProjectContext] = useState('');
@@ -585,7 +589,16 @@ export function AiPanel({
     return () => {
       cancelled = true;
     };
-  }, [aiServerUrl, serverReady]);
+  }, [aiServerUrl, serverReady, keysNonce]);
+
+  // A provider key added/removed in Settings (an overlay over this panel) fires
+  // this window event so we re-fetch config, models, and hasKeys immediately —
+  // otherwise the panel would stay stale until an OS window focus or a restart.
+  useEffect(() => {
+    const onKeysChanged = () => setKeysNonce((n) => n + 1);
+    window.addEventListener('strix:ai-keys-changed', onKeysChanged);
+    return () => window.removeEventListener('strix:ai-keys-changed', onKeysChanged);
+  }, []);
 
   // Detect whether the AI is usable, so we can prompt the user to configure it.
   // A direct model selected, or any direct model added, or a FreeLLMAPI provider
@@ -613,7 +626,7 @@ export function AiPanel({
       cancelled = true;
       window.removeEventListener('focus', check);
     };
-  }, [aiServerUrl, directOn, aiDirectModels.length]);
+  }, [aiServerUrl, directOn, aiDirectModels.length, keysNonce]);
 
   // Reload the conversation when the workspace changes (per-project chat).
   useEffect(() => {

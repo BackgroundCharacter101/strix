@@ -55,6 +55,9 @@ function ProviderKeys({ serverUrl }: { serverUrl?: string }) {
       setValue('');
       showToast(`${platformLabel(platform)} key added`, 'success');
       refresh();
+      // Tell the (still-mounted, behind-this-overlay) AI panel to re-check keys
+      // + reload models so the new key works without an alt-tab or restart.
+      window.dispatchEvent(new Event('strix:ai-keys-changed'));
     } else {
       showToast(res.error || 'Could not add key', 'error', 6000);
     }
@@ -64,6 +67,7 @@ function ProviderKeys({ serverUrl }: { serverUrl?: string }) {
     await window.strix.ai.deleteKey(id, url);
     showToast('API key removed', 'info');
     refresh();
+    window.dispatchEvent(new Event('strix:ai-keys-changed'));
   };
 
   return (

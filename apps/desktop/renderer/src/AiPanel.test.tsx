@@ -37,6 +37,33 @@ beforeEach(() => {
 });
 
 describe('AiPanel', () => {
+  it('re-checks keys + models when a key is added in Settings (strix:ai-keys-changed)', async () => {
+    let keyPresent = false;
+    const listKeys = vi.fn(async () =>
+      keyPresent ? [{ id: 1, platform: 'groq', label: '', maskedKey: '…', status: 'unknown', enabled: true }] : [],
+    );
+    const models = vi.fn(async () => (keyPresent ? ['auto', 'groq/llama-3.3-70b'] : ['auto']));
+    window.strix = makeStrixApi({
+      ai: {
+        config: vi.fn(async () => ({ baseURL: 'http://localhost:3001/v1', apiKey: '' })),
+        listKeys,
+        models,
+      },
+    });
+    render(<AiPanel filePath={null} fileContent="" />);
+    // No key yet → the "AI not configured" banner shows.
+    await waitFor(() => expect(screen.getByText('AI not configured')).toBeInTheDocument());
+
+    // Simulate adding a key in Settings, then the broadcast.
+    keyPresent = true;
+    window.dispatchEvent(new Event('strix:ai-keys-changed'));
+
+    // Panel re-checks and the banner clears without a remount / window focus.
+    await waitFor(() => expect(screen.queryByText('AI not configured')).toBeNull());
+    expect(listKeys).toHaveBeenCalledTimes(2);
+    expect(models).toHaveBeenCalledTimes(2);
+  });
+
   it('configures the AI client from the bridge on mount', async () => {
     render(<AiPanel filePath={null} fileContent="" />);
     await waitFor(() =>
