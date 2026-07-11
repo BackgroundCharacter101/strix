@@ -21,6 +21,7 @@ import {
   type NormalizedSymbol,
 } from './lspClient';
 import { connectCollab, roomForPath, pickUserColor } from './collab';
+import { computeLineHunks } from './dirtyDiff';
 import { MarkdownPreview } from './MarkdownPreview';
 import { HtmlPreview, relUrlPath } from './HtmlPreview';
 import { showToast } from './toast';
@@ -750,6 +751,52 @@ export function FileViewer({
                 }),
               );
             });
+
+            // Git "dirty diff" gutter — mark lines changed vs HEAD (added /
+            // modified) and where lines were deleted. HEAD is fetched once per
+            // mount; recompute on edit (debounced). Untracked / non-repo files
+            // (fileHead rejects) simply show no marks.
+            if (path) {
+              const collection = editor.createDecorationsCollection();
+              let head: string | null = null;
+              let gutterTimer: number | undefined;
+              const rulerColor = (t: string) =>
+                t === 'delete' ? '#f14c4c' : t === 'add' ? '#4b9c3a' : '#3a8fbf';
+              const recompute = () => {
+                if (head === null) return;
+                const hunks = computeLineHunks(head, model.getValue());
+                collection.set(
+                  hunks.map((h) => ({
+                    range: new monaco.Range(h.start, 1, h.end, 1),
+                    options: {
+                      linesDecorationsClassName: `dirty-gutter dirty-${h.type}`,
+                      overviewRuler: {
+                        color: rulerColor(h.type),
+                        position: monaco.editor.OverviewRulerLane.Left,
+                      },
+                    },
+                  })),
+                );
+              };
+              void window.strix.git
+                .fileHead(path)
+                .then((content) => {
+                  head = content;
+                  recompute();
+                })
+                .catch(() => {
+                  head = null;
+                });
+              const gutterSub = editor.onDidChangeModelContent(() => {
+                window.clearTimeout(gutterTimer);
+                gutterTimer = window.setTimeout(recompute, 500);
+              });
+              disposers.push(() => {
+                window.clearTimeout(gutterTimer);
+                gutterSub.dispose();
+                collection.clear();
+              });
+            }
 
             return () => disposers.forEach((d) => d());
           }}
