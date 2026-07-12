@@ -313,7 +313,6 @@ export function AiPanel({
   fileContent,
   onApplyEdit,
   onAskClaude,
-  onAskFreebuff,
   selectionRequest,
   seedPrompt,
   freebuffEnv,
@@ -937,36 +936,6 @@ export function AiPanel({
     }
   }, [seedPrompt]);
 
-  // Fix (§8.4) / Refactor (§8.6): ask for the full updated file, show a diff.
-  const propose = async (task: TaskType) => {
-    await ensureAi();
-    setBusy(true);
-    setProposal(null);
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const suggested = await completeAny(
-        task,
-        {
-          filePath: filePath ?? '',
-          fileContent,
-          userMessage: 'Return the full updated file. Code only, no explanation or fences.',
-          securityMode,
-          securityStance,
-          securityPersonaText,
-        },
-        tuned(controller.signal),
-      );
-      if (suggested.trim()) setProposal({ original: fileContent, suggested });
-    } catch {
-      if (!controller.signal.aborted) {
-        showToast('AI request failed — check the AI server / your key.', 'error', 6000);
-      }
-    } finally {
-      setBusy(false);
-      abortRef.current = null;
-    }
-  };
 
   // Re-run the most recent user turn (drops the last assistant reply first).
   const regenerate = async () => {
@@ -1781,9 +1750,8 @@ export function AiPanel({
               <SparkleIcon size={26} />
               <p>Ask anything about your code.</p>
               <p className="ai-empty-hint">
-                {fileReady
-                  ? 'Use Explain, Check security, Fix or Refactor on the open file.'
-                  : 'Open a file to unlock the per-file actions below.'}
+                Chat to explain, fix or refactor — pick a mode above (Manual /
+                Accept edits / Plan). Type <strong>/</strong> to call an agent.
               </p>
             </div>
           ) : (
@@ -2139,34 +2107,6 @@ export function AiPanel({
             </button>
           )}
         </div>
-        <div className="ai-actions ai-file-actions">
-          <button type="button" onClick={() => run('explain')} disabled={busy || !fileReady}>
-            Explain
-          </button>
-          <button type="button" onClick={() => run('vuln_check')} disabled={busy || !fileReady}>
-            Check security
-          </button>
-          <button type="button" onClick={() => propose('fix')} disabled={busy || !fileReady}>
-            Fix
-          </button>
-          <button type="button" onClick={() => propose('refactor')} disabled={busy || !fileReady}>
-            Refactor
-          </button>
-        </div>
-        {onAskFreebuff && (
-          <button
-            type="button"
-            className="ai-agent-btn ai-freebuff-btn"
-            title="Send this prompt to FreeBuff (free coding agent) and run it"
-            disabled={input.trim().length === 0 && !fileReady}
-            onClick={() => {
-              onAskFreebuff(input);
-              setInput('');
-            }}
-          >
-            <SparkleIcon size={13} /> Ask FreeBuff
-          </button>
-        )}
         {onAskClaude && (
           <button
             type="button"

@@ -113,11 +113,9 @@ describe('AiPanel', () => {
     expect(select.value).toBe('auto');
   });
 
-  it('disables Send until input, and file actions until a file is selected', () => {
+  it('disables Send until there is input', () => {
     render(<AiPanel filePath={null} fileContent="" />);
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Explain' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Check security' })).toBeDisabled();
   });
 
   it('sends chat with history + selected model and appends the turn to the thread', async () => {
@@ -191,42 +189,6 @@ describe('AiPanel', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument());
   });
 
-  it('runs explain against the live editor content', async () => {
-    render(<AiPanel filePath="/ws/a.ts" fileContent="const unsaved = 2;" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Explain' }));
-    await waitFor(() =>
-      expect(runTask).toHaveBeenCalledWith(
-        'explain',
-        expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const unsaved = 2;' }),
-        expect.any(Object),
-        expect.objectContaining({ model: 'auto' }),
-      ),
-    );
-  });
-
-  it('proposes a refactor diff and applies it to the editor', async () => {
-    complete.mockResolvedValue('const refactored = true;');
-    const onApplyEdit = vi.fn();
-    render(
-      <AiPanel filePath="/ws/a.ts" fileContent="const old = 1;" onApplyEdit={onApplyEdit} />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Refactor' }));
-
-    const proposal = await screen.findByLabelText('proposed change');
-    expect(complete).toHaveBeenCalledWith(
-      'refactor',
-      expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const old = 1;' }),
-      expect.objectContaining({ model: 'auto' }),
-    );
-    expect(within(proposal).getByLabelText('diff')).toHaveAttribute(
-      'data-modified',
-      'const refactored = true;',
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
-    expect(onApplyEdit).toHaveBeenCalledWith('const refactored = true;');
-  });
 
   it('runs Explain on a selection request and shows it in the thread', async () => {
     runTask.mockImplementation(async (_t, _o, cb) => {

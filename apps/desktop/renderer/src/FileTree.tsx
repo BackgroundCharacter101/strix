@@ -118,6 +118,9 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
   // on a folder MOVES it (copyMove lets both effects work).
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData('text/strix-path', node.path);
+    // text/plain fallback: some environments only preserve standard MIME types
+    // through a drop, so we can still recover the source path.
+    e.dataTransfer.setData('text/plain', node.path);
     e.dataTransfer.effectAllowed = 'copyMove';
   };
   if (node.type === 'file') {
@@ -157,8 +160,16 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
         onClick={() => onToggle(node.path)}
         onContextMenu={(e) => onContext(node, e)}
         // Folder = drop target: accept a dragged path and move it in here.
+        // preventDefault on BOTH dragEnter and dragOver — Chromium won't fire a
+        // drop otherwise. Accept our custom type or a plain-text path fallback.
+        onDragEnter={(e) => {
+          if (e.dataTransfer.types.some((t) => t === 'text/strix-path' || t === 'text/plain')) {
+            e.preventDefault();
+            if (!dragOver) setDragOver(true);
+          }
+        }}
         onDragOver={(e) => {
-          if (e.dataTransfer.types.includes('text/strix-path')) {
+          if (e.dataTransfer.types.some((t) => t === 'text/strix-path' || t === 'text/plain')) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             if (!dragOver) setDragOver(true);
@@ -168,7 +179,8 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
         onDrop={(e) => {
           e.preventDefault();
           setDragOver(false);
-          const src = e.dataTransfer.getData('text/strix-path');
+          const src =
+            e.dataTransfer.getData('text/strix-path') || e.dataTransfer.getData('text/plain');
           if (src) onMove?.(src, node.path);
         }}
       >
