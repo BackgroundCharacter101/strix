@@ -1,8 +1,9 @@
-import { app, BrowserWindow, shell, Menu, MenuItem } from 'electron';
+import { app, BrowserWindow, shell, Menu, MenuItem, session } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 import { registerIpcHandlers } from './ipc.js';
+import { withAiCors } from './aiCors.js';
 import { startAiServer, stopAiServer } from './aiServer.js';
 import { stopDevServer } from './devServer.js';
 import { buildAppMenu } from './menu.js';
@@ -184,6 +185,18 @@ if (!gotLock) {
 
     app.whenReady().then(() => {
         log('app ready; packaged=' + app.isPackaged);
+        // Let the renderer (file:// origin when packaged) call the LOCAL FreeLLMAPI
+        // directly: inject permissive CORS on the local AI server's responses.
+        // Without this, every renderer-direct AI call is CORS-blocked in a shipped
+        // build. Scoped to loopback + /v1|/api paths (see aiCors.ts).
+        try {
+            session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+                const injected = withAiCors(details.url, details.responseHeaders ?? {});
+                callback(injected ? { responseHeaders: injected } : {});
+            });
+        } catch (e) {
+            logError('CORS header hook failed:', e);
+        }
         // Create the window FIRST and in its own try/catch so a later failure
         // (IPC wiring, AI server) can never leave a windowless, lingering
         // process — the symptom of a packaged-startup crash.
