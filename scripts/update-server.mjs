@@ -40,6 +40,23 @@ const server = http.createServer((req, res) => {
   createReadStream(file).pipe(res);
 });
 
+// A friendly message instead of a raw stack when the port is already taken —
+// almost always means an update server is already running (updates still work).
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(
+      `[update-server] port ${PORT} is already in use — an update server is ` +
+        `already running there, so updates already work. Nothing to do.`,
+    );
+    console.log(
+      `[update-server] to run a fresh one, stop the other first ` +
+        `(Windows: npx kill-port ${PORT}  —  or close its terminal).`,
+    );
+    process.exit(0);
+  }
+  throw err;
+});
+
 server.listen(PORT, () => {
   console.log(`[update-server] serving ${ROOT}`);
   console.log(`[update-server] http://localhost:${PORT}/  (e.g. /latest-m1.json)`);
