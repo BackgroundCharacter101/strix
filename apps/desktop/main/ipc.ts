@@ -452,8 +452,9 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
       return result;
     } catch (e) {
       const error = e instanceof Error ? e.message : String(e);
-      if (!event.sender.isDestroyed()) event.sender.send('update:error', { error });
-      return { available: false, current: app.getVersion() };
+      // Return the error in the result (not just an event) so the UI can show
+      // "couldn't reach the update server" instead of a misleading "up to date".
+      return { available: false, current: app.getVersion(), error };
     }
   });
 

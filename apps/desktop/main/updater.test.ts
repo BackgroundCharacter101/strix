@@ -102,6 +102,31 @@ describe('checkForUpdate', () => {
     const r = await checkForUpdate({ feedURL: 'http://h', edition: 'm1', currentVersion: '0.1.0', fetchImpl });
     expect(r.available).toBe(false);
   });
+  it('offers a same-version build with a different buildId (a republish)', async () => {
+    const m = (v: string, buildId: string) =>
+      fakeResponse(new TextEncoder().encode(JSON.stringify({ version: v, url: 'http://h/s.exe', sha256: 'a'.repeat(64), buildId })));
+    // Same version, different build → available.
+    const r = await checkForUpdate({
+      feedURL: 'http://h', edition: 'm1', currentVersion: '0.2.4', currentBuildId: 'aaa111',
+      fetchImpl: vi.fn(async () => m('0.2.4', 'bbb222')),
+    });
+    expect(r.available).toBe(true);
+    // Same version, same build → not available.
+    const r2 = await checkForUpdate({
+      feedURL: 'http://h', edition: 'm1', currentVersion: '0.2.4', currentBuildId: 'aaa111',
+      fetchImpl: vi.fn(async () => m('0.2.4', 'aaa111')),
+    });
+    expect(r2.available).toBe(false);
+  });
+  it('never offers a downgrade even with a different buildId', async () => {
+    const m = fakeResponse(new TextEncoder().encode(JSON.stringify({ version: '0.2.0', url: 'http://h/s.exe', sha256: 'a'.repeat(64), buildId: 'zzz999' })));
+    const r = await checkForUpdate({
+      feedURL: 'http://h', edition: 'm1', currentVersion: '0.2.4', currentBuildId: 'aaa111',
+      fetchImpl: vi.fn(async () => m),
+    });
+    expect(r.available).toBe(false);
+  });
+
   it('throws on an HTTP error (surfaced as an error event by the caller)', async () => {
     const fetchImpl = vi.fn(async () => fakeResponse(new Uint8Array(), false, 500));
     await expect(

@@ -10,7 +10,7 @@ import type { UpdateInfo } from '../../main/bridge';
 type State =
   | { kind: 'idle' }
   | { kind: 'checking' }
-  | { kind: 'uptodate' }
+  | { kind: 'uptodate'; current: string }
   | { kind: 'available'; info: UpdateInfo }
   | { kind: 'downloading'; info: UpdateInfo; percent: number }
   | { kind: 'ready'; version: string }
@@ -27,9 +27,14 @@ export function UpdateBanner() {
     if (manual) setState({ kind: 'checking' });
     try {
       const res = await window.strix.update.check();
+      if (res.error) {
+        // A failed check must NOT look like "up to date".
+        if (manual) setState({ kind: 'error', message: `Couldn't reach the update server — ${res.error}` });
+        return;
+      }
       if (res.available && res.manifest) setState({ kind: 'available', info: res.manifest });
       else if (manual) {
-        setState({ kind: 'uptodate' });
+        setState({ kind: 'uptodate', current: res.current });
         window.setTimeout(() => setState((s) => (s.kind === 'uptodate' ? { kind: 'idle' } : s)), 3500);
       }
     } catch (e) {
@@ -74,7 +79,9 @@ export function UpdateBanner() {
     <div className="update-banner" role="status" aria-live="polite" data-kind={state.kind}>
       {state.kind === 'checking' && <span className="update-msg">Checking for updates…</span>}
 
-      {state.kind === 'uptodate' && <span className="update-msg">Strix is up to date.</span>}
+      {state.kind === 'uptodate' && (
+        <span className="update-msg">Strix is up to date (v{state.current}).</span>
+      )}
 
       {state.kind === 'available' && (
         <>

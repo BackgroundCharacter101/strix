@@ -11,6 +11,7 @@
 //   (default http://localhost:8787).
 import { readFileSync, existsSync, readdirSync, copyFileSync, writeFileSync, mkdirSync, createReadStream } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,7 +19,7 @@ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(repo, 'dist-updates');
 
 /** Build the manifest object the client validates (see main/updater.ts). */
-export function buildManifest({ version, fileName, sha256, notes, feedBase, mandatory = false }) {
+export function buildManifest({ version, fileName, sha256, notes, feedBase, mandatory = false, buildId }) {
   const base = String(feedBase).replace(/\/+$/, '');
   return {
     version,
@@ -27,6 +28,9 @@ export function buildManifest({ version, fileName, sha256, notes, feedBase, mand
     notes: notes ?? `Strix ${version}`,
     mandatory: Boolean(mandatory),
     pubDate: new Date().toISOString(),
+    // Build identity so the client detects a republish even at the same version
+    // (must match the id the app baked in — both come from git HEAD).
+    buildId: buildId ?? undefined,
   };
 }
 
@@ -77,7 +81,13 @@ async function main() {
       );
     }
   }
-  const manifest = buildManifest({ version, fileName: installer, sha256, notes, feedBase });
+  let buildId;
+  try {
+    buildId = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    buildId = undefined;
+  }
+  const manifest = buildManifest({ version, fileName: installer, sha256, notes, feedBase, buildId });
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 
   console.log(`[update-publish] ${edition} v${version}`);

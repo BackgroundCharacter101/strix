@@ -14,10 +14,20 @@
 // runtime; node-pty is a native module resolved at runtime from the app's
 // (asar-unpacked) node_modules. node builtins are auto-external on platform=node.
 import esbuild from 'esbuild';
+import { execSync } from 'node:child_process';
 
 // Product edition baked in at build time (STRIX_EDITION=competition → the
 // private build with the Claude Code menu item; anything else → the free M1).
 const edition = process.env.STRIX_EDITION === 'competition' ? 'competition' : 'm1';
+
+// Build identity (git short hash) baked in so the updater can tell one build
+// from another at the SAME version. Falls back to a timestamp outside git.
+let buildId = 'dev';
+try {
+  buildId = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+} catch {
+  buildId = String(Date.now());
+}
 
 const common = {
   bundle: true,
@@ -27,6 +37,7 @@ const common = {
   external: ['electron', 'node-pty'],
   define: {
     __STRIX_EDITION__: JSON.stringify(edition),
+    __STRIX_BUILD_ID__: JSON.stringify(buildId),
     // Update feed URL baked at build time; runtime STRIX_UPDATE_URL still wins.
     // Phase 1 default = the local update server; Phase 2 = set this at build.
     __STRIX_UPDATE_URL__: JSON.stringify(

@@ -242,6 +242,7 @@ export interface UpdateInfo {
   notes?: string;
   mandatory?: boolean;
   pubDate?: string;
+  buildId?: string;
 }
 
 export interface UpdateProgress {
@@ -255,7 +256,13 @@ export interface UpdateProgress {
 // the installer (streaming `onProgress`, ending in `onReady`/`onError`);
 // `apply` runs the verified installer silently and quits so it can relaunch.
 export interface StrixUpdateApi {
-  check(): Promise<{ available: boolean; current: string; manifest?: UpdateInfo }>;
+  check(): Promise<{
+    available: boolean;
+    current: string;
+    currentBuildId?: string;
+    manifest?: UpdateInfo;
+    error?: string;
+  }>;
   download(info: UpdateInfo): Promise<{ ok: boolean; path?: string; error?: string }>;
   apply(): Promise<{ ok: boolean; error?: string }>;
   onAvailable(cb: (info: UpdateInfo) => void): () => void;

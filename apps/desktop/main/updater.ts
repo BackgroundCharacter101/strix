@@ -23,13 +23,26 @@ export interface UpdateManifest {
   notes?: string;
   mandatory?: boolean;
   pubDate?: string;
+  /** Build identity (git short hash) so a rebuild at the SAME version is still
+   *  detected as an update — the dev republishes without bumping the version. */
+  buildId?: string;
 }
 
 export interface UpdateCheckResult {
   available: boolean;
   current: string;
+  currentBuildId?: string;
   manifest?: UpdateManifest;
+  /** Set when the check itself failed (server down, bad manifest) — distinct
+   *  from a successful "no update". Lets the UI avoid showing "up to date". */
+  error?: string;
 }
+
+// Build identity baked at build time (git short hash), so the running app can
+// tell "same version, different build" apart. Undefined under tsc/Vitest.
+declare const __STRIX_BUILD_ID__: string;
+export const APP_BUILD_ID: string =
+  typeof __STRIX_BUILD_ID__ === 'undefined' ? 'dev' : __STRIX_BUILD_ID__;
 
 export interface DownloadProgress {
   received: number;
@@ -104,6 +117,7 @@ export function parseManifest(text: string): UpdateManifest {
     notes: typeof m.notes === 'string' ? m.notes : undefined,
     mandatory: m.mandatory === true,
     pubDate: typeof m.pubDate === 'string' ? m.pubDate : undefined,
+    buildId: typeof m.buildId === 'string' ? m.buildId : undefined,
   };
 }
 
@@ -116,16 +130,23 @@ export async function checkForUpdate(opts: {
   feedURL: string;
   edition: string;
   currentVersion: string;
+  currentBuildId?: string;
   fetchImpl?: FetchLike;
 }): Promise<UpdateCheckResult> {
   const { feedURL, edition, currentVersion } = opts;
+  const currentBuildId = opts.currentBuildId ?? APP_BUILD_ID;
   const fetchImpl = opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike);
   const base = feedURL.replace(/\/+$/, '');
   const res = await fetchImpl(`${base}/latest-${edition}.json`);
   if (!res.ok) throw new Error(`update check failed: HTTP ${res.status}`);
   const manifest = parseManifest(await res.text());
-  const available = compareVersions(manifest.version, currentVersion) > 0;
-  return { available, current: currentVersion, manifest };
+  const cmp = compareVersions(manifest.version, currentVersion);
+  // Offer when the feed is a newer version, OR the SAME version but a different
+  // build (a republish after a change) — never a downgrade.
+  const sameVersionNewBuild =
+    cmp === 0 && !!manifest.buildId && manifest.buildId !== currentBuildId;
+  const available = cmp > 0 || sameVersionNewBuild;
+  return { available, current: currentVersion, currentBuildId, manifest };
 }
 
 /**
