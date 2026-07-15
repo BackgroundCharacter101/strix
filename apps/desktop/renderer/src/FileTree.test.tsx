@@ -176,6 +176,19 @@ describe('FileTree', () => {
     expect(rename).toHaveBeenCalledWith('/root/readme.md', '/root/src/readme.md');
   });
 
+  it('moves via the drag ref even when dataTransfer.getData is empty (Electron quirk)', async () => {
+    tree.mockResolvedValue(sample);
+    render(<FileTree rootPath="/root" />);
+    const fileBtn = (await screen.findByText('readme.md')).closest('button')!;
+    const folderBtn = (await screen.findByText('src')).closest('button')!;
+
+    // dragstart records the source in module state; the drop's dataTransfer
+    // returns '' (the real-world failure) yet the move still lands.
+    fireEvent.dragStart(fileBtn, { dataTransfer: { setData: () => {}, effectAllowed: '' } });
+    fireEvent.drop(folderBtn, { dataTransfer: { getData: () => '', types: [] } });
+    expect(rename).toHaveBeenCalledWith('/root/readme.md', '/root/src/readme.md');
+  });
+
   it('ignores a drop of a folder into itself', async () => {
     tree.mockResolvedValue(sample);
     render(<FileTree rootPath="/root" />);

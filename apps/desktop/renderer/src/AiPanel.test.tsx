@@ -412,6 +412,38 @@ describe('AiPanel', () => {
     expect(thread).not.toHaveTextContent('the reply');
   });
 
+  it('copies a message to the clipboard', async () => {
+    const writeText = vi.fn(async () => {});
+    Object.assign(navigator, { clipboard: { writeText } });
+    localStorage.setItem(
+      'strix.ai.history:global',
+      JSON.stringify([{ role: 'user', content: 'copy me please' }]),
+    );
+    render(<AiPanel filePath={null} fileContent="" />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy message' })[0]);
+    expect(writeText).toHaveBeenCalledWith('copy me please');
+  });
+
+  it('rewinds the conversation to before a message', () => {
+    localStorage.setItem(
+      'strix.ai.history:global',
+      JSON.stringify([
+        { role: 'user', content: 'first' },
+        { role: 'assistant', content: 'r1' },
+        { role: 'user', content: 'second' },
+        { role: 'assistant', content: 'r2' },
+      ]),
+    );
+    render(<AiPanel filePath={null} fileContent="" />);
+    // Rewind to the SECOND user message → drops it + everything after.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Rewind to here' })[1]);
+    const thread = screen.getByLabelText('AI conversation');
+    expect(thread).toHaveTextContent('first');
+    expect(thread).toHaveTextContent('r1');
+    expect(thread).not.toHaveTextContent('second');
+    expect(thread).not.toHaveTextContent('r2');
+  });
+
   it('suggests files for an @mention and accepts one into the composer', async () => {
     window.strix = makeStrixApi({
       fs: {

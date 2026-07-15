@@ -3002,7 +3002,7 @@ kbd {
   opacity: 0;
   transition: opacity var(--ease, 0.12s);
 }
-.ai-row-user:hover .ai-msg-actions,
+.ai-row:hover .ai-msg-actions,
 .ai-msg-actions:focus-within {
   opacity: 1;
 }

@@ -1472,6 +1472,22 @@ export function AiPanel({
     if (busy) return;
     setHistory(history.filter((_, idx) => idx !== i && !(idx === i + 1 && history[i + 1]?.role === 'assistant')));
   };
+  // Copy a message's text to the clipboard.
+  const copyTurn = (i: number) => {
+    const msg = history[i];
+    if (msg) {
+      void navigator.clipboard
+        .writeText(String(msg.content))
+        .then(() => showToast('Copied to clipboard', 'info', 1500))
+        .catch(() => showToast('Could not copy', 'error'));
+    }
+  };
+  // Rewind the conversation to before this message (discard it + everything
+  // after) — Claude-Code-style "rewind to here", without loading the composer.
+  const rewindTo = (i: number) => {
+    if (busy) return;
+    setHistory(history.slice(0, i));
+  };
 
   const send = () => {
     const text = input.trim();
@@ -1770,26 +1786,44 @@ export function AiPanel({
                       m.content
                     )}
                   </div>
-                  {m.role === 'user' && !busy && (
-                    <div className="ai-msg-actions">
-                      <button
-                        type="button"
-                        title="Edit & resend from here"
-                        aria-label="Edit message"
-                        onClick={() => editTurn(i)}
-                      >
-                        ✎
-                      </button>
-                      <button
-                        type="button"
-                        title="Delete this message"
-                        aria-label="Delete message"
-                        onClick={() => deleteTurn(i)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
+                  <div className="ai-msg-actions">
+                    <button
+                      type="button"
+                      title="Copy this message"
+                      aria-label="Copy message"
+                      onClick={() => copyTurn(i)}
+                    >
+                      ⧉
+                    </button>
+                    {m.role === 'user' && !busy && (
+                      <>
+                        <button
+                          type="button"
+                          title="Rewind the conversation to here"
+                          aria-label="Rewind to here"
+                          onClick={() => rewindTo(i)}
+                        >
+                          ⟲
+                        </button>
+                        <button
+                          type="button"
+                          title="Edit & resend from here"
+                          aria-label="Edit message"
+                          onClick={() => editTurn(i)}
+                        >
+                          ✎
+                        </button>
+                        <button
+                          type="button"
+                          title="Delete this message"
+                          aria-label="Delete message"
+                          onClick={() => deleteTurn(i)}
+                        >
+                          ×
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
               {streaming && (

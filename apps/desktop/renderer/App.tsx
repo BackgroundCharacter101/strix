@@ -398,6 +398,24 @@ export default function App() {
     setActiveGroup('a');
   };
 
+  // Close ONE editor group (the × on its tab bar): remove the clicked group and
+  // shift the groups after it down a slot, so the OTHER panes keep their content
+  // (closing the side you opened doesn't drop you on an empty group A).
+  const closeGroup = (which: 'a' | 'b' | 'c') => {
+    if (splitCount < 2) return;
+    const order = GROUP_ORDER.slice(0, splitCount);
+    const idx = order.indexOf(which);
+    if (idx < 0) return;
+    for (let i = idx; i < order.length - 1; i++) {
+      const dst = groupTabs[order[i]];
+      const src = groupTabs[order[i + 1]];
+      dst.replaceAll(src.tabs, src.activePath);
+    }
+    groupTabs[order[order.length - 1]].replaceAll([], null);
+    setSplitCount((splitCount - 1) as 1 | 2);
+    setActiveGroup(order[Math.max(0, idx - 1)]);
+  };
+
   // Open a file in the next group (splitting if needed) — right-click
   // "Open to the Side" or dropping on the right of a single group.
   const openToSide = (path: string) => {
@@ -951,7 +969,11 @@ export default function App() {
       }}
       onDrop={(e) => onGroupDrop(which, e)}
     >
-      <EditorTabs tabs={group} onSplit={cycleSplit} onCloseGroup={split ? unsplit : undefined} />
+      <EditorTabs
+        tabs={group}
+        onSplit={cycleSplit}
+        onCloseGroup={split ? () => closeGroup(which) : undefined}
+      />
       {group.activePath && <Breadcrumbs rootPath={root} path={group.activePath} />}
       <FileViewer
         path={group.activePath}

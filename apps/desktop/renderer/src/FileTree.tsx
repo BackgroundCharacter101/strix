@@ -109,19 +109,26 @@ interface TreeRowProps {
   style: React.CSSProperties;
 }
 
+// The path currently being dragged, held in module state so a folder's drop
+// handler can read it WITHOUT dataTransfer.getData — which returns '' on drop in
+// some Electron/Chromium configs (the real reason folder drops silently failed).
+let draggedPath: string | null = null;
+
 // One flat tree row. Indentation comes from depth (inline padding) instead of
 // nested <ul>s, so a row can be rendered in isolation by the virtual window.
 function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext, onMove, style }: TreeRowProps) {
   const { node, depth } = row;
   const indent = { paddingLeft: 8 + depth * 12 };
-  // Drag payload is the source path; a file drop on the editor opens it, a drop
-  // on a folder MOVES it (copyMove lets both effects work).
+  // Remember the source path both in module state (reliable) and dataTransfer
+  // (so the editor-group open-on-drop still works).
   const onDragStart = (e: React.DragEvent) => {
+    draggedPath = node.path;
     e.dataTransfer.setData('text/strix-path', node.path);
-    // text/plain fallback: some environments only preserve standard MIME types
-    // through a drop, so we can still recover the source path.
     e.dataTransfer.setData('text/plain', node.path);
     e.dataTransfer.effectAllowed = 'copyMove';
+  };
+  const onDragEnd = () => {
+    draggedPath = null;
   };
   if (node.type === 'file') {
     const active = node.path === activePath;
@@ -135,6 +142,7 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
           aria-current={active ? 'true' : undefined}
           draggable
           onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
           onClick={() => onSelectFile?.(node)}
           onContextMenu={(e) => onContext(node, e)}
         >
@@ -147,6 +155,12 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
 
   const isOpen = expanded.has(node.path);
   const [dragOver, setDragOver] = useState(false);
+  // Accept the drop when an internal drag is in progress (draggedPath set) OR the
+  // dataTransfer advertises our type — gating on module state is what makes this
+  // robust. preventDefault on BOTH dragEnter and dragOver or Chromium fires no drop.
+  const canAccept = (e: React.DragEvent) =>
+    draggedPath !== null ||
+    e.dataTransfer.types.some((t) => t === 'text/strix-path' || t === 'text/plain');
   return (
     <li data-type="directory" style={style}>
       <button
@@ -157,19 +171,17 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
         data-dragover={dragOver || undefined}
         draggable
         onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
         onClick={() => onToggle(node.path)}
         onContextMenu={(e) => onContext(node, e)}
-        // Folder = drop target: accept a dragged path and move it in here.
-        // preventDefault on BOTH dragEnter and dragOver — Chromium won't fire a
-        // drop otherwise. Accept our custom type or a plain-text path fallback.
         onDragEnter={(e) => {
-          if (e.dataTransfer.types.some((t) => t === 'text/strix-path' || t === 'text/plain')) {
+          if (canAccept(e)) {
             e.preventDefault();
             if (!dragOver) setDragOver(true);
           }
         }}
         onDragOver={(e) => {
-          if (e.dataTransfer.types.some((t) => t === 'text/strix-path' || t === 'text/plain')) {
+          if (canAccept(e)) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             if (!dragOver) setDragOver(true);
@@ -180,7 +192,10 @@ function TreeRow({ row, expanded, activePath, onToggle, onSelectFile, onContext,
           e.preventDefault();
           setDragOver(false);
           const src =
-            e.dataTransfer.getData('text/strix-path') || e.dataTransfer.getData('text/plain');
+            draggedPath ||
+            e.dataTransfer.getData('text/strix-path') ||
+            e.dataTransfer.getData('text/plain');
+          draggedPath = null;
           if (src) onMove?.(src, node.path);
         }}
       >
