@@ -412,6 +412,39 @@ describe('AiPanel', () => {
     expect(thread).not.toHaveTextContent('the reply');
   });
 
+  it('applies a chat edit request to the open file — proposes a diff (Manual)', async () => {
+    complete.mockResolvedValue('const refactored = true;');
+    const onApplyEdit = vi.fn();
+    render(
+      <AiPanel filePath="/ws/a.ts" fileContent="const old = 1;" workspaceKey="/ws" onApplyEdit={onApplyEdit} />,
+    );
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'can you refactor this file' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    const proposal = await screen.findByLabelText('proposed change');
+    expect(complete).toHaveBeenCalledWith(
+      'refactor',
+      expect.objectContaining({ filePath: '/ws/a.ts', fileContent: 'const old = 1;' }),
+      expect.any(Object),
+    );
+    fireEvent.click(within(proposal).getByRole('button', { name: 'Apply' }));
+    expect(onApplyEdit).toHaveBeenCalledWith('const refactored = true;');
+  });
+
+  it('auto-applies a chat edit request in Accept-edits mode (no diff review)', async () => {
+    complete.mockResolvedValue('const done = true;');
+    const onApplyEdit = vi.fn();
+    render(
+      <AiPanel filePath="/ws/a.ts" fileContent="const old = 1;" workspaceKey="/ws" onApplyEdit={onApplyEdit} />,
+    );
+    fireEvent.click(screen.getByRole('radio', { name: 'Accept edits' }));
+    fireEvent.change(screen.getByLabelText('Ask AI'), { target: { value: 'change this to true' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+
+    await waitFor(() => expect(onApplyEdit).toHaveBeenCalledWith('const done = true;'));
+    expect(screen.queryByLabelText('proposed change')).toBeNull();
+  });
+
   it('copies a message to the clipboard', async () => {
     const writeText = vi.fn(async () => {});
     Object.assign(navigator, { clipboard: { writeText } });

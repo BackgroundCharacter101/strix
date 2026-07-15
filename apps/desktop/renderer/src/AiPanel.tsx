@@ -1397,6 +1397,82 @@ export function AiPanel({
 
   // A pure question / explanation request — answered as chat (with streaming).
   // Everything else, in an open project, goes to the file-editing agent.
+  // Strip a leading ``` fence (and trailing) so an applied edit is raw file text.
+  const stripFences = (s: string): string => {
+    const t = s.trim();
+    const m = /^```[\w-]*\n([\s\S]*?)\n```$/.exec(t);
+    return (m ? m[1] : t).replace(/^```[\w-]*\n?/, '').replace(/\n?```$/, '');
+  };
+
+  // An edit/change request for the OPEN file (vs a question or a project build).
+  // Politeness prefixes are stripped first so "can you fix this" still counts.
+  const isEditIntent = (text: string): boolean => {
+    const t = text
+      .trim()
+      .replace(
+        /^\s*(hey|hi|hello|please|pls|kindly|could you|can you|would you|will you|i want you to|i'?d like you to|i need you to|let'?s|go ahead and|now)\b[\s,:-]*/i,
+        '',
+      );
+    return /\b(make|change|fix|refactor|add|implement|update|modif(?:y|ies)|improve|enhance|rewrite|convert|replace|remove|delete|rename|clean\s*up|turn|optimi[sz]e|format|wrap|extract)\b/i.test(
+      t,
+    );
+  };
+
+  // Edit the OPEN file per the instruction: get the full updated file and apply
+  // it. Accept-edits applies to the editor immediately; Manual shows a diff to
+  // approve; Plan mode never reaches here (send routes plan → chat).
+  const editOpenFile = async (instruction: string) => {
+    await ensureAi();
+    setHistory((h) => [...h, { role: 'user', content: instruction }]);
+    setInput('');
+    setAttachments([]);
+    setBusy(true);
+    setStreaming('');
+    setProposal(null);
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const fileName = (filePath ?? 'the file').split(/[\\/]/).filter(Boolean).pop() ?? 'the file';
+    try {
+      const suggested = await completeAny(
+        'refactor',
+        {
+          filePath: filePath ?? '',
+          fileContent,
+          userMessage: `${instruction}\n\nReturn ONLY the complete updated contents of this file — no explanation, no commentary, no markdown fences.`,
+          securityMode,
+          securityStance,
+          securityPersonaText,
+        },
+        tuned(controller.signal),
+      );
+      const cleaned = stripFences(suggested);
+      if (!cleaned.trim()) {
+        setHistory((h) => [...h, { role: 'assistant', content: 'No change was produced — try rephrasing.' }]);
+        return;
+      }
+      if (autoApplyOn) {
+        onApplyEdit?.(cleaned);
+        setHistory((h) => [
+          ...h,
+          { role: 'assistant', content: `✓ Applied the changes to \`${fileName}\`. Press Ctrl+S to save.` },
+        ]);
+      } else {
+        setProposal({ original: fileContent, suggested: cleaned });
+        setHistory((h) => [
+          ...h,
+          { role: 'assistant', content: `Proposed changes to \`${fileName}\` — review the diff below and click Apply.` },
+        ]);
+      }
+    } catch {
+      if (!controller.signal.aborted) {
+        showToast('AI request failed — check the AI server / your key.', 'error', 6000);
+      }
+    } finally {
+      setBusy(false);
+      abortRef.current = null;
+    }
+  };
+
   const isQuestion = (text: string): boolean => {
     const t = text.trim();
     return (
@@ -1492,8 +1568,16 @@ export function AiPanel({
   const send = () => {
     const text = input.trim();
     if ((!text && attachments.length === 0) || busy) return;
+    // Plan mode: only describe, never edit (run injects the plan directive).
+    if (planOnly) {
+      void run('chat');
+      return;
+    }
     if (text && workspaceKey && isRunIntent(text)) {
       void handleRun(text);
+    } else if (text && fileReady && isEditIntent(text) && attachments.length === 0) {
+      // A file is open and the user asked to change it → edit it directly.
+      void editOpenFile(text);
     } else if (text && workspaceKey && !isQuestion(text) && attachments.length === 0) {
       void buildProject();
     } else {
