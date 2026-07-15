@@ -132,11 +132,11 @@ local models*.
 ```powershell
 npm run typecheck    # tsc --build (strict)
 npm run lint         # eslint (flat) + typescript-eslint
-npm test             # vitest — 436 tests / 64 files
+npm test             # vitest — 441 tests / 65 files
 npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 ```
 
-Current: typecheck + lint clean · **436 tests** pass · **0 prod vulns** · both editions build.
+Current: typecheck + lint clean · **441 tests** pass · **0 prod vulns** · both editions build.
 
 ## Repo layout
 
