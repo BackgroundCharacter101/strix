@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-07-11
+> Last updated: 2026-07-13 · v0.2.6
 
 ---
 
@@ -182,7 +182,7 @@ Competition edition. No installer rebuild needed for day-to-day work.
 ## 3. Quality gates & scripts (root `package.json`)
 
 - **`npm run typecheck`** (`tsc --build`) · **`npm run lint`** (eslint) ·
-  **`npm test`** (vitest) — **all green: 441 tests / 65 files.**
+  **`npm test`** (vitest) — **all green: 445 tests / 65 files.**
   ALWAYS run all three before committing. After a renderer change also run
   `npm -w @strix/desktop run build:renderer` so the built app reflects it.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
@@ -537,6 +537,31 @@ strix/ (folder: tabea)
 - **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
   `workspace.saveAs` (native Save dialog, defaults into the workspace).
 - Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
+
+## 9g. Session update — 2026-07-13 (v0.2.1 → v0.2.6: fixes batch)
+
+Shipped via the live updater; each `chore: bump` builds + `update:publish`.
+
+- **AI chat now edits the open file** (0.2.6). Polite edit requests ("can you fix
+  this") were misrouted to plain chat (isQuestion caught can/could) → it only
+  replied with code. New `isEditIntent` (strips politeness) + `editOpenFile`:
+  when a file is open and you ask to change it, it fetches the full updated file
+  and applies per **agent mode** — Accept-edits writes to the editor, Manual
+  shows a diff to approve (CodeProposal), Plan describes only.
+- **Agent modes** (0.2.1) — Manual / Accept-edits / Plan selector in the AI
+  toolbar (maps onto autoApply); per-file action buttons removed (mode-driven).
+- **Renderer-direct AI CORS fix** (0.2.3, `main/aiCors.ts`) — packaged apps load
+  from `file://`; the local FreeLLMAPI CORS rejected that origin, silently
+  breaking autocomplete, Ctrl+G generate, selection Fix, agents, and FreeLLMAPI
+  chat. Main injects `Access-Control-Allow-*` on loopback `/v1|/api` responses.
+- **Updater robustness** (0.2.5) — detect a rebuild at the SAME version via a
+  git-hash **buildId** baked in (`__STRIX_BUILD_ID__`) + in the manifest; a
+  failed check no longer masquerades as "up to date"; the banner shows the version.
+- **Folder drag-drop** (0.2.6) — the real fix: hold the dragged path in module
+  state (dataTransfer.getData returns '' on drop in Electron). Also per-group
+  **split close** (× closes the clicked group, shifts the rest) and AI
+  **copy / rewind-to-here** per message.
+- **Live-preview + `/agent` menu + untitled/save-as** (0.2.0–0.2.1).
 
 ## 9f. Session update — 2026-07-11 (perf: git-status polling)
 

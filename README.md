@@ -48,11 +48,14 @@ large-file guard (minified bundles no longer lock the editor).
 FreeLLMAPI **Auto** (free-provider router with failover) plus **your own direct API-key models**
 (OpenAI, OpenRouter, Groq, DeepSeek, …) — added via **provider presets** (baseURL/model prefilled)
 with a **native Anthropic** adapter — and **auto-detected local models** (Ollama / LM Studio,
-Competition). The **active model answering this session is always shown** next to the picker. Agentic
-build/edit from chat, diff-proposal apply with **one-click rollback**, **edit / delete previous chat
-turns** (revert the thread like VS Code), and a **Run → auto-fix loop**: runs a command, and on
-failure (exit code *or* errors in the output) proposes a fix and re-runs — bounded to 3 rounds, and
-**stops immediately on environment errors** (missing tool / command not found — no code fix helps).
+Competition). The **active model answering this session is always shown** next to the picker.
+**Agent modes** (like Claude Code) — **Manual** proposes a diff you approve, **Accept edits**
+auto-applies to the file, **Plan** only describes — so *asking the chat to change the open file
+actually edits it*. Per-message **copy / rewind-to-here / edit / delete** (revert the thread like
+Claude Code), **`/` to call an agent**, agentic whole-project build, one-click rollback, and a
+**Run → auto-fix loop**: runs a command, and on failure (exit code *or* errors in the output)
+proposes a fix and re-runs — bounded to 3 rounds, and **stops immediately on environment errors**
+(missing tool / command not found — no code fix helps).
 
 **Coding agents** — a panel of single-purpose agents that watch the project and **monitor/audit only
 (never edit your code)**: README/Progress/Changelog/TODO/Architecture doc-writers, plus Security,
@@ -132,11 +135,11 @@ local models*.
 ```powershell
 npm run typecheck    # tsc --build (strict)
 npm run lint         # eslint (flat) + typescript-eslint
-npm test             # vitest — 441 tests / 65 files
+npm test             # vitest — 445 tests / 65 files
 npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 ```
 
-Current: typecheck + lint clean · **441 tests** pass · **0 prod vulns** · both editions build.
+Current: typecheck + lint clean · **445 tests** pass · **0 prod vulns** · both editions build.
 
 ## Repo layout
 
