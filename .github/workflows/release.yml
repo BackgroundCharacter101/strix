@@ -1,5 +1,8 @@
 name: Release
 
+# Tag a release: `git tag v0.2.6 && git push origin v0.2.6`.
+# Builds the PUBLIC M1 edition only — the Competition edition is private and is
+# never built in CI. Windows installer is unsigned (SmartScreen warns).
 on:
   push:
     tags:
@@ -9,6 +12,30 @@ permissions:
   contents: write
 
 jobs:
+  # Windows M1 installer (the primary target): electron-builder --dir wrapped by
+  # the custom Inno Setup installer (scripts/edition.mjs → package:m1).
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - run: npm install
+      - run: npm run build # typecheck gate
+      - run: npm run ai:setup # build the vendored FreeLLMAPI bundle
+      - run: npm run package:m1
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: strix-windows
+          path: apps/desktop/release/m1/*Setup*.exe
+          retention-days: 1
+
+  # Linux AppImage.
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -16,33 +43,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: npm
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y fuse libfuse2
-      - run: npm ci
+      - run: npm install
       - run: npm run build
       - run: npm run ai:setup
-      - run: npm --workspace @strix/desktop run package:linux
+      - run: npm run package:linux
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: Strix-AppImage
-          path: apps/desktop/release/*.AppImage
+          name: strix-linux
+          path: apps/desktop/release/**/*.AppImage
           retention-days: 1
 
+  # Publish a GitHub Release with both artifacts + auto-generated notes.
   release:
-    needs: build-linux
+    needs: [build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
-      - name: Download AppImage
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: Strix-AppImage
-          path: release/
+          path: dist
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*.AppImage
+          files: |
+            dist/strix-windows/*
+            dist/strix-linux/*
           generate_release_notes: true

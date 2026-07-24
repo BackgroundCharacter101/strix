@@ -141,6 +141,14 @@ npm run security     # secret / forbidden-file scan (pre-commit hook + CI)
 
 Current: typecheck + lint clean · **445 tests** pass · **0 prod vulns** · both editions build.
 
+**CI/CD** ([.github/workflows](.github/workflows)) — **CI** runs the gates
+(manifest check, security scan, lint, typecheck, tests) + a production **build
+smoke** on every push to `main` and every PR. **Release** fires on a `v*` tag:
+it builds the **Windows M1 installer** (Inno Setup) and the **Linux AppImage**
+and publishes a GitHub Release with auto-generated notes. Only the public **M1**
+edition is built in CI — the Competition edition is private. Tag a release with
+`git tag v0.2.6 && git push origin v0.2.6`.
+
 ## Repo layout
 
 ```

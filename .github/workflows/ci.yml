@@ -4,19 +4,38 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
+# Cancel superseded runs on the same ref (e.g. a new push to a PR).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  install-and-validate:
+  # Gate: the same checks the pre-commit hook runs, on Linux.
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - run: npm install
       - run: npm run check:manifest
       - run: npm run security:ci
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+
+  # Smoke: the production bundles actually build (catches vite/esbuild-only
+  # breakage unit tests miss — a bad import, the build-id define, etc.).
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm --workspace @strix/desktop run build:app
