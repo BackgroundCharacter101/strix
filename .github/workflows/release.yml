@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fuse libfuse2
+      - run: npm ci
+      - run: npm run build
+      - run: npm run ai:setup
+      - run: npm --workspace @strix/desktop run package:linux
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: Strix-AppImage
+          path: apps/desktop/release/*.AppImage
+          retention-days: 1
+
+  release:
+    needs: build-linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download AppImage
+        uses: actions/download-artifact@v4
+        with:
+          name: Strix-AppImage
+          path: release/
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.AppImage
+          generate_release_notes: true
