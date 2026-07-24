@@ -38,4 +38,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install
+      - run: npm run build # build workspace package types first (tsc --build)
       - run: npm --workspace @strix/desktop run build:app
