@@ -1,12 +1,17 @@
 # Packaging Strix (Phase 8)
 
+> **CURRENT (v0.2.x):** Windows ships via a **custom Inno Setup installer** built
+> from the electron-builder `win-unpacked` payload — `npm run package:m1` /
+> `package:competition` (see `scripts/edition.mjs` + `apps/desktop/build/installer.iss`).
+> The installer offers an **all-users / just-me** choice and supports the in-app
+> **live auto-update**. **CI cuts releases**: pushing a `v*` tag runs
+> `.github/workflows/release.yml`, which builds the Windows **M1** installer +
+> the **Linux AppImage** and publishes a GitHub Release (Competition stays
+> private). The electron-builder NSIS notes below are the original Phase-8
+> baseline, kept for reference.
+
 Turns Strix into an installable app via **electron-builder** — Windows (NSIS +
 portable `.exe`), **Linux (AppImage + `.deb`)**, and macOS (dmg + zip).
-
-> **Status: first pass — needs a real build + test run on a Windows machine.**
-> The build config and the packaged-app AI-server launch are in place and
-> unit-tested, but the installer itself hasn't been produced/verified yet (it
-> can't be built in the dev sandbox). See _Known limitations_ below.
 
 ## Build it
 

@@ -208,7 +208,7 @@ Status bar updates: "AI: groq/llama-3.3-70b · 4,210 tokens today"
 | **Vitest** | Unit + integration testing |
 | **ESLint + Prettier** | Lint and format |
 | **electron-builder** | Package and distribute the app |
-| **GitHub Actions** | CI — lint, test, build on every PR |
+| **GitHub Actions** | CI — manifest/security/lint/typecheck/test + build smoke on every PR; tag-triggered Release builds the Windows M1 installer + Linux AppImage |
 
 ---
 
@@ -717,7 +717,7 @@ COLLAB_SERVER_URL=ws://192.168.x.x:1234
 - [ ] Configure TypeScript project references
 - [ ] Add ESLint + Prettier with shared config
 - [ ] Set up Vitest with a dummy test in each package
-- [ ] GitHub Actions CI: lint + test on every PR to `main`
+- [x] GitHub Actions CI: gates + build smoke on every PR to `main`; Release on `v*` tag
 - [ ] Create `.env.example` with `FREELLMAPI_URL` and `FREELLMAPI_KEY`
 - [ ] Write `docs/SETUP.md` — environment setup for new team members
 - [ ] Add FreeLLMAPI as a git submodule: `git submodule add https://github.com/tashfeenahmed/freellmapi`

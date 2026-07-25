@@ -188,10 +188,15 @@ Competition edition. No installer rebuild needed for day-to-day work.
 - `npm run watch` — `tsc --build --watch`. `npm run test:watch` — vitest watch.
 - `npm run security` — secret scanner. `npm run security:ci` — adds critical dep audit.
 - **Pre-commit hook** (`.githooks/pre-commit`, wired via `prepare` →
-  `core.hooksPath`) runs the security scan on every commit. CI
-  (`.github/workflows/ci.yml`) runs security:ci + lint + typecheck + test.
-- Commit messages end with the `Co-Authored-By` trailer. Work on a branch only if
-  asked; current work has been committing straight to `main` (local).
+  `core.hooksPath`) runs the security scan on every commit.
+- **CI/CD** (`.github/workflows/`): **ci.yml** runs manifest-check + security:ci +
+  lint + typecheck + test + a production **build smoke** on every push to `main`
+  and every PR (with npm cache + concurrency cancel). **release.yml** fires on a
+  `v*` tag and builds the **Windows M1 Inno installer** + **Linux AppImage**, then
+  publishes a GitHub Release (M1 only — Competition stays private). A
+  `pull_request_template.md` carries the gate checklist.
+- Commit messages end with the `Co-Authored-By` trailer. `feat/editions-m1` is
+  merged to **`main`** (origin/main synced); tag `vX.Y.Z` to cut a release.
 
 ---
 
@@ -756,15 +761,21 @@ Shipped via the live updater; each `chore: bump` builds + `update:publish`.
   server installed (Languages panel shows which).
 - **Source Control:** ✅ done — stage/commit (auto-stages), Sync/publish,
   generate-message, branch bar, history, create-PR.
-- **Editor:** split editors / side-by-side; breadcrumb dropdown navigation.
-- **Hardening:** consider proxying AI through main to keep the key out of the
-  renderer bundle (CSP + contextIsolation already in place; 0 prod vulns).
-- **Installer:** ✅ done — custom Inno Setup (per-machine, opt-in tasks, glass art).
-- **GitHub:** branch pushed. Open the **PR** into `main` (diverged). Optional:
-  bake the OAuth **client id** for zero-setup "Sign in with GitHub"; "publish to a
-  new repo" (create-repo) not yet built.
-- **Team test phase:** flagged before handoff — no code signing (SmartScreen
-  warns), no auto-update yet, no first-run onboarding. AI needs a provider key.
+- **Editor:** ✅ split editors / side-by-side (close per-group); breadcrumb
+  dropdown navigation still a candidate.
+- **Hardening:** ✅ renderer-direct AI CORS-fixed via main header injection
+  (`main/aiCors.ts`); CSP + contextIsolation in place; 0 prod vulns.
+- **Installer:** ✅ done — custom Inno Setup with an **all-users / just-me** chooser.
+- **Live auto-update:** ✅ done — banner check → sha256-verified download → silent
+  per-user apply; detects same-version rebuilds via git **buildId**. Phase 2
+  (hosted https feed instead of the local `dist-updates/` server) is the follow-up.
+- **CI/CD:** ✅ done — CI gates + build smoke on every PR; tag-triggered Release
+  builds Windows + Linux artifacts. Code signing (SmartScreen) still open — CI is
+  ready for `CSC_LINK`/`CSC_KEY_PASSWORD` secrets.
+- **GitHub:** ✅ `main` synced. Optional: bake the OAuth **client id** for
+  zero-setup "Sign in with GitHub"; "publish to a new repo" not yet built.
+- **Team test phase:** remaining before wide handoff — no code signing (SmartScreen
+  warns) and no first-run onboarding. AI needs a provider key.
 - **Cybersec (Competition):** user wants **useful, non-CTF** features. Next ideas:
   testing workbench (Test Explorer + AI generate/fix tests), dependency/CVE panel.
   Project Map Phase 2: treemap + node-graph arrows.

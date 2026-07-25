@@ -53,6 +53,7 @@ see §6).
 | Collab | **Yjs** + y-websocket (opt-in) |
 | Tests | **Vitest** + Testing Library (445 tests) |
 | Tooling | npm workspaces + Turborepo, ESLint (flat) + typescript-eslint |
+| CI/CD | **GitHub Actions** — gates + build smoke on every PR; `v*` tag builds the Windows M1 installer + Linux AppImage and cuts a Release |
 | Target | **Windows** primarily (also cross-platform-capable) |
 
 ---
