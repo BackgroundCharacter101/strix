@@ -82,9 +82,13 @@ Run & Serve or the command palette ("Preview: Open Live Preview").
 **Live auto-update** — on launch Strix checks an update server; if a newer build
 exists a banner offers it (**Update now** → download + **sha256-verify** →
 **Restart to apply**). Updates install **silently** (per-user, no UAC) and
-relaunch. Publish a release with `npm run update:publish`; serve it locally with
-`npm run update:serve` (Phase 1) or from any https host (Phase 2). Help → *Check
-for Updates…* checks on demand.
+relaunch. It detects updates by version **and a git build-id**, so republishing
+after any change is offered even without a version bump. To push an update: keep
+`npm run update:serve` running in a terminal (the local feed on `:8787`), then
+after a change run **`npm run update:ship`** (builds the M1 installer +
+publishes it to the feed) — the app's Help → *Check for Updates…* then offers it.
+Phase 2: host the `dist-updates/` feed on an https server so nobody runs it
+locally.
 
 **Multi-window** — open several windows, **one project per window** (own watcher, LSP, search).
 

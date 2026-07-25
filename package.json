@@ -14,6 +14,8 @@
         "update:serve": "node scripts/update-server.mjs",
         "update:publish": "node scripts/update-publish.mjs",
         "update:publish:competition": "node scripts/update-publish.mjs competition",
+        "update:ship": "npm run package:m1 && node scripts/update-publish.mjs m1",
+        "update:ship:competition": "npm run package:competition && node scripts/update-publish.mjs competition",
         "start:m1": "node scripts/edition.mjs m1 start",
         "start:competition": "node scripts/edition.mjs competition start",
         "build:m1": "node scripts/edition.mjs m1 build",
