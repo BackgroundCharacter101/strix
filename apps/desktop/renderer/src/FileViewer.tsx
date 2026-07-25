@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type * as Monaco from 'monaco-editor';
 import { CodeEditor, languageForPath, type EditorOptions } from '@strix/editor';
 import { complete } from '@strix/ai-gateway';
@@ -358,6 +358,15 @@ export function FileViewer({
   const isMarkdown = path ? languageForPath(path) === 'markdown' : false;
   const isHtml = path ? /\.html?$/i.test(path) : false;
 
+  // Ctrl/Cmd + mouse wheel (and touchpad pinch, reported as Ctrl+wheel) zooms the
+  // current view. The Monaco code editor zooms itself (mouseWheelZoom option); for
+  // the preview/notice views (Markdown, HTML iframe, binary/huge) there's no
+  // editor, so we scale their container with the CSS `zoom` property here.
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [zoom, setZoom] = useState(1);
+  // Start each newly opened file at 100%.
+  useEffect(() => setZoom(1), [path]);
+
   // Live preview: the HTML iframe serves from DISK, so reload it whenever the
   // on-disk content changes — a clean buffer update (AI apply / agent write /
   // external edit reloading the draft) or a save (dirty → false). Typing alone
@@ -384,6 +393,26 @@ export function FileViewer({
   // on them spikes RAM/CPU. Offer an explicit "open anyway" escape hatch.
   const [forceHuge, setForceHuge] = useState(false);
   const isHuge = (buffer?.draft?.length ?? 0) > 15_000_000 && !forceHuge;
+
+  // True when a non-Monaco view is showing — those get CSS zoom (Monaco has its
+  // own mouseWheelZoom, so we leave its wheel events alone).
+  const previewMode =
+    isHuge || isBinary || (isMarkdown && showPreview) || (isHtml && showPreview);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || !previewMode) return;
+      e.preventDefault(); // stop the browser's own page zoom
+      setZoom((z) => {
+        const next = e.deltaY < 0 ? z * 1.1 : z / 1.1;
+        return Math.min(5, Math.max(0.3, Math.round(next * 100) / 100));
+      });
+    };
+    // Non-passive so preventDefault actually suppresses native zoom/scroll.
+    host.addEventListener('wheel', onWheel, { passive: false });
+    return () => host.removeEventListener('wheel', onWheel);
+  }, [previewMode]);
 
   if (!path || !buffer) {
     return (
@@ -531,7 +560,7 @@ export function FileViewer({
           </button>
         )}
       </div>
-      <div className="editor-host">
+      <div className="editor-host" ref={hostRef} style={previewMode ? { zoom } : undefined}>
         {isHuge ? (
           <div className="binary-notice" role="note">
             <p>

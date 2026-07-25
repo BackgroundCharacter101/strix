@@ -52,6 +52,10 @@ export interface CodeEditorProps {
 // touches (ligatures, padding, bracket colourisation) cost nothing at runtime.
 const MODERN_OPTIONS = {
   automaticLayout: true,
+  // Ctrl/Cmd + mouse wheel (and touchpad pinch, which the browser reports as
+  // Ctrl+wheel) zooms the editor font in/out — matches VS Code, and the same
+  // gesture zooms the Markdown/HTML preview (see FileViewer).
+  mouseWheelZoom: true,
   padding: { top: 12, bottom: 12 },
   fontFamily: "'Cascadia Code', 'Consolas', monospace",
   fontLigatures: true,
