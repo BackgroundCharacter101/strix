@@ -84,9 +84,11 @@ exists a banner offers it (**Update now** → download + **sha256-verify** →
 **Restart to apply**). Updates install **silently** (per-user, no UAC) and
 relaunch. It detects updates by version **and a git build-id**, so republishing
 after any change is offered even without a version bump. To push an update: keep
-`npm run update:serve` running in a terminal (the local feed on `:8787`), then
-after a change run **`npm run update:ship`** (builds the M1 installer +
-publishes it to the feed) — the app's Help → *Check for Updates…* then offers it.
+the feed on `:8787` running (`npm run update:serve`, or **double-click
+`update-server.bat`** and leave the window open), then after a change run
+**`npm run update:ship`** (or **double-click `ship-update.bat`**) to build the M1
+installer + publish it to the feed — the app's Help → *Check for Updates…* then
+offers it.
 Phase 2: host the `dist-updates/` feed on an https server so nobody runs it
 locally.
 
