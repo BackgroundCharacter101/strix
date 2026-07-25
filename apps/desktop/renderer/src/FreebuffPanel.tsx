@@ -24,6 +24,11 @@ export function FreebuffPanel({
 }) {
   const [installed, setInstalled] = useState<boolean | null>(null);
   const [restart, setRestart] = useState(0);
+  // FreeBuff runs in Command Prompt on Windows, not PowerShell: the `freebuff`
+  // npm shim + its interactive TUI misbehave under PowerShell's execution policy.
+  // The user's normal terminal keeps its own shell.
+  const isWindows = typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent);
+  const fbShell = isWindows ? 'cmd.exe' : shell;
   // Latest usage scraped from FreeBuff's output (sessions/time left).
   const [usage, setUsage] = useState<FreebuffUsage | null>(null);
   // Rolling tail of recent output to scan (usage line may span chunks).
@@ -111,7 +116,7 @@ export function FreebuffPanel({
             fontSize={fontSize}
             fontFamily={fontFamily}
             cursorStyle={cursorStyle}
-            shell={shell}
+            shell={fbShell}
             onData={onData}
           />
         )}
