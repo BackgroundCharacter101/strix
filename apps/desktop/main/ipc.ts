@@ -501,16 +501,22 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('update:apply', async () => {
     if (!stagedInstaller) return { ok: false, error: 'no update downloaded' };
     try {
-      const args = ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART'];
-      // An all-users (Program Files) install needs admin rights to overwrite its
-      // files, so launch the installer elevated (one UAC prompt). A per-user
-      // install under the profile updates silently — no elevation. The Inno
-      // `skipifnotsilent` [Run] entry relaunches Strix either way.
+      // An all-users (Program Files) install needs admin rights AND must install
+      // in all-users MODE — a silent Inno install otherwise defaults to per-user
+      // (lowest) and never replaces the Program Files copy. So force the mode with
+      // /ALLUSERS (elevated) or /CURRENTUSER (per-user), matching the running app.
       const elevated = isSystemInstall(app.getPath('exe'), [
         process.env['ProgramFiles'],
         process.env['ProgramFiles(x86)'],
         process.env['ProgramW6432'],
       ]);
+      const args = [
+        '/VERYSILENT',
+        '/SUPPRESSMSGBOXES',
+        '/NORESTART',
+        elevated ? '/ALLUSERS' : '/CURRENTUSER',
+      ];
+      console.log(`[update] applying ${stagedInstaller} elevated=${elevated} args=${args.join(' ')}`);
       if (elevated) {
         // ShellExecute "runas" via PowerShell triggers the UAC consent dialog,
         // then runs the installer silently under the elevated token.
@@ -527,9 +533,10 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
       } else {
         spawn(stagedInstaller, args, { detached: true, stdio: 'ignore' }).unref();
       }
-      // Quit shortly after so our exe/handles are free for the installer to
-      // overwrite (Inno also closes us via Restart Manager as a fallback).
-      setTimeout(() => app.quit(), 400);
+      // Quit so our exe/handles are free for the installer to overwrite (Inno
+      // also closes us via Restart Manager). A little longer than before so the
+      // elevated UAC + installer has time to take over before we release.
+      setTimeout(() => app.quit(), 1200);
       return { ok: true };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) };

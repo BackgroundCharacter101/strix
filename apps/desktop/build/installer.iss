@@ -52,7 +52,10 @@ DisableWelcomePage=no
 ; and installs into Program Files (that install then updates with one UAC per
 ; update — see main/ipc.ts update:apply).
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+; `commandline` lets a SILENT update pass /ALLUSERS or /CURRENTUSER to install in
+; the SAME mode as the running app — without it, a silent install falls back to
+; per-user (lowest) and never replaces an all-users Program Files install.
+PrivilegesRequiredOverridesAllowed=dialog commandline
 ; Let Inno close a running Strix (via Restart Manager) so a silent self-update
 ; can overwrite the in-use exe; we relaunch it ourselves from [Run].
 CloseApplications=yes
