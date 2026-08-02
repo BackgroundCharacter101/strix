@@ -66,7 +66,7 @@ describe('SourceControlView', () => {
   it('shows a clean message when there are no changes', async () => {
     status.mockResolvedValue({ isRepo: true, branch: 'main', files: [] });
     render(<SourceControlView rootPath="/ws" onOpenDiff={vi.fn()} />);
-    expect(await screen.findByText('No changes.')).toBeInTheDocument();
+    expect(await screen.findByText('No changes')).toBeInTheDocument();
   });
 });
 
@@ -93,5 +93,23 @@ describe('Source Control header', () => {
     expect(screen.queryByRole('menuitem', { name: 'Create Pull Request' })).toBeNull();
     fireEvent.click(more);
     expect(screen.getByRole('menuitem', { name: 'Create Pull Request' })).toBeInTheDocument();
+  });
+
+  it('closes the overflow menu on Escape', async () => {
+    status.mockResolvedValue({ isRepo: true, branch: 'main', files: [], root: '/r' });
+    render(<SourceControlView rootPath="/r" onOpenDiff={vi.fn()} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'More source control actions' }));
+    expect(screen.getByRole('menuitem', { name: 'Create Pull Request' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('menuitem', { name: 'Create Pull Request' })).toBeNull();
+  });
+
+  it('gives a clean tree a real empty state', async () => {
+    status.mockResolvedValue({ isRepo: true, branch: 'main', files: [], root: '/r' });
+    const { container } = render(<SourceControlView rootPath="/r" onOpenDiff={vi.fn()} />);
+    await screen.findByRole('button', { name: 'Branch: main' });
+    const empty = container.querySelector('.scm-empty');
+    expect(empty).toBeInTheDocument();
+    expect(empty).toHaveTextContent('No changes');
   });
 });

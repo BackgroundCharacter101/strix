@@ -5139,3 +5139,71 @@ a:focus-visible,
   font-size: var(--text-sm);
   border-radius: var(--control-radius);
 }
+
+/* --- Source Control body: one gutter, one control height ---------------- */
+.scm-commit {
+  gap: var(--panel-gap);
+  padding: var(--panel-gap) var(--panel-gutter);
+}
+
+.scm-message {
+  font-size: var(--text-sm);
+  border-radius: var(--control-radius);
+}
+
+.scm-commit-btn {
+  height: var(--control-h);
+  font-size: var(--text-sm);
+  border-radius: var(--control-radius);
+}
+
+.scm-group-head {
+  padding: var(--space-3) var(--panel-gutter) var(--space-1);
+}
+
+.scm-line .scm-row,
+.scm-stash-row {
+  min-height: var(--control-h);
+}
+
+.scm-line .scm-row {
+  padding-left: var(--panel-gutter);
+  font-size: var(--text-sm);
+  border-radius: var(--control-radius);
+}
+
+.scm-stash-row {
+  padding: var(--space-2) var(--panel-gutter);
+}
+
+.scm-stash-msg {
+  font-size: var(--text-sm);
+}
+
+.scm-stash-btn {
+  height: var(--control-h-sm);
+  font-size: var(--text-xs);
+}
+
+/* Clean tree deserves a real state, not a bare left-aligned line. */
+.scm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--section-gap) var(--panel-gutter);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Decorative tick — CSS, not markup, so it needs no aria-hidden span. */
+.scm-empty::before {
+  content: '✓';
+  font-size: var(--text-lg);
+  color: var(--accent);
+}
+
+.scm-empty-hint {
+  font-size: var(--text-xs);
+}

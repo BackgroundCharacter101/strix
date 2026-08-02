@@ -427,7 +427,12 @@ export function SourceControlView({
         </button>
       </div>
 
-      {status.files.length === 0 && <p className="muted">No changes.</p>}
+      {status.files.length === 0 && (
+        <div className="scm-empty">
+          <span>No changes</span>
+          <span className="scm-empty-hint">Your working tree is clean.</span>
+        </div>
+      )}
 
       {staged.length > 0 && (
         <>
