@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-08-02 · v0.2.9
+> Last updated: 2026-08-02 · v0.2.13
 
 ---
 
@@ -542,6 +542,23 @@ strix/ (folder: tabea)
 - **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
   `workspace.saveAs` (native Save dialog, defaults into the workspace).
 - Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
+
+## 9i. Session update — 2026-08-02 (self-hosted update feed)
+
+- **Strix can host its own update feed** (`main/updateFeed.ts`, 0.2.13). Updating
+  used to need `npm run update:serve` running in a terminal; close it and "Check
+  for Updates" had nothing to talk to. A build made with `--selfhost` serves the
+  feed folder itself while the app is open.
+- **Opt-in and deliberately narrow** — it is an HTTP server inside a desktop app:
+  `__STRIX_UPDATE_SERVE_DIR__` is only baked when building with `--selfhost`, so
+  public releases never listen and embed no build-machine path; binds `127.0.0.1`
+  only (verified unreachable from the LAN); serves only `.json` + `.exe` resolved
+  inside the root (plain and percent-encoded traversal refused); `EADDRINUSE` is
+  treated as success; stopped on `will-quit`.
+- Build with `npm run package:m1:selfhost`, or `update:ship:selfhost` to publish
+  in one step.
+- Note: `dist-updates/` holds every installer since 0.2.0 (~2.2 GB) — prune old
+  ones periodically; only the version in `latest-m1.json` is needed.
 
 ## 9h. Session update — 2026-08-02 (git stash + smart branch switch, zoom)
 
