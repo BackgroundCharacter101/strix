@@ -77,20 +77,27 @@ Type scale:
 |---|---|---|---|
 | `--text-2xs` | 9px | **10px** | badges and counts only — never a label |
 | `--text-xs` | 11px | 11px | secondary metadata |
-| `--text-sm` | — | **12px** | dense labels (new) |
-| `--text-base` | — | **13px** | default UI text (new) |
+| `--text-sm` | 12px | 12px | dense labels (already exists) |
+| `--text-base` | 13px | 13px | default UI text (already exists) |
+
+The scale is already adequate — `--text-sm` and `--text-base` exist and are simply not used by the
+panels in this slice, which reach for `--text-2xs`/`--text-xs` instead. The work is therefore mostly
+**applying the right existing step**, plus nudging `--text-2xs` off 9px.
 
 Rule: 9px is no longer used for anything the user is meant to read.
 
 Interaction and motion:
 
-- Hover fill `rgba(255,255,255,.06)`, active fill `rgba(255,255,255,.10)`. Borders do not appear on
-  hover (that shift is what makes a UI feel jumpy).
+- Quiet fills on hover, using the **existing** `--bg-hover` (and `--overlay-subtle` for chips) rather
+  than new rgba literals — a parallel set of hover values would recreate the drift this slice exists
+  to remove. Borders do not appear on hover (that shift is what makes a UI feel jumpy).
 - Focus keeps the existing blue `--focus` token, rendered as a soft 3px ring.
 - Transitions 150–200ms ease-out, limited to opacity and transform, with a
   `prefers-reduced-motion: reduce` branch.
 - The existing `density: compact` setting continues to tighten spacing for users who want more on
-  screen; it scales `--panel-gap` and `--control-h`.
+  screen. It is implemented as a `:root[data-density='compact']` block that **redefines the control
+  tokens themselves** (`--control-h: 24px`, `--panel-gutter: 10px`, …), so every surface built on
+  them shrinks together rather than each needing its own per-component override.
 
 ### 2. Source Control (`SourceControlView.tsx`, `StashList.tsx`)
 
