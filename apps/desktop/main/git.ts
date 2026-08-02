@@ -241,6 +241,84 @@ export async function sync(rootPath: string): Promise<{ ok: boolean; output: str
   return { ok: pushed.ok, output: parts.join('\n') || (pushed.ok ? 'Synced.' : 'Sync failed.') };
 }
 
+// --- Stash (shelve uncommitted work so you can switch branches) ---------------
+// We shell out to the system git: its stash is battle-tested and handles the
+// index/working-tree/untracked interplay that isomorphic-git can't yet.
+
+export interface GitStashEntry {
+  ref: string; // e.g. "stash@{0}"
+  message: string; // e.g. "WIP on main: 1a2b3c4 Some commit"
+  date: number; // ms since epoch
+}
+
+// All stashes, newest first. Empty on a repo with no stashes (or any error).
+export async function stashList(rootPath: string): Promise<GitStashEntry[]> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  try {
+    // \x1f (unit separator) is safe: it never appears in refs/messages.
+    const { stdout } = await execFileAsync(
+      'git',
+      ['stash', 'list', '--format=%gd%x1f%s%x1f%ct'],
+      { cwd: dir, maxBuffer: 4 * 1024 * 1024 },
+    );
+    return stdout
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => {
+        const [ref, message, ct] = line.split('\x1f');
+        return { ref, message: message ?? '', date: Number(ct) * 1000 };
+      });
+  } catch {
+    return [];
+  }
+}
+
+// Shelve the current changes. `includeUntracked` also stashes new files (git's
+// default leaves them behind, which won't block a checkout anyway).
+export async function stashPush(
+  rootPath: string,
+  message?: string,
+  includeUntracked = false,
+): Promise<{ ok: boolean; output: string }> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const args = ['stash', 'push'];
+  if (includeUntracked) args.push('-u');
+  if (message && message.trim()) args.push('-m', message.trim());
+  try {
+    const { stdout, stderr } = await execFileAsync('git', args, { cwd: dir, timeout: 60_000 });
+    const out = `${stdout}${stderr}`.trim();
+    if (/No local changes to save/i.test(out)) return { ok: false, output: 'No local changes to stash.' };
+    return { ok: true, output: out || 'Stashed.' };
+  } catch (e) {
+    return { ok: false, output: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+// pop = apply + drop; apply = keep the stash; drop = discard it. `ref` targets a
+// specific entry (e.g. "stash@{2}"); omit to act on the most recent.
+async function stashOp(
+  rootPath: string,
+  op: 'pop' | 'apply' | 'drop',
+  ref?: string,
+): Promise<{ ok: boolean; output: string }> {
+  const dir = await git.findRoot({ fs, filepath: rootPath });
+  const args = ['stash', op];
+  if (ref) args.push(ref);
+  try {
+    const { stdout, stderr } = await execFileAsync('git', args, { cwd: dir, timeout: 60_000 });
+    return { ok: true, output: `${stdout}${stderr}`.trim() || `Stash ${op} done.` };
+  } catch (e) {
+    // A conflicting pop/apply exits non-zero but may have partially applied —
+    // surface git's message so the user can resolve it.
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, output: msg };
+  }
+}
+
+export const stashPop = (rootPath: string, ref?: string) => stashOp(rootPath, 'pop', ref);
+export const stashApply = (rootPath: string, ref: string) => stashOp(rootPath, 'apply', ref);
+export const stashDrop = (rootPath: string, ref: string) => stashOp(rootPath, 'drop', ref);
+
 // The committed (HEAD) content of a file, for diffing against the working copy.
 // Returns '' for untracked/new files or any error.
 export async function getFileHeadContent(filePath: string): Promise<string> {

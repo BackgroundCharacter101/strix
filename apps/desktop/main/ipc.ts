@@ -37,6 +37,11 @@ import {
   pull,
   push,
   sync,
+  stashList,
+  stashPush,
+  stashPop,
+  stashApply,
+  stashDrop,
 } from './git.js';
 import {
   getRoot,
@@ -204,6 +209,13 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
   ipcMain.handle('git:pull', (_event, root: string) => pull(root));
   ipcMain.handle('git:push', (_event, root: string) => push(root));
   ipcMain.handle('git:sync', (_event, root: string) => sync(root));
+  ipcMain.handle('git:stashList', (_event, root: string) => stashList(root));
+  ipcMain.handle('git:stashPush', (_event, root: string, message?: string, includeUntracked?: boolean) =>
+    stashPush(root, message, includeUntracked),
+  );
+  ipcMain.handle('git:stashPop', (_event, root: string, ref?: string) => stashPop(root, ref));
+  ipcMain.handle('git:stashApply', (_event, root: string, ref: string) => stashApply(root, ref));
+  ipcMain.handle('git:stashDrop', (_event, root: string, ref: string) => stashDrop(root, ref));
 
   const terminals = new TerminalManager();
   ipcMain.handle('terminal:create', (event, opts: TerminalCreateOptions) =>

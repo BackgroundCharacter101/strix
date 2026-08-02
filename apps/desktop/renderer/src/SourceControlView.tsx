@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import type { GitBranches, GitLogEntry } from '../../main/git';
+import type { GitBranches, GitLogEntry, GitStashEntry } from '../../main/git';
 import { useGitStatusState } from './useGitStatus';
 import { FileIcon } from './FileTree';
 import { showToast } from './toast';
 import { SparkleIcon } from './icons';
 import { COMMIT_MESSAGE_INSTRUCTION, cleanCommitMessage } from './commitMessage';
 import { freellmComplete } from './aiComplete';
+import { StashList } from './StashList';
 
 function basename(p: string): string {
   const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
@@ -32,19 +33,25 @@ export function SourceControlView({
   const [prBusy, setPrBusy] = useState(false);
   const [branches, setBranches] = useState<GitBranches | null>(null);
   const [history, setHistory] = useState<GitLogEntry[]>([]);
+  const [stashes, setStashes] = useState<GitStashEntry[]>([]);
   const [newBranch, setNewBranch] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
+  // The branch a switch was blocked on by uncommitted changes — drives the
+  // "stash & switch?" confirm bar.
+  const [pendingSwitch, setPendingSwitch] = useState<string | null>(null);
 
   const repoBranch = status?.branch ?? null;
   const reloadGit = useCallback(() => {
     if (!rootPath || !status?.isRepo) {
       setBranches(null);
       setHistory([]);
+      setStashes([]);
       return;
     }
     window.strix.git.listBranches(rootPath).then(setBranches).catch(() => {});
     window.strix.git.log(rootPath, 30).then(setHistory).catch(() => {});
+    window.strix.git.stashList(rootPath).then(setStashes).catch(() => {});
   }, [rootPath, status?.isRepo, repoBranch]);
   useEffect(() => reloadGit(), [reloadGit]);
 
@@ -90,10 +97,78 @@ export function SourceControlView({
       showToast('Changes committed', 'success');
     });
 
-  const switchBranch = (ref: string) =>
+  // A blocked checkout looks the same from isomorphic-git and system git.
+  const CONFLICT_RE = /would be overwritten|checkoutconflict|commit your changes or stash/i;
+
+  const switchBranch = (ref: string) => {
+    if (!rootPath || busy || ref === status.branch) return;
+    setBusy(true);
+    void (async () => {
+      try {
+        await window.strix.git.checkout(rootPath, ref);
+        showToast(`Switched to ${ref}`, 'success', 2500);
+        setPendingSwitch(null);
+        reload();
+        reloadGit();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // Uncommitted changes block the switch — offer to stash instead of
+        // dead-ending with a raw error (the whole point of this fix).
+        if (CONFLICT_RE.test(msg)) setPendingSwitch(ref);
+        else showToast(`Git: ${msg}`, 'error', 8000);
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
+  // Shelve the blocking changes, then complete the switch. The work is safe in
+  // the stash list and can be restored from the Stashes panel.
+  const stashAndSwitch = () => {
+    const ref = pendingSwitch;
+    if (!ref || !rootPath || busy) return;
+    setBusy(true);
+    void (async () => {
+      try {
+        const res = await window.strix.git.stashPush(rootPath, `Before switching to ${ref}`, true);
+        if (!res.ok) {
+          showToast(`Stash: ${res.output}`, 'error', 8000);
+          return;
+        }
+        await window.strix.git.checkout(rootPath, ref);
+        showToast(`Switched to ${ref} — your changes are stashed below.`, 'success', 5000);
+        setPendingSwitch(null);
+        reload();
+        reloadGit();
+      } catch (e) {
+        showToast(`Git: ${e instanceof Error ? e.message : String(e)}`, 'error', 8000);
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
+
+  // Manual "Stash" button — shelve tracked changes (leaves untracked files).
+  const stashCurrent = () =>
     void guard(async () => {
-      await window.strix.git.checkout(rootPath!, ref);
-      showToast(`Switched to ${ref}`, 'success', 2500);
+      const res = await window.strix.git.stashPush(rootPath!);
+      showToast(res.ok ? 'Changes stashed' : res.output, res.ok ? 'success' : 'info');
+      reloadGit();
+    });
+
+  // Restore / discard a stash entry.
+  const stashAct = (op: 'pop' | 'apply' | 'drop', ref: string) =>
+    void guard(async () => {
+      const api = window.strix.git;
+      const res =
+        op === 'pop'
+          ? await api.stashPop(rootPath!, ref)
+          : op === 'apply'
+            ? await api.stashApply(rootPath!, ref)
+            : await api.stashDrop(rootPath!, ref);
+      const label = op === 'pop' ? 'restored' : op === 'apply' ? 'applied' : 'dropped';
+      showToast(res.ok ? `Stash ${label}` : res.output, res.ok ? 'success' : 'error', res.ok ? 3000 : 9000);
+      reloadGit();
     });
 
   const makeBranch = () => {
@@ -271,6 +346,27 @@ export function SourceControlView({
           {syncBusy ? '…' : '⟲ Sync'}
         </button>
       </div>
+      {pendingSwitch && (
+        <div className="scm-switch-confirm" role="alert">
+          <span>
+            Unsaved changes block the switch to <strong>{pendingSwitch}</strong>. Stash them and
+            switch? (restore later from Stashes)
+          </span>
+          <div className="scm-switch-actions">
+            <button type="button" className="scm-commit-btn" disabled={busy} onClick={stashAndSwitch}>
+              Stash &amp; switch
+            </button>
+            <button
+              type="button"
+              className="scm-link"
+              disabled={busy}
+              onClick={() => setPendingSwitch(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <div className="scm-newbranch">
         <input
           className="scm-newbranch-input"
@@ -346,13 +442,26 @@ export function SourceControlView({
         <>
           <div className="scm-group-head">
             <span>Changes</span>
-            <button type="button" className="scm-link" disabled={busy} onClick={stageAll}>
-              Stage all
-            </button>
+            <span className="scm-head-actions">
+              <button
+                type="button"
+                className="scm-link"
+                disabled={busy}
+                title="Shelve your changes so you can switch branches"
+                onClick={stashCurrent}
+              >
+                Stash
+              </button>
+              <button type="button" className="scm-link" disabled={busy} onClick={stageAll}>
+                Stage all
+              </button>
+            </span>
           </div>
           <ul className="scm-list">{unstaged.map((f) => fileRow(f, 'stage'))}</ul>
         </>
       )}
+
+      <StashList stashes={stashes} busy={busy} onAct={stashAct} />
 
       {history.length > 0 && (
         <>

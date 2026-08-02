@@ -52,6 +52,12 @@ const api: StrixApi = {
     pull: (rootPath) => ipcRenderer.invoke('git:pull', rootPath),
     push: (rootPath) => ipcRenderer.invoke('git:push', rootPath),
     sync: (rootPath) => ipcRenderer.invoke('git:sync', rootPath),
+    stashList: (rootPath) => ipcRenderer.invoke('git:stashList', rootPath),
+    stashPush: (rootPath, message, includeUntracked) =>
+      ipcRenderer.invoke('git:stashPush', rootPath, message, includeUntracked),
+    stashPop: (rootPath, ref) => ipcRenderer.invoke('git:stashPop', rootPath, ref),
+    stashApply: (rootPath, ref) => ipcRenderer.invoke('git:stashApply', rootPath, ref),
+    stashDrop: (rootPath, ref) => ipcRenderer.invoke('git:stashDrop', rootPath, ref),
   },
   terminal: {
     create: (opts) => ipcRenderer.invoke('terminal:create', opts),

@@ -1,5 +1,5 @@
 import type { FileNode } from './fs';
-import type { GitStatus, GitBranches, GitLogEntry } from './git';
+import type { GitStatus, GitBranches, GitLogEntry, GitStashEntry } from './git';
 import type { SearchMatch, ReplaceResult, MatchOptions } from './search';
 import type { TerminalCreateOptions } from './terminal';
 import type { Language, JsonRpcMessage } from './lsp';
@@ -99,6 +99,16 @@ export interface StrixGitApi {
   push(rootPath: string): Promise<{ ok: boolean; output: string }>;
   // Sync = pull then push (publishes the branch if it has no upstream yet).
   sync(rootPath: string): Promise<{ ok: boolean; output: string }>;
+  // Stash: shelve uncommitted work so you can switch branches, then restore it.
+  stashList(rootPath: string): Promise<GitStashEntry[]>;
+  stashPush(
+    rootPath: string,
+    message?: string,
+    includeUntracked?: boolean,
+  ): Promise<{ ok: boolean; output: string }>;
+  stashPop(rootPath: string, ref?: string): Promise<{ ok: boolean; output: string }>;
+  stashApply(rootPath: string, ref: string): Promise<{ ok: boolean; output: string }>;
+  stashDrop(rootPath: string, ref: string): Promise<{ ok: boolean; output: string }>;
 }
 
 export interface StrixTerminalApi {

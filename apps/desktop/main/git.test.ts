@@ -4,7 +4,18 @@ import { promises as fsp } from 'fs';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { getGitStatus, listBranches, createBranch, checkoutBranch, gitLog, commit } from './git';
+import { execFileSync } from 'child_process';
+import {
+  getGitStatus,
+  listBranches,
+  createBranch,
+  checkoutBranch,
+  gitLog,
+  commit,
+  stashList,
+  stashPush,
+  stashPop,
+} from './git';
 
 let tmp: string;
 
@@ -95,5 +106,44 @@ describe('branches + history', () => {
     expect(log[0].message).toBe('second commit');
     expect(log[1].message).toBe('initial commit');
     expect(log[0].oid).toHaveLength(7);
+  });
+});
+
+describe('stash', () => {
+  // `git stash` writes internal commits, so it needs an author identity.
+  async function repoWithIdentity() {
+    await gitClient.init({ fs, dir: tmp, defaultBranch: 'main' });
+    execFileSync('git', ['config', 'user.email', 't@t'], { cwd: tmp });
+    execFileSync('git', ['config', 'user.name', 'T'], { cwd: tmp });
+    await fsp.writeFile(path.join(tmp, 'a.txt'), 'v1', 'utf8');
+    await gitClient.add({ fs, dir: tmp, filepath: 'a.txt' });
+    await commit(tmp, 'initial');
+  }
+
+  it('stashes a dirty change, lists it, and pop restores it', async () => {
+    await repoWithIdentity();
+    await fsp.writeFile(path.join(tmp, 'a.txt'), 'v2 dirty', 'utf8');
+
+    const push = await stashPush(tmp, 'my wip');
+    expect(push.ok).toBe(true);
+    // Working tree is back to the committed content — the switch would now succeed.
+    expect(await fsp.readFile(path.join(tmp, 'a.txt'), 'utf8')).toBe('v1');
+
+    const list = await stashList(tmp);
+    expect(list.length).toBe(1);
+    expect(list[0].ref).toBe('stash@{0}');
+    expect(list[0].message).toContain('my wip');
+
+    const pop = await stashPop(tmp);
+    expect(pop.ok).toBe(true);
+    expect(await fsp.readFile(path.join(tmp, 'a.txt'), 'utf8')).toBe('v2 dirty');
+    expect((await stashList(tmp)).length).toBe(0);
+  });
+
+  it('reports "no local changes" when there is nothing to stash', async () => {
+    await repoWithIdentity();
+    const res = await stashPush(tmp);
+    expect(res.ok).toBe(false);
+    expect(res.output).toMatch(/no local changes/i);
   });
 });

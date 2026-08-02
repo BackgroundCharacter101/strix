@@ -79,6 +79,11 @@ export function makeStrixApi(overrides: StrixApiOverrides = {}): StrixApi {
       pull: vi.fn(async () => ({ ok: true, output: '' })),
       push: vi.fn(async () => ({ ok: true, output: '' })),
       sync: vi.fn(async () => ({ ok: true, output: '' })),
+      stashList: vi.fn(async () => []),
+      stashPush: vi.fn(async () => ({ ok: true, output: '' })),
+      stashPop: vi.fn(async () => ({ ok: true, output: '' })),
+      stashApply: vi.fn(async () => ({ ok: true, output: '' })),
+      stashDrop: vi.fn(async () => ({ ok: true, output: '' })),
     },
     terminal: {
       create: vi.fn(async (): Promise<string> => 'term-1'),

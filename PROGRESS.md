@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-07-13 · v0.2.6
+> Last updated: 2026-08-02 · v0.2.9
 
 ---
 
@@ -542,6 +542,25 @@ strix/ (folder: tabea)
 - **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
   `workspace.saveAs` (native Save dialog, defaults into the workspace).
 - Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
+
+## 9h. Session update — 2026-08-02 (git stash + smart branch switch, zoom)
+
+- **Branch switching no longer dead-ends on a dirty tree** — git correctly
+  refuses a checkout that would clobber uncommitted edits; Strix used to just
+  flash a raw error. Now the Source Control view detects the conflict and shows a
+  **"Stash & switch?"** confirm bar: it stashes, switches, and points you at the
+  new **Stashes** panel to restore. Root-caused with a repro (isomorphic-git
+  `checkout` is fine on non-conflicting dirty files but throws `CheckoutConflictError`
+  when a dirty file also differs on the target branch — same as system git).
+- **Full stash panel** (`git.ts` + `StashList.tsx`) — system-git-backed
+  `stashList/Push/Pop/Apply/Drop` (IPC `git:stash*`), a **Stash** action in the
+  Changes header, and a Stashes section with pop/apply/drop per entry.
+- **Ctrl/Cmd + wheel (touchpad pinch) zoom for every file view** (0.2.9) — Monaco
+  `mouseWheelZoom` for code; FileViewer scales Markdown/HTML preview + notices via
+  CSS `zoom`. Per-file, resets to 100% on open.
+- Note: 23 `npm audit` findings remain — all **devDependencies** (electron-builder,
+  vitest/vite, electron); prod deps are 0. They need deliberate major upgrades on a
+  separate branch (a blind `npm audit fix` regressed 23→37).
 
 ## 9g. Session update — 2026-07-13 (v0.2.1 → v0.2.6: fixes batch)
 
