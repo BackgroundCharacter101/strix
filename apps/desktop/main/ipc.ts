@@ -1,7 +1,6 @@
 import { ipcMain, shell, app } from 'electron';
 import * as os from 'os';
 import * as path from 'node:path';
-import { spawn } from 'node:child_process';
 import { streamDirect, streamFreeLLM, detectLocalModels } from './aiProxy.js';
 import {
   checkForUpdate,
@@ -70,6 +69,7 @@ import { popupMenu } from './menu.js';
 import { TerminalManager, execCommand, type TerminalCreateOptions } from './terminal.js';
 import { LspManager, type Language, type JsonRpcMessage } from './lsp.js';
 import { commandExists } from './commandExists.js';
+import { launchInstaller } from './launchInstaller.js';
 import { installServer, uninstallServer } from './languageServers.js';
 import { startStaticServer, stopStaticServer, staticServerInfo } from './staticServer.js';
 import { startDevServer, stopDevServer, devServerStatus } from './devServer.js';
@@ -528,26 +528,15 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
         '/NORESTART',
         elevated ? '/ALLUSERS' : '/CURRENTUSER',
       ];
-      console.log(`[update] applying ${stagedInstaller} elevated=${elevated} args=${args.join(' ')}`);
-      if (elevated) {
-        // ShellExecute "runas" via PowerShell triggers the UAC consent dialog,
-        // then runs the installer silently under the elevated token.
-        const list = args.map((a) => `'${a}'`).join(',');
-        spawn(
-          'powershell.exe',
-          [
-            '-NoProfile',
-            '-Command',
-            `Start-Process -FilePath '${stagedInstaller.replace(/'/g, "''")}' -ArgumentList ${list} -Verb RunAs`,
-          ],
-          { detached: true, stdio: 'ignore' },
-        ).unref();
-      } else {
-        spawn(stagedInstaller, args, { detached: true, stdio: 'ignore' }).unref();
-      }
+      // CONFIRM the installer actually started before quitting. spawn() reports
+      // a launch failure through an 'error' EVENT, not a throw, so the try/catch
+      // around it never fired: a declined UAC prompt used to close the app and
+      // install nothing, which looks exactly like "the update broke the app".
+      const launched = await launchInstaller(stagedInstaller, args, elevated);
+      if (!launched.ok) return launched; // stay open so the banner can explain
+
       // Quit so our exe/handles are free for the installer to overwrite (Inno
-      // also closes us via Restart Manager). A little longer than before so the
-      // elevated UAC + installer has time to take over before we release.
+      // also closes us via Restart Manager) and its [Run] entry relaunches us.
       setTimeout(() => app.quit(), 1200);
       return { ok: true };
     } catch (e) {

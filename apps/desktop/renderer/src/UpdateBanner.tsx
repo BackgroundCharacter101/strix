@@ -118,7 +118,21 @@ export function UpdateBanner() {
             <button
               type="button"
               className="update-btn update-btn-primary"
-              onClick={() => void window.strix.update.apply()}
+              onClick={() => {
+                // Surface an apply failure. Discarding this result meant a
+                // declined admin prompt closed the app silently and installed
+                // nothing, with no explanation anywhere.
+                void window.strix.update
+                  .apply()
+                  .then((res) => {
+                    if (!res.ok) {
+                      setState({ kind: 'error', message: res.error ?? 'The installer did not start.' });
+                    }
+                  })
+                  .catch((e: unknown) =>
+                    setState({ kind: 'error', message: e instanceof Error ? e.message : String(e) }),
+                  );
+              }}
             >
               Restart now
             </button>
