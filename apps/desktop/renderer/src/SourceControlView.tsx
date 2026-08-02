@@ -8,6 +8,7 @@ import { COMMIT_MESSAGE_INSTRUCTION, cleanCommitMessage } from './commitMessage'
 import { freellmComplete } from './aiComplete';
 import { StashList } from './StashList';
 import { BranchMenu } from './BranchMenu';
+import { useDismiss } from './useDismiss';
 
 function basename(p: string): string {
   const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
@@ -38,6 +39,8 @@ export function SourceControlView({
   const [showHistory, setShowHistory] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  // Dismiss the overflow menu the same way the branch menu dismisses.
+  const moreRef = useDismiss<HTMLDivElement>(moreOpen, () => setMoreOpen(false));
   // The branch a switch was blocked on by uncommitted changes — drives the
   // "stash & switch?" confirm bar.
   const [pendingSwitch, setPendingSwitch] = useState<string | null>(null);
@@ -304,7 +307,7 @@ export function SourceControlView({
     <div className="scm-view" aria-label="source control">
       <div className="scm-head">
         <span className="scm-head-title">Source Control</span>
-        <div className="scm-more">
+        <div className="scm-more" ref={moreRef}>
           <button
             type="button"
             className="scm-more-btn"

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { GitBranchIcon } from './icons';
+import { useDismiss } from './useDismiss';
 
 // The branch control for Source Control: one button showing where you are,
 // opening a menu of local branches plus "New branch…". This replaces a bare
@@ -21,7 +22,6 @@ export function BranchMenu({
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
-  const wrapRef = useRef<HTMLDivElement | null>(null);
 
   const close = () => {
     setOpen(false);
@@ -29,22 +29,8 @@ export function BranchMenu({
     setName('');
   };
 
-  // Close on Escape or a click outside, like every other menu in the app.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    const onDown = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) close();
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('mousedown', onDown);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('mousedown', onDown);
-    };
-  }, [open]);
+  // Close on Escape or a click outside — shared with the panel's other menus.
+  const wrapRef = useDismiss<HTMLDivElement>(open, close);
 
   const submit = () => {
     const trimmed = name.trim();
