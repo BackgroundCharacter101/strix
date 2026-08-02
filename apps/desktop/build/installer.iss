@@ -107,7 +107,12 @@ Root: HKA; Subkey: "Software\Classes\Directory\Background\shell\OpenWithStrix\co
 Filename: "{app}\{#MyExe}"; Description: "Launch {#MyAppName} now"; Flags: nowait postinstall skipifsilent
 ; Silent install (a live auto-update): relaunch Strix automatically once files
 ; are swapped, since there's no finish page to click.
-Filename: "{app}\{#MyExe}"; Flags: nowait skipifnotsilent
+; `runasoriginaluser` matters for an ALL-USERS update: that install runs
+; elevated, and without this the relaunched Strix inherits the administrator
+; token — an IDE with a terminal and an AI agent running as admin, writing
+; admin-owned files into the user's profile. This drops it back to the user who
+; started Setup.
+Filename: "{app}\{#MyExe}"; Flags: nowait skipifnotsilent runasoriginaluser
 
 [Code]
 // Only append to PATH when our dir isn't already present.

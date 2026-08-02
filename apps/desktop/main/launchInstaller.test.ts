@@ -1,46 +1,99 @@
-import { describe, it, expect } from 'vitest';
-import { elevateCommand, launchInstaller } from './launchInstaller';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { promises as fsp } from 'fs';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { launchInstaller, UAC_DECLINED } from './launchInstaller';
 
-describe('elevateCommand', () => {
-  it('quotes the installer path and each argument', () => {
-    const cmd = elevateCommand('C:\\Temp\\Strix M1 Setup 0.2.14.exe', ['/VERYSILENT', '/ALLUSERS']);
-    expect(cmd).toContain("-FilePath 'C:\\Temp\\Strix M1 Setup 0.2.14.exe'");
-    expect(cmd).toContain("-ArgumentList '/VERYSILENT','/ALLUSERS'");
-    expect(cmd).toContain('-Verb RunAs');
-  });
+let tmp: string;
 
-  it('escapes single quotes so a quoted path cannot break out of the command', () => {
-    const cmd = elevateCommand("C:\\it's\\setup.exe", []);
-    expect(cmd).toContain("'C:\\it''s\\setup.exe'");
-  });
-
-  it('exits non-zero when Start-Process fails, so a declined prompt is detectable', () => {
-    const cmd = elevateCommand('C:\\a.exe', ['/X']);
-    expect(cmd).toContain('-ErrorAction Stop');
-    expect(cmd).toContain('catch { exit 1 }');
-  });
+beforeEach(async () => {
+  tmp = await fsp.mkdtemp(path.join(os.tmpdir(), 'strix-launch-'));
+});
+afterEach(async () => {
+  await fsp.rm(tmp, { recursive: true, force: true });
 });
 
+const logPath = () => path.join(tmp, 'install.log');
+
 describe('launchInstaller', () => {
-  it('reports failure instead of throwing when the binary does not exist', async () => {
-    // The old code spawned without an 'error' listener, so this failure was
-    // invisible and the app quit anyway.
-    const res = await launchInstaller('C:\\definitely\\missing-installer.exe', ['/S'], false);
+  it('reports failure instead of throwing when the installer is missing', async () => {
+    // The old code spawned with no 'error' listener, so this was invisible and
+    // the app quit anyway.
+    const res = await launchInstaller(path.join(tmp, 'nope.exe'), ['/S'], true, {
+      logPath: logPath(),
+      timeoutMs: 5_000,
+    });
     expect(res.ok).toBe(false);
-    expect(res.error).toBeTruthy();
+    expect(res.error).toMatch(/could not start the installer/i);
   });
 
-  it('treats a non-zero elevation exit code as a declined prompt', async () => {
-    // `cmd.exe /c exit 1` stands in for PowerShell reporting a refused UAC.
-    const res = await launchInstaller('cmd.exe', ['/c', 'exit 1'], false);
-    // Direct (non-elevated) spawn only reports whether the process STARTED.
+  it('treats "exited without ever writing a log" as a declined elevation', async () => {
+    // cmd.exe exits non-zero without creating the log — the shape of a refused
+    // UAC prompt.
+    const res = await launchInstaller('cmd.exe', ['/c', 'exit 1'], true, {
+      logPath: logPath(),
+      timeoutMs: 5_000,
+    });
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe(UAC_DECLINED);
+  });
+
+  it('does not call a silent no-op a success', async () => {
+    const res = await launchInstaller('cmd.exe', ['/c', 'exit 0'], true, {
+      logPath: logPath(),
+      timeoutMs: 5_000,
+    });
+    expect(res.ok).toBe(false);
+    expect(res.error).toMatch(/exited without installing/i);
+  });
+
+  it('succeeds as soon as the install log appears, without waiting for exit', async () => {
+    const log = logPath();
+    // Stand-in for Inno: read the /LOG= argument the implementation appends,
+    // write it, then keep running the way a real install does. Resolving here
+    // proves we key off the log and not process exit.
+    const script =
+      "const fs=require('fs');" +
+      "const a=process.argv.find(s=>s.startsWith('/LOG='));" +
+      "fs.writeFileSync(a.slice(5),'installing');" +
+      'setTimeout(() => {}, 30000);';
+    const started = Date.now();
+    const res = await launchInstaller(process.execPath, ['-e', script], true, {
+      logPath: log,
+      timeoutMs: 10_000,
+      pollMs: 50,
+    });
+    expect(res.ok).toBe(true);
+    expect(res.logPath).toBe(log);
+    // It resolved while the stand-in was still running, not after 30s.
+    expect(Date.now() - started).toBeLessThan(9_000);
+  }, 15_000);
+
+  it('clears a stale log so a previous run cannot fake success', async () => {
+    const log = logPath();
+    fs.writeFileSync(log, 'log from an earlier attempt');
+    const res = await launchInstaller('cmd.exe', ['/c', 'exit 1'], true, {
+      logPath: log,
+      timeoutMs: 5_000,
+    });
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe(UAC_DECLINED);
+  });
+
+  it('times out rather than hanging on an unanswered prompt', async () => {
+    // Runs forever and never writes a log — an unanswered UAC dialog.
+    const res = await launchInstaller(process.execPath, ['-e', 'setTimeout(() => {}, 30000);'], true, {
+      logPath: logPath(),
+      timeoutMs: 400,
+      pollMs: 50,
+    });
+    expect(res.ok).toBe(false);
+    expect(res.error).toMatch(/timed out/i);
+  }, 10_000);
+
+  it('per-user path succeeds on spawn, with no log to wait for', async () => {
+    const res = await launchInstaller('cmd.exe', ['/c', 'exit 0'], false);
     expect(res.ok).toBe(true);
   });
-
-  it('times out rather than hanging forever on an unanswered prompt', async () => {
-    // Elevated path against a binary that never exits, with a tiny timeout.
-    const res = await launchInstaller('powershell.exe', ['/wait'], true, 50);
-    expect(res.ok).toBe(false);
-    expect(res.error).toMatch(/timed out|could not start|declined/i);
-  }, 10_000);
 });

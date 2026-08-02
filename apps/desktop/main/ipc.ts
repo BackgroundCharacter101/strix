@@ -532,7 +532,10 @@ export function registerIpcHandlers(ensureAiServer: () => void = () => {}): void
       // a launch failure through an 'error' EVENT, not a throw, so the try/catch
       // around it never fired: a declined UAC prompt used to close the app and
       // install nothing, which looks exactly like "the update broke the app".
-      const launched = await launchInstaller(stagedInstaller, args, elevated);
+      // The log path doubles as the "installation actually began" signal and as
+      // a breadcrumb when a future update misbehaves.
+      const logPath = path.join(app.getPath('temp'), 'strix-update-install.log');
+      const launched = await launchInstaller(stagedInstaller, args, elevated, { logPath });
       if (!launched.ok) return launched; // stay open so the banner can explain
 
       // Quit so our exe/handles are free for the installer to overwrite (Inno
