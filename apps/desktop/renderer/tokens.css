@@ -83,7 +83,7 @@
   --font-display: 'Bahnschrift', 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
   --font-ui: 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Cascadia Code', 'Consolas', monospace;
-  --text-2xs: 9px;
+  --text-2xs: 10px;
   --text-xs: 11px;
   --text-sm: 12px;
   --text-base: 13px;
@@ -154,6 +154,20 @@
 
   /* Back-compat alias (older rules used --radius) */
   --radius: var(--radius-md);
+
+  /* =======================================================================
+     CONTROLS — macOS-flavoured sizing. Additive on purpose: the --space-*
+     and --radius-* scales keep their values so surfaces that have not been
+     migrated yet cannot shift underneath us.
+     ======================================================================= */
+  --control-h: 28px;        /* buttons, selects, segmented controls */
+  --control-h-sm: 22px;     /* inline row actions (stash Pop/Apply/Drop) */
+  --control-radius: 7px;    /* softer than the old 4px */
+  --card-radius: 10px;
+  --field-h: 28px;          /* text inputs match button height */
+  --panel-gutter: 12px;     /* ONE horizontal gutter for panel content */
+  --panel-gap: 8px;         /* rhythm between blocks inside a panel */
+  --section-gap: 16px;      /* between major sections */
 }
 
 /* =========================================================================

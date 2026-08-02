@@ -72,6 +72,17 @@
   padding-bottom: var(--space-2);
 }
 
+/* Compact density tightens the control scale itself, so every surface built on
+   these tokens shrinks together instead of needing its own override. */
+:root[data-density='compact'] {
+  --control-h: 24px;
+  --control-h-sm: 20px;
+  --field-h: 24px;
+  --panel-gutter: 10px;
+  --panel-gap: 6px;
+  --section-gap: 12px;
+}
+
 /* ---- Scrollbars --------------------------------------------------------- */
 * {
   scrollbar-width: thin;
