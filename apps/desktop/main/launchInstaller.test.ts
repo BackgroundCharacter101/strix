@@ -83,9 +83,11 @@ describe('launchInstaller', () => {
 
   it('times out rather than hanging on an unanswered prompt', async () => {
     // Runs forever and never writes a log — an unanswered UAC dialog.
+    // The budget must clear node's own startup (which can take several hundred
+    // ms under a loaded suite) or this races and reports a spawn error instead.
     const res = await launchInstaller(process.execPath, ['-e', 'setTimeout(() => {}, 30000);'], true, {
       logPath: logPath(),
-      timeoutMs: 400,
+      timeoutMs: 2_000,
       pollMs: 50,
     });
     expect(res.ok).toBe(false);
