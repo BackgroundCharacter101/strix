@@ -16,7 +16,11 @@
 - Materials (`backdrop-filter`) stay confined to chrome overlays. Do not add blur to panels, the editor, or code.
 - `--text-2xs` is for badges and counts only. No text a user is meant to read may be smaller than `--text-xs` (11px).
 - Do NOT change existing `--space-*` or `--radius-*` token values. Add new tokens instead.
-- Every file stays under 500 lines (project rule). `SourceControlView.tsx` is at 491 lines today — Task 5 extracts `BranchMenu.tsx` before Task 6 adds to it.
+- **New** files stay under 500 lines (project rule). Two existing files are already over and are out
+  of scope to split in this slice: `AiPanel.tsx` (2,272 lines) and `AiPanel.test.tsx` (577). Neither
+  may grow materially — new UI for them goes into its own component + test file instead. That is why
+  Task 3 creates `AgentModeControl.tsx` and Task 5 creates `BranchMenu.tsx`.
+  `SourceControlView.tsx` is at 491 lines and MUST end this slice under 500.
 - Animate only `opacity` and `transform`. Every animation needs a `@media (prefers-reduced-motion: reduce)` branch.
 - No `Co-Authored-By` trailer in commits (project rule).
 - Renderer tests need `// @vitest-environment jsdom` as line 1 and `import '@testing-library/jest-dom/vitest'`.
@@ -246,60 +250,163 @@ git commit -m "feat(ui): add propose/auto-apply/plan icons for the agent mode co
 The control currently lives in the model toolbar at `AiPanel.tsx` around line 1705 (`<span className="ai-mode" …>`), rendered at `--text-2xs` with `2px 9px` padding and pushed right by `margin-left:auto`. It moves into `.ai-actions` (around line 2197), left of the attach + Send buttons.
 
 **Files:**
-- Modify: `apps/desktop/renderer/src/AiPanel.tsx` (remove old block ~1704-1725; add to `.ai-actions`; fix empty-state copy ~1853)
+- Create: `apps/desktop/renderer/src/AgentModeControl.tsx`
+- Test: `apps/desktop/renderer/src/AgentModeControl.test.tsx` (create)
+- Modify: `apps/desktop/renderer/src/AiPanel.tsx` (remove old block ~1704-1725; render the new
+  component inside `.ai-actions`; fix empty-state copy ~1853)
 - Modify: `apps/desktop/renderer/styles.css` (replace the `.ai-mode` rules near line 4900)
-- Test: `apps/desktop/renderer/src/AiPanel.test.tsx` (append cases)
+
+`AiPanel.tsx` is 2,272 lines and must not grow materially, so the control is its own component and
+its tests are their own file rather than appended to the 577-line `AiPanel.test.tsx`.
 
 **Interfaces:**
-- Consumes: `ProposeIcon`, `AutoApplyIcon`, `PlanIcon` from Task 2; `--control-h`, `--control-radius`, `--panel-gap` from Task 1.
-- Produces: the segmented control markup — a `role="radiogroup"` with `aria-label="Agent mode"` containing three `role="radio"` buttons whose accessible names are exactly `Manual`, `Accept edits`, and `Plan`. Task 4 attaches to the same `agentMode` state.
+- Consumes: `ProposeIcon`, `AutoApplyIcon`, `PlanIcon` from Task 2; `--control-h`, `--control-radius` from Task 1.
+- Produces:
+  ```ts
+  export type AgentMode = 'manual' | 'accept' | 'plan';
+  export function AgentModeControl(props: {
+    mode: AgentMode;
+    onChange: (mode: AgentMode) => void;
+  }): JSX.Element
+  ```
+  Renders a `role="radiogroup"` with `aria-label="Agent mode"` containing three `role="radio"`
+  buttons whose accessible names are exactly `Manual`, `Accept edits`, and `Plan`. Task 4 keys off
+  the same `agentMode` state in `AiPanel`.
 
 - [ ] **Step 1: Write the failing test**
 
-Append to `apps/desktop/renderer/src/AiPanel.test.tsx` (inside the existing top-level `describe`, or as a new `describe` at the end of the file):
+Create `apps/desktop/renderer/src/AgentModeControl.test.tsx`:
 
 ```tsx
-describe('agent mode segmented control', () => {
-  it('renders all three modes inside the composer actions row', () => {
-    render(<AiPanel {...baseProps} />);
-    const group = screen.getByRole('radiogroup', { name: 'Agent mode' });
-    expect(group).toBeInTheDocument();
-    // It must live in the composer, not the model toolbar.
-    expect(group.closest('.ai-actions')).not.toBeNull();
+// @vitest-environment jsdom
+import { describe, it, expect, vi } from 'vitest';
+import '@testing-library/jest-dom/vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { AgentModeControl } from './AgentModeControl';
+
+describe('AgentModeControl', () => {
+  it('renders all three modes as one radiogroup', () => {
+    render(<AgentModeControl mode="manual" onChange={vi.fn()} />);
+    expect(screen.getByRole('radiogroup', { name: 'Agent mode' })).toBeInTheDocument();
     for (const name of ['Manual', 'Accept edits', 'Plan']) {
       expect(screen.getByRole('radio', { name })).toBeInTheDocument();
     }
   });
 
-  it('marks exactly one mode active and switches on click', () => {
-    render(<AiPanel {...baseProps} />);
-    const manual = screen.getByRole('radio', { name: 'Manual' });
-    const plan = screen.getByRole('radio', { name: 'Plan' });
-    expect(manual).toHaveAttribute('aria-checked', 'true');
-    fireEvent.click(plan);
-    expect(plan).toHaveAttribute('aria-checked', 'true');
-    expect(manual).toHaveAttribute('aria-checked', 'false');
+  it('marks exactly one mode active', () => {
+    render(<AgentModeControl mode="plan" onChange={vi.fn()} />);
+    expect(screen.getByRole('radio', { name: 'Plan' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Manual' })).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('moves between modes with the arrow keys', () => {
-    render(<AiPanel {...baseProps} />);
-    const manual = screen.getByRole('radio', { name: 'Manual' });
-    manual.focus();
-    fireEvent.keyDown(manual, { key: 'ArrowRight' });
-    expect(screen.getByRole('radio', { name: 'Accept edits' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
+  it('reports the picked mode on click', () => {
+    const onChange = vi.fn();
+    render(<AgentModeControl mode="manual" onChange={onChange} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Accept edits' }));
+    expect(onChange).toHaveBeenCalledWith('accept');
+  });
+
+  it('moves to the next mode with ArrowRight and wraps with ArrowLeft', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<AgentModeControl mode="manual" onChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'Manual' }), { key: 'ArrowRight' });
+    expect(onChange).toHaveBeenCalledWith('accept');
+
+    onChange.mockClear();
+    rerender(<AgentModeControl mode="manual" onChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'Manual' }), { key: 'ArrowLeft' });
+    expect(onChange).toHaveBeenCalledWith('plan');
+  });
+
+  it('keeps only the active mode in the tab order', () => {
+    render(<AgentModeControl mode="accept" onChange={vi.fn()} />);
+    expect(screen.getByRole('radio', { name: 'Accept edits' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('radio', { name: 'Manual' })).toHaveAttribute('tabindex', '-1');
   });
 });
 ```
 
-`baseProps` is the prop object the existing tests in this file already build for `<AiPanel>`; reuse it verbatim rather than inventing a new one. If the existing tests inline their props, copy that same object into a `const baseProps = { … }` at the top of your new `describe` and use it.
-
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npx vitest run apps/desktop/renderer/src/AiPanel.test.tsx -t "agent mode segmented"`
-Expected: FAIL — `group.closest('.ai-actions')` is null (the control is still in the toolbar), and no arrow-key handling exists.
+Run: `npx vitest run apps/desktop/renderer/src/AgentModeControl.test.tsx`
+Expected: FAIL — cannot resolve `./AgentModeControl`.
+
+- [ ] **Step 2b: Write the component**
+
+Create `apps/desktop/renderer/src/AgentModeControl.tsx`:
+
+```tsx
+import React from 'react';
+import { ProposeIcon, AutoApplyIcon, PlanIcon } from './icons';
+
+export type AgentMode = 'manual' | 'accept' | 'plan';
+
+// Module-level: the mode list never depends on props or state.
+const MODES = [
+  { id: 'manual', label: 'Manual', title: 'Propose edits — you apply them', Icon: ProposeIcon },
+  { id: 'accept', label: 'Accept edits', title: 'Auto-apply the AI’s edits', Icon: AutoApplyIcon },
+  { id: 'plan', label: 'Plan', title: 'Plan only — makes no file edits', Icon: PlanIcon },
+] as const satisfies ReadonlyArray<{
+  id: AgentMode;
+  label: string;
+  title: string;
+  Icon: (p: { size?: number }) => React.JSX.Element;
+}>;
+
+// How the AI's file changes are handled. This lives beside Send in the composer
+// rather than in the model toolbar: it decides whether the AI writes to your
+// files, so it belongs where you are looking when you write the request.
+export function AgentModeControl({
+  mode,
+  onChange,
+}: {
+  mode: AgentMode;
+  onChange: (mode: AgentMode) => void;
+}) {
+  const activeIndex = MODES.findIndex((m) => m.id === mode);
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const delta = e.key === 'ArrowRight' ? 1 : -1;
+    onChange(MODES[(activeIndex + delta + MODES.length) % MODES.length].id);
+  };
+
+  return (
+    <span
+      className="ai-segmented"
+      role="radiogroup"
+      aria-label="Agent mode"
+      style={{ ['--seg-index' as string]: String(Math.max(0, activeIndex)) }}
+    >
+      {/* One thumb slid by transform, rather than repainting three backgrounds. */}
+      <span className="ai-segmented-thumb" aria-hidden />
+      {MODES.map(({ id, label, title, Icon }) => (
+        <button
+          key={id}
+          type="button"
+          className={`ai-segmented-btn${mode === id ? ' is-active' : ''}`}
+          role="radio"
+          aria-checked={mode === id}
+          // Only the selected radio is tabbable; arrows move within the group.
+          tabIndex={mode === id ? 0 : -1}
+          title={title}
+          onClick={() => onChange(id)}
+          onKeyDown={onKeyDown}
+        >
+          <Icon size={13} />
+          <span className="ai-segmented-label">{label}</span>
+        </button>
+      ))}
+    </span>
+  );
+}
+```
+
+- [ ] **Step 2c: Run test to verify it passes**
+
+Run: `npx vitest run apps/desktop/renderer/src/AgentModeControl.test.tsx`
+Expected: PASS (5 tests)
 
 - [ ] **Step 3: Remove the old control from the toolbar**
 
@@ -330,59 +437,29 @@ In `apps/desktop/renderer/src/AiPanel.tsx`, delete this whole block (the comment
         </span>
 ```
 
-- [ ] **Step 4: Add the segmented control to the composer**
+- [ ] **Step 4: Render the control in the composer**
 
-Add the icon imports to the existing `./icons` import statement at the top of `AiPanel.tsx` (it already imports `SparkleIcon`):
+Add the import near the other local imports at the top of `AiPanel.tsx`:
 
 ```tsx
-import { SparkleIcon, ProposeIcon, AutoApplyIcon, PlanIcon } from './icons';
+import { AgentModeControl } from './AgentModeControl';
 ```
 
-In `AiPanel.tsx`, find `<div className="ai-actions">` (~line 2197) and insert this as its **first child**, before the attach button:
+In `AiPanel.tsx`, find `<div className="ai-actions">` (~line 2197) and insert this as its **first
+child**, before the attach button:
 
 ```tsx
-          {(() => {
-            const MODES = [
-              ['manual', 'Manual', 'Propose edits — you apply them', ProposeIcon],
-              ['accept', 'Accept edits', 'Auto-apply the AI’s edits', AutoApplyIcon],
-              ['plan', 'Plan', 'Plan only — makes no file edits', PlanIcon],
-            ] as const;
-            const activeIndex = MODES.findIndex(([m]) => m === agentMode);
-            return (
-              <span
-                className="ai-segmented"
-                role="radiogroup"
-                aria-label="Agent mode"
-                style={{ ['--seg-index' as string]: String(activeIndex) }}
-              >
-                {/* Sliding fill behind the active segment — transform only. */}
-                <span className="ai-segmented-thumb" aria-hidden />
-                {MODES.map(([m, label, title, Icon]) => (
-                  <button
-                    key={m}
-                    type="button"
-                    className={`ai-segmented-btn${agentMode === m ? ' is-active' : ''}`}
-                    role="radio"
-                    aria-checked={agentMode === m}
-                    // Only the selected radio is tabbable; arrows move within.
-                    tabIndex={agentMode === m ? 0 : -1}
-                    title={title}
-                    onClick={() => setAgentMode(m)}
-                    onKeyDown={(e) => {
-                      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-                      e.preventDefault();
-                      const delta = e.key === 'ArrowRight' ? 1 : -1;
-                      const next = MODES[(activeIndex + delta + MODES.length) % MODES.length][0];
-                      setAgentMode(next);
-                    }}
-                  >
-                    <Icon size={13} />
-                    <span className="ai-segmented-label">{label}</span>
-                  </button>
-                ))}
-              </span>
-            );
-          })()}
+          <AgentModeControl mode={agentMode} onChange={setAgentMode} />
+```
+
+`agentMode` and `setAgentMode` are the existing state declared near line 443; do not duplicate them.
+If TypeScript objects that `setAgentMode` is not assignable to `(mode: AgentMode) => void`, import
+the exported type and use it for the state instead of the inline union:
+
+```tsx
+import { AgentModeControl, type AgentMode } from './AgentModeControl';
+// …
+const [agentMode, setAgentMode] = useState<AgentMode>(/* keep the existing initialiser */);
 ```
 
 - [ ] **Step 5: Fix the now-wrong empty-state copy**
@@ -473,20 +550,21 @@ In `apps/desktop/renderer/styles.css`, delete the old block that starts with the
 }
 ```
 
-- [ ] **Step 7: Run tests to verify they pass**
+- [ ] **Step 7: Confirm the control moved, not duplicated**
 
-Run: `npx vitest run apps/desktop/renderer/src/AiPanel.test.tsx`
-Expected: PASS — all pre-existing AiPanel tests plus the 3 new ones.
+Run: `npx grep -rn "ai-mode-btn\|className=\"ai-mode\"" apps/desktop/renderer/src apps/desktop/renderer/styles.css`
+Expected: no matches. The old toolbar control and its CSS are gone, not merely hidden.
 
 - [ ] **Step 8: Verify the whole suite**
 
 Run: `npm run typecheck && npm run lint && npm test`
-Expected: all green.
+Expected: all green. Pre-existing `AiPanel.test.tsx` cases that asserted on the old toolbar control
+must be updated to the new markup — the control intentionally no longer lives there.
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add apps/desktop/renderer/src/AiPanel.tsx apps/desktop/renderer/src/AiPanel.test.tsx apps/desktop/renderer/styles.css
+git add apps/desktop/renderer/src/AgentModeControl.tsx apps/desktop/renderer/src/AgentModeControl.test.tsx apps/desktop/renderer/src/AiPanel.tsx apps/desktop/renderer/src/AiPanel.test.tsx apps/desktop/renderer/styles.css
 git commit -m "feat(ui): move agent mode into the composer as a real segmented control"
 ```
 
@@ -499,30 +577,37 @@ Accept-edits means the AI writes to files without asking. That state should be v
 **Files:**
 - Modify: `apps/desktop/renderer/src/AiPanel.tsx` (class on the composer wrapper)
 - Modify: `apps/desktop/renderer/styles.css` (append one rule)
-- Test: `apps/desktop/renderer/src/AiPanel.test.tsx` (append one case)
+- Test: `apps/desktop/renderer/src/AgentModeControl.test.tsx` (append one case)
 
 **Interfaces:**
-- Consumes: `agentMode` state and the segmented control from Task 3.
+- Consumes: `agentMode` / `autoApplyOn` state in `AiPanel` and the control from Task 3.
 - Produces: the class `is-accept-mode` on the `.ai-composer` element whenever `agentMode === 'accept'`.
 
 - [ ] **Step 1: Write the failing test**
 
-Append to the `agent mode segmented control` describe in `AiPanel.test.tsx`:
+The class is applied by `AiPanel`, but `AiPanel.test.tsx` is already 577 lines and must not grow.
+Assert the rule directly instead — append to `apps/desktop/renderer/src/AgentModeControl.test.tsx`:
 
 ```tsx
-  it('marks the composer while the AI is allowed to write files', () => {
-    const { container } = render(<AiPanel {...baseProps} />);
-    const composer = container.querySelector('.ai-composer');
-    expect(composer).not.toHaveClass('is-accept-mode');
-    fireEvent.click(screen.getByRole('radio', { name: 'Accept edits' }));
-    expect(composer).toHaveClass('is-accept-mode');
+describe('accept-edits ambient signal', () => {
+  it('is styled so the composer shows when the AI may write files', () => {
+    const css = readFileSync(join(__dirname, '..', 'styles.css'), 'utf8');
+    expect(css).toMatch(/\.ai-composer\.is-accept-mode\s*\{/);
   });
+});
+```
+
+Add these imports at the top of that test file:
+
+```tsx
+import { readFileSync } from 'fs';
+import { join } from 'path';
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `npx vitest run apps/desktop/renderer/src/AiPanel.test.tsx -t "allowed to write files"`
-Expected: FAIL — element does not have class `is-accept-mode`.
+Run: `npx vitest run apps/desktop/renderer/src/AgentModeControl.test.tsx -t "may write files"`
+Expected: FAIL — no `.ai-composer.is-accept-mode` rule exists yet.
 
 - [ ] **Step 3: Add the class**
 
@@ -555,13 +640,18 @@ Append to `apps/desktop/renderer/styles.css`, directly after the `.ai-segmented`
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `npx vitest run apps/desktop/renderer/src/AiPanel.test.tsx`
+Run: `npx vitest run apps/desktop/renderer/src/AgentModeControl.test.tsx`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Verify the whole suite**
+
+Run: `npm run typecheck && npm run lint && npm test`
+Expected: all green.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add apps/desktop/renderer/src/AiPanel.tsx apps/desktop/renderer/src/AiPanel.test.tsx apps/desktop/renderer/styles.css
+git add apps/desktop/renderer/src/AiPanel.tsx apps/desktop/renderer/src/AgentModeControl.test.tsx apps/desktop/renderer/styles.css
 git commit -m "feat(ui): tint the composer while accept-edits mode is active"
 ```
 
