@@ -15,6 +15,7 @@ import {
   stashList,
   stashPush,
   stashPop,
+  parsePorcelain,
 } from './git';
 
 let tmp: string;
@@ -106,6 +107,52 @@ describe('branches + history', () => {
     expect(log[0].message).toBe('second commit');
     expect(log[1].message).toBe('initial commit');
     expect(log[0].oid).toHaveLength(7);
+  });
+});
+
+describe('autocrlf (Windows) — no phantom changes, switching works', () => {
+  // Regression guard: isomorphic-git ignores core.autocrlf, so it saw every text
+  // file as modified (CRLF working tree vs LF blob). That filled Source Control
+  // with phantom changes and made every branch switch throw CheckoutConflictError
+  // even on a clean tree. System git normalizes, so both must behave.
+  it('reports a clean tree and switches branches with core.autocrlf=true', async () => {
+    await gitClient.init({ fs, dir: tmp, defaultBranch: 'main' });
+    const cfg = (k: string, v: string) => execFileSync('git', ['config', k, v], { cwd: tmp });
+    cfg('user.email', 't@t');
+    cfg('user.name', 'T');
+    cfg('core.autocrlf', 'true');
+    // LF in the file; with autocrlf git stores LF and checks out CRLF.
+    await fsp.writeFile(path.join(tmp, 'a.txt'), 'line one\nline two\n', 'utf8');
+    execFileSync('git', ['add', 'a.txt'], { cwd: tmp });
+    await commit(tmp, 'initial');
+    await createBranch(tmp, 'feature');
+    await fsp.writeFile(path.join(tmp, 'a.txt'), 'line one\nchanged on feature\n', 'utf8');
+    execFileSync('git', ['add', 'a.txt'], { cwd: tmp });
+    await commit(tmp, 'feature edit');
+    await checkoutBranch(tmp, 'main');
+    // Force the CRLF working-tree form git would produce on checkout.
+    await fsp.writeFile(path.join(tmp, 'a.txt'), 'line one\r\nline two\r\n', 'utf8');
+
+    // No phantom modification, even though the bytes differ from the blob.
+    expect((await getGitStatus(tmp)).files).toEqual([]);
+    // ...and the branch switch succeeds instead of CheckoutConflictError.
+    await checkoutBranch(tmp, 'feature');
+    expect((await getGitStatus(tmp)).branch).toBe('feature');
+  });
+});
+
+describe('parsePorcelain', () => {
+  it('splits staged and unstaged, handles untracked and renames', () => {
+    // "MM" = staged edit plus further unstaged edit → one row in each section.
+    const out = 'MM a.ts\0A  new.ts\0 D gone.ts\0?? untracked.ts\0R  to.ts\0from.ts\0';
+    expect(parsePorcelain(out)).toEqual([
+      { path: 'a.ts', status: 'modified', staged: true },
+      { path: 'a.ts', status: 'modified', staged: false },
+      { path: 'new.ts', status: 'added', staged: true },
+      { path: 'gone.ts', status: 'deleted', staged: false },
+      { path: 'untracked.ts', status: 'added', staged: false },
+      { path: 'to.ts', status: 'modified', staged: true },
+    ]);
   });
 });
 
