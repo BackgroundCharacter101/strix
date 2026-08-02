@@ -1973,7 +1973,9 @@ kbd {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: var(--space-2) var(--space-3) 0;
+  /* Same horizontal gutter as the group headings and commit box below, so the
+     whole panel shares one left edge. */
+  padding: var(--space-2) var(--space-4) 0;
 }
 .scm-branch-select {
   flex: 1 1 auto;
@@ -2008,7 +2010,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px var(--space-3) 0;
+  padding: 4px var(--space-4) 0;
 }
 .scm-newbranch-input {
   flex: 1 1 auto;
@@ -2250,7 +2252,7 @@ kbd {
   padding: var(--space-3);
   font-size: var(--text-xs);
   color: var(--text);
-  background: var(--surface);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
@@ -2261,38 +2263,113 @@ kbd {
   gap: var(--space-3);
 }
 
-/* Stashes list — one row per shelved change set. */
+/* Stashes list — one row per shelved change set. Entries often share a message
+   ("On main: …"), so the message leads and the branch/age metadata below it is
+   what actually tells them apart. */
 .scm-stash-list {
   list-style: none;
   margin: 0;
-  padding: 0 var(--space-3) var(--space-2);
+  padding: 0 0 var(--space-2);
 }
 
+/* Full-bleed rows: the hover band runs edge to edge while the text keeps the
+   panel's shared 8px gutter. */
 .scm-stash-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 2px 4px;
-  font-size: var(--text-xs);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.scm-stash-row:hover,
+.scm-stash-row:focus-within {
+  background: var(--bg-hover);
+}
+
+.scm-stash-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .scm-stash-msg {
-  flex: 1 1 auto;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--text-xs);
   color: var(--text);
 }
 
+.scm-stash-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+.scm-stash-branch {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scm-stash-tag {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.4px;
+}
+
+/* Row actions stay out of the way until the row is hovered or keyboard-focused
+   (three rows of "Pop Apply Drop" otherwise read as noise). */
 .scm-stash-actions {
   display: flex;
   flex: 0 0 auto;
-  gap: var(--space-2);
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity 160ms ease-out;
 }
 
-.scm-danger {
+.scm-stash-row:hover .scm-stash-actions,
+.scm-stash-row:focus-within .scm-stash-actions {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scm-stash-actions {
+    transition: none;
+  }
+}
+
+.scm-stash-btn {
+  all: unset;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+}
+
+.scm-stash-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.scm-stash-btn:focus-visible {
+  outline: 1px solid var(--focus);
+}
+
+/* Destructive intent shows on interaction, not at rest. */
+.scm-stash-btn.is-danger:hover {
   color: var(--danger, #e5534b);
+}
+
+.scm-stash-btn[disabled] {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .scm-line {
