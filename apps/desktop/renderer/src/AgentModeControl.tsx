@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ProposeIcon, AutoApplyIcon, PlanIcon } from './icons';
 
 export type AgentMode = 'manual' | 'accept' | 'plan';
@@ -26,6 +26,23 @@ export function AgentModeControl({
   onChange: (mode: AgentMode) => void;
 }) {
   const activeIndex = MODES.findIndex((m) => m.id === mode);
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const buttonRefs = useRef<Record<AgentMode, HTMLButtonElement | null>>({
+    manual: null,
+    accept: null,
+    plan: null,
+  });
+
+  // Roving-tabindex radiogroups move focus together with selection (ARIA
+  // Authoring Practices). We only follow the mode here if focus was already
+  // inside the group — i.e. the change came from arrow-key navigation —
+  // so a click (which already focuses its own button) or an unrelated
+  // parent re-render never steals focus from elsewhere on the page.
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !container.contains(document.activeElement)) return;
+    buttonRefs.current[mode]?.focus();
+  }, [mode]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -36,6 +53,7 @@ export function AgentModeControl({
 
   return (
     <span
+      ref={containerRef}
       className="ai-segmented"
       role="radiogroup"
       aria-label="Agent mode"
@@ -46,6 +64,9 @@ export function AgentModeControl({
       {MODES.map(({ id, label, title, Icon }) => (
         <button
           key={id}
+          ref={(el) => {
+            buttonRefs.current[id] = el;
+          }}
           type="button"
           className={`ai-segmented-btn${mode === id ? ' is-active' : ''}`}
           role="radio"

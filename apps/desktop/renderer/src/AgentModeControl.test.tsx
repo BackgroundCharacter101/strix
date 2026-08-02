@@ -43,4 +43,35 @@ describe('AgentModeControl', () => {
     expect(screen.getByRole('radio', { name: 'Accept edits' })).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('radio', { name: 'Manual' })).toHaveAttribute('tabindex', '-1');
   });
+
+  it('moves DOM focus to the newly selected button on arrow-key navigation', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<AgentModeControl mode="manual" onChange={onChange} />);
+    const manualBtn = screen.getByRole('radio', { name: 'Manual' });
+    manualBtn.focus();
+    expect(document.activeElement).toBe(manualBtn);
+
+    fireEvent.keyDown(manualBtn, { key: 'ArrowRight' });
+    expect(onChange).toHaveBeenCalledWith('accept');
+
+    // Simulate the parent updating `mode` in response to onChange, as a
+    // controlled component would.
+    rerender(<AgentModeControl mode="accept" onChange={onChange} />);
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'Accept edits' }));
+  });
+
+  it('does not steal focus when mode changes without prior keyboard focus in the group', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<AgentModeControl mode="manual" onChange={onChange} />);
+
+    const outsideInput = document.createElement('input');
+    document.body.appendChild(outsideInput);
+    outsideInput.focus();
+    expect(document.activeElement).toBe(outsideInput);
+
+    rerender(<AgentModeControl mode="accept" onChange={onChange} />);
+    expect(document.activeElement).toBe(outsideInput);
+
+    document.body.removeChild(outsideInput);
+  });
 });
