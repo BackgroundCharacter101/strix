@@ -15,6 +15,11 @@
 // (asar-unpacked) node_modules. node builtins are auto-external on platform=node.
 import esbuild from 'esbuild';
 import { execSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// apps/desktop/ → repo root (this file lives in apps/desktop/).
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Product edition baked in at build time (STRIX_EDITION=competition → the
 // private build with the Claude Code menu item; anything else → the free M1).
@@ -42,6 +47,16 @@ const common = {
     // Phase 1 default = the local update server; Phase 2 = set this at build.
     __STRIX_UPDATE_URL__: JSON.stringify(
       process.env.STRIX_UPDATE_URL ?? 'http://localhost:8787',
+    ),
+    // Folder this build should serve the update feed from, so the app hosts its
+    // own updates instead of needing a separate `npm run update:serve` terminal.
+    // OPT-IN: only baked when STRIX_SERVE_UPDATE_FEED=1 at build time, so public
+    // releases ship with it empty and never open a local server (and no build
+    // machine path leaks into them). See main/updateFeed.ts.
+    __STRIX_UPDATE_SERVE_DIR__: JSON.stringify(
+      process.env.STRIX_SERVE_UPDATE_FEED === '1'
+        ? (process.env.STRIX_UPDATE_SERVE_DIR ?? path.resolve(repoRoot, 'dist-updates'))
+        : '',
     ),
     // CJS output has no `import.meta.url`; code uses it (createRequire,
     // fileURLToPath). Map every occurrence to a banner const derived from the

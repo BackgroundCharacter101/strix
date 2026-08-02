@@ -16,6 +16,8 @@
         "update:publish:competition": "node scripts/update-publish.mjs competition",
         "update:ship": "npm run package:m1 && node scripts/update-publish.mjs m1",
         "update:ship:competition": "npm run package:competition && node scripts/update-publish.mjs competition",
+        "package:m1:selfhost": "node scripts/edition.mjs m1 win --selfhost",
+        "update:ship:selfhost": "npm run package:m1:selfhost && node scripts/update-publish.mjs m1",
         "start:m1": "node scripts/edition.mjs m1 start",
         "start:competition": "node scripts/edition.mjs competition start",
         "build:m1": "node scripts/edition.mjs m1 build",

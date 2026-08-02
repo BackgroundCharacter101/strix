@@ -34,7 +34,17 @@ const productName = isComp ? 'Strix M1 Competition' : 'Strix M1';
 const appId = isComp ? 'com.strix.ide.competition' : 'com.strix.ide';
 const outDir = path.join('release', edition);
 
-const env = { ...process.env, STRIX_EDITION: edition };
+// `--selfhost` bakes the repo's dist-updates folder into the build so the app
+// serves its own update feed on startup (see apps/desktop/main/updateFeed.ts).
+// Opt-in: public releases must NOT run a local server, so it stays off by
+// default and no build-machine path is embedded in them.
+const selfHostFeed = process.argv.includes('--selfhost');
+
+const env = {
+  ...process.env,
+  STRIX_EDITION: edition,
+  ...(selfHostFeed ? { STRIX_SERVE_UPDATE_FEED: '1' } : {}),
+};
 const onWin = process.platform === 'win32';
 
 function run(cmd, args, cwd) {

@@ -6,6 +6,7 @@ import { registerIpcHandlers } from './ipc.js';
 import { withAiCors } from './aiCors.js';
 import { startAiServer, stopAiServer } from './aiServer.js';
 import { stopDevServer } from './devServer.js';
+import { startUpdateFeed, stopUpdateFeed } from './updateFeed.js';
 import { buildAppMenu } from './menu.js';
 import { EDITION } from './edition.js';
 
@@ -235,6 +236,10 @@ if (!gotLock) {
         } catch (e) {
             logError('registerIpcHandlers failed:', e);
         }
+        // Host the update feed ourselves when this build is configured with one,
+        // so "Check for Updates" works without a separate server terminal.
+        // No-ops (resolves null) in builds that ship without a feed folder.
+        startUpdateFeed(log).catch((e) => logError('startUpdateFeed failed:', e));
     }).catch((e) => logError('whenReady failed:', e));
 }
 
@@ -252,6 +257,7 @@ app.on('web-contents-created', (_event, contents) => {
 app.on('will-quit', () => {
     stopAiServer();
     stopDevServer();
+    stopUpdateFeed();
 });
 
 app.on('window-all-closed', () => {
