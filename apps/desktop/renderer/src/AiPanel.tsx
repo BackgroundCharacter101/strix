@@ -33,6 +33,7 @@ import {
 import { CodeProposal } from './CodeProposal';
 import { PromptDialog } from './PromptDialog';
 import { SparkleIcon } from './icons';
+import { AgentModeControl } from './AgentModeControl';
 import { renderMarkdown } from './markdown';
 import { showToast } from './toast';
 import { isSafeRelPath, pickBuildModel } from '@strix/ai-gateway';
@@ -1701,28 +1702,6 @@ export function AiPanel({
                 ? routedVia
                 : 'Auto · router'}
         </span>
-        {/* Agent mode: how the AI's file changes are handled. */}
-        <span className="ai-mode" role="radiogroup" aria-label="Agent mode">
-          {(
-            [
-              ['manual', 'Manual', 'Propose edits — you apply them'],
-              ['accept', 'Accept edits', 'Auto-apply the AI’s edits'],
-              ['plan', 'Plan', 'Plan only — makes no file edits'],
-            ] as const
-          ).map(([m, label, title]) => (
-            <button
-              key={m}
-              type="button"
-              className={`ai-mode-btn${agentMode === m ? ' is-active' : ''}`}
-              role="radio"
-              aria-checked={agentMode === m}
-              title={title}
-              onClick={() => setAgentMode(m)}
-            >
-              {label}
-            </button>
-          ))}
-        </span>
       </div>
 
       {hasKeys === false && (
@@ -1850,7 +1829,7 @@ export function AiPanel({
               <SparkleIcon size={26} />
               <p>Ask anything about your code.</p>
               <p className="ai-empty-hint">
-                Chat to explain, fix or refactor — pick a mode above (Manual /
+                Chat to explain, fix or refactor — pick a mode below (Manual /
                 Accept edits / Plan). Type <strong>/</strong> to call an agent.
               </p>
             </div>
@@ -2195,6 +2174,7 @@ export function AiPanel({
           />
         </div>
         <div className="ai-actions">
+          <AgentModeControl mode={agentMode} onChange={setAgentMode} />
           <button
             type="button"
             className="ai-attach-btn"
