@@ -1116,11 +1116,10 @@ export default function App() {
             {showSidebar && !zen && (
               <>
                 <aside className="sidebar" style={{ width: sidebar.size }}>
-                  <div className="sidebar-header">
-                    {sidebarView === 'search'
-                      ? 'Search'
-                      : sidebarView === 'scm'
-                        ? 'Source Control'
+                  {sidebarView !== 'scm' && (
+                    <div className="sidebar-header">
+                      {sidebarView === 'search'
+                        ? 'Search'
                         : sidebarView === 'run'
                           ? 'Run & Serve'
                           : sidebarView === 'extensions'
@@ -1132,7 +1131,8 @@ export default function App() {
                                 : sidebarView === 'agents'
                                   ? 'Agents'
                                   : 'Explorer'}
-                  </div>
+                    </div>
+                  )}
                   {sidebarView === 'search' ? (
                     <SearchView onOpen={openAtLine} />
                   ) : sidebarView === 'agents' ? (

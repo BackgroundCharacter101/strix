@@ -69,3 +69,29 @@ describe('SourceControlView', () => {
     expect(await screen.findByText('No changes.')).toBeInTheDocument();
   });
 });
+
+describe('Source Control header', () => {
+  it('shows the branch as one control and no standing new-branch field', async () => {
+    status.mockResolvedValue({ isRepo: true, branch: 'main', files: [], root: '/r' });
+    render(<SourceControlView rootPath="/r" onOpenDiff={vi.fn()} />);
+    expect(await screen.findByRole('button', { name: 'Branch: main' })).toBeInTheDocument();
+    // The always-visible "New branch…" input is gone; it lives in the menu now.
+    expect(screen.queryByLabelText('New branch name')).toBeNull();
+  });
+
+  it('names the primary action after the branch it commits to', async () => {
+    status.mockResolvedValue({ isRepo: true, branch: 'main', files: [], root: '/r' });
+    render(<SourceControlView rootPath="/r" onOpenDiff={vi.fn()} />);
+    expect(await screen.findByRole('button', { name: 'Commit on main' })).toBeInTheDocument();
+  });
+
+  it('keeps Create Pull Request reachable from the overflow menu', async () => {
+    status.mockResolvedValue({ isRepo: true, branch: 'main', files: [], root: '/r' });
+    render(<SourceControlView rootPath="/r" onOpenDiff={vi.fn()} />);
+    const more = await screen.findByRole('button', { name: 'More source control actions' });
+    // Not on screen until asked for.
+    expect(screen.queryByRole('menuitem', { name: 'Create Pull Request' })).toBeNull();
+    fireEvent.click(more);
+    expect(screen.getByRole('menuitem', { name: 'Create Pull Request' })).toBeInTheDocument();
+  });
+});

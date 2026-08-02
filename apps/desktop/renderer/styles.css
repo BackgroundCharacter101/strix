@@ -1980,20 +1980,6 @@ kbd {
   color: var(--text-muted);
 }
 
-.scm-branchbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  /* Same horizontal gutter as the group headings and commit box below, so the
-     whole panel shares one left edge. */
-  padding: var(--space-2) var(--space-4) 0;
-}
-.scm-branch-select {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--text-xs);
-  padding: 2px 4px;
-}
 .scm-sync-btn {
   font-size: var(--text-xs);
   padding: 2px 7px;
@@ -2016,17 +2002,6 @@ kbd {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
   color: var(--accent-ink);
-}
-.scm-newbranch {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px var(--space-4) 0;
-}
-.scm-newbranch-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--text-xs);
 }
 .scm-history-head {
   width: 100%;
@@ -2204,19 +2179,6 @@ kbd {
 .scm-commit-btn {
   align-self: stretch;
   font-weight: var(--weight-medium);
-}
-
-/* Secondary "Create Pull Request" action below Commit. */
-.scm-pr-btn {
-  align-self: stretch;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-}
-
-.scm-pr-btn:hover:not(:disabled) {
-  color: var(--text);
-  border-color: var(--accent);
 }
 
 .scm-group-head {
@@ -5105,4 +5067,75 @@ a:focus-visible,
   background: var(--bg-input);
   border: 1px solid var(--focus);
   border-radius: calc(var(--control-radius) - 2px);
+}
+
+/* --- Source Control header + sync row ---------------------------------- */
+.scm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--panel-gutter);
+}
+
+.scm-head-title {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.scm-more {
+  position: relative;
+}
+
+.scm-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--control-radius) - 2px);
+  cursor: pointer;
+}
+
+.scm-more-btn:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.scm-more-menu {
+  position: absolute;
+  z-index: 30; /* matches the existing in-panel dropdown convention */
+  top: calc(var(--control-h-sm) + 4px);
+  right: 0;
+  min-width: 190px;
+  padding: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow-modal);
+}
+
+/* Branch button on top, its verbs directly beneath it. */
+.scm-branchbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--panel-gap);
+  padding: var(--space-2) var(--panel-gutter) 0;
+}
+
+.scm-syncrow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.scm-syncrow .scm-sync-btn {
+  flex: 1 1 0;
+  height: var(--control-h);
+  font-size: var(--text-sm);
+  border-radius: var(--control-radius);
 }

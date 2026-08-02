@@ -7,6 +7,7 @@ import { SparkleIcon } from './icons';
 import { COMMIT_MESSAGE_INSTRUCTION, cleanCommitMessage } from './commitMessage';
 import { freellmComplete } from './aiComplete';
 import { StashList } from './StashList';
+import { BranchMenu } from './BranchMenu';
 
 function basename(p: string): string {
   const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
@@ -34,9 +35,9 @@ export function SourceControlView({
   const [branches, setBranches] = useState<GitBranches | null>(null);
   const [history, setHistory] = useState<GitLogEntry[]>([]);
   const [stashes, setStashes] = useState<GitStashEntry[]>([]);
-  const [newBranch, setNewBranch] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   // The branch a switch was blocked on by uncommitted changes — drives the
   // "stash & switch?" confirm bar.
   const [pendingSwitch, setPendingSwitch] = useState<string | null>(null);
@@ -171,13 +172,12 @@ export function SourceControlView({
       reloadGit();
     });
 
-  const makeBranch = () => {
-    const name = newBranch.trim();
-    if (!name) return;
+  const makeBranch = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     void guard(async () => {
-      await window.strix.git.createBranch(rootPath!, name);
-      setNewBranch('');
-      showToast(`Created and switched to ${name}`, 'success', 2500);
+      await window.strix.git.createBranch(rootPath!, trimmed);
+      showToast(`Created and switched to ${trimmed}`, 'success', 2500);
     });
   };
 
@@ -302,49 +302,74 @@ export function SourceControlView({
 
   return (
     <div className="scm-view" aria-label="source control">
+      <div className="scm-head">
+        <span className="scm-head-title">Source Control</span>
+        <div className="scm-more">
+          <button
+            type="button"
+            className="scm-more-btn"
+            aria-label="More source control actions"
+            aria-haspopup="menu"
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((v) => !v)}
+          >
+            ⋯
+          </button>
+          {moreOpen && (
+            <div className="scm-more-menu" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                className="scm-branch-item"
+                disabled={prBusy}
+                onClick={() => {
+                  setMoreOpen(false);
+                  void createPr();
+                }}
+              >
+                {prBusy ? 'Creating…' : 'Create Pull Request'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
       <div className="scm-branchbar">
-        <select
-          className="scm-branch-select"
-          aria-label="Current branch"
-          title="Switch branch"
-          value={status.branch ?? ''}
-          disabled={busy}
-          onChange={(e) => e.target.value && switchBranch(e.target.value)}
-        >
-          {status.branch == null && <option value="">(detached HEAD)</option>}
-          {(branches?.branches ?? (status.branch ? [status.branch] : [])).map((b) => (
-            <option key={b} value={b}>
-              ⎇ {b}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          className="scm-sync-btn"
-          title="Pull (fast-forward) from origin"
-          disabled={syncBusy}
-          onClick={() => sync('pull')}
-        >
-          ↓ Pull
-        </button>
-        <button
-          type="button"
-          className="scm-sync-btn"
-          title="Push to origin"
-          disabled={syncBusy}
-          onClick={() => sync('push')}
-        >
-          ↑ Push
-        </button>
-        <button
-          type="button"
-          className="scm-sync-btn scm-sync-primary"
-          title="Sync — pull then push (publishes the branch if it has no upstream)"
-          disabled={syncBusy}
-          onClick={() => sync('sync')}
-        >
-          {syncBusy ? '…' : '⟲ Sync'}
-        </button>
+        <BranchMenu
+          current={status.branch}
+          branches={branches?.branches ?? (status.branch ? [status.branch] : [])}
+          busy={busy}
+          onSwitch={switchBranch}
+          onCreate={makeBranch}
+        />
+        <div className="scm-syncrow">
+          <button
+            type="button"
+            className="scm-sync-btn"
+            title="Pull (fast-forward) from origin"
+            disabled={syncBusy}
+            onClick={() => sync('pull')}
+          >
+            ↓ Pull
+          </button>
+          <button
+            type="button"
+            className="scm-sync-btn"
+            title="Push to origin"
+            disabled={syncBusy}
+            onClick={() => sync('push')}
+          >
+            ↑ Push
+          </button>
+          <button
+            type="button"
+            className="scm-sync-btn scm-sync-primary"
+            title="Sync — pull then push (publishes the branch if it has no upstream)"
+            disabled={syncBusy}
+            onClick={() => sync('sync')}
+          >
+            {syncBusy ? '…' : '⟲ Sync'}
+          </button>
+        </div>
       </div>
       {pendingSwitch && (
         <div className="scm-switch-confirm" role="alert">
@@ -367,25 +392,6 @@ export function SourceControlView({
           </div>
         </div>
       )}
-      <div className="scm-newbranch">
-        <input
-          className="scm-newbranch-input"
-          aria-label="New branch name"
-          placeholder="New branch…"
-          value={newBranch}
-          onChange={(e) => setNewBranch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && makeBranch()}
-        />
-        <button
-          type="button"
-          className="scm-link"
-          disabled={busy || newBranch.trim().length === 0}
-          onClick={makeBranch}
-        >
-          Create
-        </button>
-      </div>
-
       <div className="scm-commit">
         <div className="scm-message-wrap">
           <textarea
@@ -413,16 +419,8 @@ export function SourceControlView({
           disabled={busy || message.trim().length === 0 || staged.length === 0}
           onClick={commit}
         >
-          Commit{staged.length ? ` (${staged.length})` : ''}
-        </button>
-        <button
-          type="button"
-          className="scm-pr-btn"
-          title="Push the current branch and open a pull request on GitHub"
-          disabled={prBusy}
-          onClick={() => void createPr()}
-        >
-          {prBusy ? 'Creating…' : 'Create Pull Request'}
+          Commit on {status.branch ?? 'HEAD'}
+          {staged.length ? ` (${staged.length})` : ''}
         </button>
       </div>
 
