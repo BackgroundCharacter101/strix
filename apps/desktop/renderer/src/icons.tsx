@@ -274,3 +274,32 @@ export function FolderGlyph({ open = false, size = 15 }: IconProps & { open?: bo
     </svg>
   );
 }
+
+// --- Agent mode icons (AI composer segmented control) ---------------------
+// Manual: the AI proposes an edit and you apply it — a pencil.
+export function ProposeIcon({ size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M4 20h4l10-10a2.5 2.5 0 0 0-3.5-3.5L4.5 16.5 4 20z" />
+    </svg>
+  );
+}
+
+// Accept edits: the AI writes to the file itself — a check.
+export function AutoApplyIcon({ size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M4 12.5l5.2 5.2L20 7" />
+    </svg>
+  );
+}
+
+// Plan: think it through, change nothing — a checklist.
+export function PlanIcon({ size = 14 }: IconProps) {
+  return (
+    <svg {...base(size)}>
+      <path d="M4 6.5h3.4M4 12h3.4M4 17.5h3.4" />
+      <path d="M11 6.5h9M11 12h9M11 17.5h6" />
+    </svg>
+  );
+}
