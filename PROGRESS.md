@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-08-02 · v0.2.13
+> Last updated: 2026-08-02 · v0.2.14
 
 ---
 
@@ -542,6 +542,29 @@ strix/ (folder: tabea)
 - **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
   `workspace.saveAs` (native Save dialog, defaults into the workspace).
 - Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
+
+## 9j. Session update — 2026-08-02 (UI slice 1 — design language, SCM, AI composer)
+
+Spec: `docs/superpowers/specs/2026-08-02-ui-redesign-design.md` ·
+Plan: `docs/superpowers/plans/2026-08-02-ui-redesign.md` (executed task-by-task with review gates)
+
+- **Control tokens** (`tokens.css`) — `--control-h: 28px`, `--control-h-sm`, `--control-radius: 7px`,
+  `--card-radius`, `--field-h`, `--panel-gutter: 12px`, `--panel-gap`, `--section-gap`, plus
+  `:root[data-density='compact']` overrides so compact mode scales the tokens themselves. Additive:
+  no existing `--space-*` / `--radius-*` value changed, so untouched surfaces cannot shift.
+  `--text-2xs` 9px → 10px; **9px is no longer used for anything meant to be read.**
+- **Agent mode moved into the composer** (`AgentModeControl.tsx`) — it decides whether the AI writes
+  to your files, and it used to be 9px text in the corner of the model toolbar. Now a 28px segmented
+  control beside Send, icons per mode, roving-tabindex radiogroup with arrow keys that move focus as
+  well as selection. Accept-edits tints the composer so the state is ambient.
+- **Source Control hierarchy** — `BranchMenu.tsx` replaces a bare `<select>` AND the always-visible
+  "New branch…" row; sync verbs sit under the branch button; **Create Pull Request moved to a `⋯`
+  overflow menu** so `Commit on <branch>` is the only primary action; one shared `--panel-gutter`
+  gives the panel a single left edge; a clean tree gets a real empty state.
+- **`useDismiss.ts`** — Escape / outside-click dismissal shared by both panel menus (the overflow
+  menu shipped without it and stayed stuck open; caught in review).
+- 492 tests (from 463). `AiPanel.tsx` shrank 2272 → 2252; `SourceControlView.tsx` at 497/500.
+- Later slices reuse these tokens: explorer, tabs, terminal, settings, palette, status bar.
 
 ## 9i. Session update — 2026-08-02 (self-hosted update feed)
 
