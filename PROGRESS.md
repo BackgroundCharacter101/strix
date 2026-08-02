@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-08-02 · v0.2.14
+> Last updated: 2026-08-02 · v0.2.16
 
 ---
 
@@ -542,6 +542,32 @@ strix/ (folder: tabea)
 - **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
   `workspace.saveAs` (native Save dialog, defaults into the workspace).
 - Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
+
+## 9k. Session update — 2026-08-02 (updater: apply actually works, all-users included)
+
+Symptom: "update, hit Restart, and it won't open." The installer downloaded and verified
+(117MB staged in temp) but **no Inno log was ever written** — it never ran — and the install
+stayed at 0.2.12. Two silent failures stacked:
+
+- `update:apply` spawned the installer then called `app.quit()` on an unconditional 1200ms
+  timer. `spawn()` reports launch failures via an **'error' event, not a throw**, so the
+  surrounding try/catch never fired: a declined UAC prompt closed the app and installed nothing.
+- `UpdateBanner` called `void window.strix.update.apply()` and **discarded the result**, so even
+  a returned error displayed nothing.
+
+Fixed in `main/launchInstaller.ts` — the app now quits only after the install demonstrably began:
+
+- All-users updates pass `/ALLUSERS` and let **Inno raise the UAC prompt itself** instead of
+  pre-elevating via `Start-Process -Verb RunAs`. Inno then records the original non-elevated
+  user, which is what makes the new `runasoriginaluser` flag on the silent `[Run]` entry work —
+  without it an all-users update **relaunched Strix as administrator**.
+- Success is observed, not guessed: Inno writes its `/LOG` only once installation starts, so the
+  launcher resolves ok when that file appears and treats "exited without ever writing one" as a
+  declined prompt. A stale log is deleted first so it cannot fake success.
+- On failure the banner explains that administrator approval is needed.
+
+**Not yet verified end-to-end against a real UAC install** (needs an elevated run on the target
+machine) — but a failure now reports its reason instead of vanishing. 499 tests.
 
 ## 9j. Session update — 2026-08-02 (UI slice 1 — design language, SCM, AI composer)
 
