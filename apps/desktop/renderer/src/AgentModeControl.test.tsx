@@ -2,6 +2,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { AgentModeControl } from './AgentModeControl';
 
 describe('AgentModeControl', () => {
@@ -73,5 +75,12 @@ describe('AgentModeControl', () => {
     expect(document.activeElement).toBe(outsideInput);
 
     document.body.removeChild(outsideInput);
+  });
+});
+
+describe('accept-edits ambient signal', () => {
+  it('is styled so the composer shows when the AI may write files', () => {
+    const css = readFileSync(join(__dirname, '..', 'styles.css'), 'utf8');
+    expect(css).toMatch(/\.ai-composer\.is-accept-mode\s*\{/);
   });
 });

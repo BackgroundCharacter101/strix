@@ -1996,7 +1996,7 @@ export function AiPanel({
         </div>
       )}
 
-      <div className="ai-composer">
+      <div className={`ai-composer${autoApplyOn ? ' is-accept-mode' : ''}`}>
         {pinned.length > 0 && (
           <div className="ai-pinned" aria-label="pinned files">
             {pinned.map((f) => (
