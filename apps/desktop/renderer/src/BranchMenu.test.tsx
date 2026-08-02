@@ -51,4 +51,22 @@ describe('BranchMenu', () => {
     render(<BranchMenu {...props} current={null} />);
     expect(screen.getByRole('button', { name: 'Branch: detached HEAD' })).toBeInTheDocument();
   });
+
+  it('resets create state when closed via the trigger button', () => {
+    render(<BranchMenu {...props} />);
+    const trigger = screen.getByRole('button', { name: 'Branch: main' });
+
+    // Open, enter create mode, type a name.
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New branch…' }));
+    fireEvent.change(screen.getByLabelText('New branch name'), { target: { value: 'wip' } });
+
+    // Close via the trigger button, without submitting.
+    fireEvent.click(trigger);
+
+    // Reopen — should show the normal branch list, not the stale create input.
+    fireEvent.click(trigger);
+    expect(screen.getByRole('menuitem', { name: 'New branch…' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('New branch name')).toBeNull();
+  });
 });

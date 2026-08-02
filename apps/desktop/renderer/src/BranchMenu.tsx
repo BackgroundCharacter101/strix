@@ -62,7 +62,13 @@ export function BranchMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={busy}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (open) {
+            close();
+          } else {
+            setOpen(true);
+          }
+        }}
       >
         <GitBranchIcon size={13} />
         <span className="scm-branch-name">{current ?? 'detached HEAD'}</span>

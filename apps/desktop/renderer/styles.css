@@ -5049,7 +5049,7 @@ a:focus-visible,
 .scm-branch-menu {
   position: absolute;
   z-index: 30; /* matches the existing in-panel dropdown convention */
-  top: calc(var(--control-h) + 4px);
+  top: calc(var(--control-h) + var(--space-2));
   left: 0;
   right: 0;
   padding: var(--space-2);
@@ -5086,7 +5086,7 @@ a:focus-visible,
 }
 
 .scm-branch-check {
-  flex: 0 0 14px;
+  flex: 0 0 var(--space-7);
   color: var(--accent);
 }
 
