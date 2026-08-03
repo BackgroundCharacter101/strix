@@ -78,6 +78,31 @@ describe('AgentModeControl', () => {
   });
 });
 
+describe('selection thumb', () => {
+  // The labels are different lengths, so the segments are NOT equal thirds.
+  // The thumb must be sized/positioned from the ACTIVE button, not from a
+  // hardcoded 1/3 — that version lined up on Manual and drifted off the others.
+  const thumbOf = (c: HTMLElement) => c.querySelector('.ai-segmented-thumb') as HTMLElement;
+
+  it('sizes and positions itself from the measured active segment', () => {
+    const { container, rerender } = render(<AgentModeControl mode="manual" onChange={vi.fn()} />);
+    const thumb = thumbOf(container);
+    // jsdom reports 0 for layout, so assert the mechanism: inline width/transform
+    // driven by measurement, never a CSS-only 1/3 assumption.
+    expect(thumb.style.width).toMatch(/px$/);
+    expect(thumb.style.transform).toMatch(/^translateX\(-?\d+px\)$/);
+
+    rerender(<AgentModeControl mode="plan" onChange={vi.fn()} />);
+    expect(thumbOf(container).style.transform).toMatch(/^translateX\(-?\d+px\)$/);
+  });
+
+  it('does not hardcode a one-third width in the stylesheet', () => {
+    const css = readFileSync(join(__dirname, '..', 'styles.css'), 'utf8');
+    const rule = css.slice(css.indexOf('.ai-segmented-thumb'), css.indexOf('.ai-segmented-thumb') + 400);
+    expect(rule).not.toMatch(/\/\s*3\s*\)/);
+  });
+});
+
 describe('accept-edits ambient signal', () => {
   it('is styled so the composer shows when the AI may write files', () => {
     const css = readFileSync(join(__dirname, '..', 'styles.css'), 'utf8');

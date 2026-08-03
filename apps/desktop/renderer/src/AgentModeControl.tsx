@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ProposeIcon, AutoApplyIcon, PlanIcon } from './icons';
 
 export type AgentMode = 'manual' | 'accept' | 'plan';
@@ -51,16 +51,38 @@ export function AgentModeControl({
     onChange(MODES[(activeIndex + delta + MODES.length) % MODES.length].id);
   };
 
+  // Measure the active segment rather than assuming three equal thirds. The
+  // labels are different lengths ("Accept edits" vs "Plan") and flex items will
+  // not shrink below their content, so the segments are NOT equal — a fixed
+  // one-third thumb lines up only on the first one and drifts off the others.
+  const [thumb, setThumb] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = buttonRefs.current[mode];
+      if (el) setThumb({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    // Re-measure when the panel is resized (labels hide at narrow widths).
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [mode]);
+
   return (
-    <span
-      ref={containerRef}
-      className="ai-segmented"
-      role="radiogroup"
-      aria-label="Agent mode"
-      style={{ ['--seg-index' as string]: String(Math.max(0, activeIndex)) }}
-    >
-      {/* One thumb slid by transform, rather than repainting three backgrounds. */}
-      <span className="ai-segmented-thumb" aria-hidden />
+    <span ref={containerRef} className="ai-segmented" role="radiogroup" aria-label="Agent mode">
+      {/* One thumb moved by transform, sized to the segment it sits under.
+          Hidden until measured so it never flashes at the wrong place. */}
+      <span
+        className="ai-segmented-thumb"
+        aria-hidden
+        style={
+          thumb
+            ? { width: `${thumb.width}px`, transform: `translateX(${thumb.left}px)` }
+            : { opacity: 0 }
+        }
+      />
       {MODES.map(({ id, label, title, Icon }) => (
         <button
           key={id}
