@@ -5292,3 +5292,101 @@ a:focus-visible,
 .set-row-control input[type='number'] {
   min-width: 90px;
 }
+
+/* --- Settings GUI / JSON view switch -------------------------------------- */
+/* Two-segment toggle in the Settings header. One thumb moved by transform
+   (never background-color, per the reduced-motion policy) — with only two
+   equal segments a fixed 50% width is exact, no JS measurement needed. */
+.settings-view-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-h);
+  padding: 2px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+}
+
+.settings-view-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  background: var(--accent);
+  border-radius: calc(var(--control-radius) - 2px);
+  transform: translateX(0);
+  transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.settings-view-switch[data-view='json'] .settings-view-thumb {
+  transform: translateX(100%);
+}
+
+.settings-view-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  padding: 0 var(--space-4);
+  height: 100%;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--control-radius) - 2px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 150ms ease-out;
+}
+
+.settings-view-btn:hover {
+  color: var(--text);
+}
+
+.settings-view-btn[aria-pressed='true'] {
+  color: var(--accent-ink);
+}
+
+.settings-view-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-view-thumb {
+    transition: none;
+  }
+}
+
+/* --- Settings JSON view -------------------------------------------------- */
+.settings-json {
+  display: flex;
+  flex-direction: column;
+  gap: var(--panel-gap);
+  height: 100%;
+  min-height: 0;
+}
+
+.settings-json-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.settings-json-editor {
+  flex: 1 1 auto;
+  min-height: 320px;
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+
+.settings-json-error {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--danger, #e5534b);
+}

@@ -16,6 +16,7 @@ import { showToast } from './toast';
 import { Toggle } from './SettingsControls';
 import { CYBERSEC_ENABLED, IS_COMPETITION } from './edition';
 import { KEY_COMMANDS, resolveKey, eventAccelerator } from './keybindings';
+import { SettingsJson } from './SettingsJson';
 
 // FreeLLMAPI providers the user can add a key for (ids match the server).
 const KEY_PLATFORMS: { id: string; label: string }[] = [
@@ -396,6 +397,9 @@ export function SettingsPage({
   const [recordingKey, setRecordingKey] = useState<string | null>(null);
   // Reset to defaults is destructive, so it needs a second confirming click.
   const [confirmingReset, setConfirmingReset] = useState(false);
+  // GUI is the normal tabbed view; JSON is a raw, derived view of the same
+  // settings state (see SettingsJson) — never a second source of truth.
+  const [view, setView] = useState<'gui' | 'json'>('gui');
   const searching = query.trim() !== '';
   // While searching, show every section so matches surface; otherwise show only
   // the selected one (a clean, tabbed full-screen layout).
@@ -419,6 +423,25 @@ export function SettingsPage({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <div className="settings-view-switch" data-view={view} role="group" aria-label="Settings view">
+          <div className="settings-view-thumb" aria-hidden="true" />
+          <button
+            type="button"
+            className="settings-view-btn"
+            aria-pressed={view === 'gui'}
+            onClick={() => setView('gui')}
+          >
+            GUI
+          </button>
+          <button
+            type="button"
+            className="settings-view-btn"
+            aria-pressed={view === 'json'}
+            onClick={() => setView('json')}
+          >
+            JSON
+          </button>
+        </div>
         {confirmingReset ? (
           <>
             <button
@@ -453,6 +476,14 @@ export function SettingsPage({
       </div>
 
       <div className="settings-main">
+        {view === 'json' ? (
+          // Mounted only while this view is selected, so a second Monaco
+          // instance never exists alongside the GUI's editors.
+          <div className="settings-body">
+            <SettingsJson settings={settings} onApply={onChange} />
+          </div>
+        ) : (
+        <>
         <nav className="settings-nav" aria-label="Settings sections">
           {SECTIONS.map((s) => (
             <button
@@ -1199,6 +1230,8 @@ export function SettingsPage({
         )}
         </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
