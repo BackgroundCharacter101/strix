@@ -131,17 +131,18 @@ function defineStrixThemes(accent: string) {
     inherit: true,
     rules: [{ token: 'comment', foreground: '6a8759', fontStyle: 'italic' }],
     colors: {
-      // Warm, soft light: paper-cream background + warm-gray text (matches the
-      // light theme tokens), so the editor isn't a glaring white island.
-      'editor.background': '#faf7f1',
-      'editor.foreground': '#3b352d',
-      'editorLineNumber.foreground': '#bdb4a2',
+      // Warm, soft light: paper-cream background + warm-gray text. These MUST
+      // track --bg / --text in tokens.css, or the editor becomes a differently
+      // shaded island in the middle of the window.
+      'editor.background': '#eae5da',
+      'editor.foreground': '#2c2822',
+      'editorLineNumber.foreground': '#7e7566',
       'editorLineNumber.activeForeground': accent,
       'editorCursor.foreground': accent,
       'editor.selectionBackground': withAlpha(accent, '44'),
       'editor.lineHighlightBackground': '#7a5a2010',
       'editor.lineHighlightBorder': '#00000000',
-      'editorIndentGuide.background': '#e6ddcd',
+      'editorIndentGuide.background': '#d5ccba',
       'editorIndentGuide.activeBackground': withAlpha(accent, '66'),
       'editorBracketMatch.border': accent,
       'editorGutter.background': '#faf7f1',
