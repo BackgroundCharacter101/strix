@@ -5277,7 +5277,7 @@ a:focus-visible,
 .set-row-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   flex: 1 1 auto;
   min-width: 0;
 }
