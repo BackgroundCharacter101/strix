@@ -450,31 +450,37 @@ body {
   background: var(--bg);
 }
 
-/* Body splits into a left section-nav and the scrolling content. */
+/* Body splits into a left section-nav and the scrolling content. The content
+   column fills the pane and is capped at a readable measure (see
+   .settings-col) instead of sitting in a narrow card pinned to the corner. */
 .settings-main {
-  flex: 1 1 auto;
   display: flex;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
 }
 
 .settings-nav {
   flex: 0 0 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--panel-gap) var(--space-2);
   border-right: 1px solid var(--border);
   overflow-y: auto;
 }
 
 .settings-nav-item {
-  all: unset;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-base);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
   color: var(--text-muted);
-  transition: background var(--ease, 0.12s), color var(--ease, 0.12s);
+  background: transparent;
+  border: 0;
+  border-radius: var(--control-radius);
+  cursor: pointer;
+  text-align: left;
 }
 
 .settings-nav-item:hover {
@@ -483,9 +489,8 @@ body {
 }
 
 .settings-nav-item[aria-current='true'] {
-  background: var(--selection);
+  background: var(--bg-hover);
   color: var(--text);
-  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .settings-toolbar {
@@ -562,22 +567,27 @@ body {
   font-size: var(--text-base);
 }
 
+/* The content column: fills the pane, but capped so label/control pairs never
+   stretch across a 2000px window. Centring removes the old top-left void. */
 .settings-body {
   flex: 1 1 auto;
+  min-width: 0;
   overflow-y: auto;
-  /* Centered reading column, wider for the full-screen layout. */
-  padding: var(--space-8) var(--space-10) var(--space-10);
+  padding: var(--section-gap) var(--section-gap) 64px;
 }
 
-.settings-body > .set-section {
-  /* Each section is a calm card on the page — grouped, with breathing room,
-     instead of a dense wall of rows. */
-  max-width: 860px;
-  margin: 0 0 var(--space-6);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 4px var(--space-8) var(--space-4);
+.settings-col {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.set-section-title {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: var(--section-gap) 0 var(--space-2);
 }
 
 /* Roomier rows on the full-screen page + a hairline between them so each setting

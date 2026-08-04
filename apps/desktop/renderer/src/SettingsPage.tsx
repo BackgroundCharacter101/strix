@@ -3,7 +3,15 @@ import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gatewa
 import type { Settings, DirectModel } from './useSettings';
 import type { AiProviderKey } from '../../main/bridge';
 import { THEMES, ACCENTS } from './themes';
-import { CloseIcon } from './icons';
+import {
+  CloseIcon,
+  SparkleIcon,
+  FileGlyph,
+  TerminalIcon,
+  PlanIcon,
+  AgentsIcon,
+  ProblemsIcon,
+} from './icons';
 import { showToast } from './toast';
 import { CYBERSEC_ENABLED, IS_COMPETITION } from './edition';
 import { KEY_COMMANDS, resolveKey, eventAccelerator } from './keybindings';
@@ -334,14 +342,14 @@ function DirectModels({
 
 type SectionId = 'appearance' | 'editor' | 'terminal' | 'keys' | 'ai' | 'security';
 
-const SECTIONS: { id: SectionId; title: string }[] = [
-  { id: 'appearance', title: 'Appearance' },
-  { id: 'editor', title: 'Editor' },
-  { id: 'terminal', title: 'Terminal' },
-  { id: 'keys', title: 'Keyboard' },
-  { id: 'ai', title: 'AI' },
+const SECTIONS: { id: SectionId; title: string; Icon: React.ComponentType<{ size?: number }> }[] = [
+  { id: 'appearance', title: 'Appearance', Icon: SparkleIcon },
+  { id: 'editor', title: 'Editor', Icon: FileGlyph },
+  { id: 'terminal', title: 'Terminal', Icon: TerminalIcon },
+  { id: 'keys', title: 'Keyboard', Icon: PlanIcon },
+  { id: 'ai', title: 'AI', Icon: AgentsIcon },
   // Security AI persona configures Cybersec mode — Competition edition only.
-  ...(CYBERSEC_ENABLED ? [{ id: 'security' as SectionId, title: 'Security AI' }] : []),
+  ...(CYBERSEC_ENABLED ? [{ id: 'security' as SectionId, title: 'Security AI', Icon: ProblemsIcon }] : []),
 ];
 
 function Row({
@@ -450,18 +458,20 @@ export function SettingsPage({
               key={s.id}
               type="button"
               className="settings-nav-item"
-              aria-current={!searching && activeSection === s.id}
+              aria-current={!searching && activeSection === s.id ? 'true' : undefined}
               onClick={() => {
                 setQuery('');
                 setActiveSection(s.id);
               }}
             >
+              <s.Icon size={14} />
               {s.title}
             </button>
           ))}
         </nav>
 
         <div className="settings-body">
+        <div className="settings-col">
         {showSection('appearance') && (
         <section className="set-section">
           <h3>Appearance</h3>
@@ -1202,6 +1212,7 @@ export function SettingsPage({
           </Row>
         </section>
         )}
+        </div>
         </div>
       </div>
     </div>
