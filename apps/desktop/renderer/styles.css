@@ -567,34 +567,55 @@ body {
   font-size: var(--text-base);
 }
 
-/* The content column: fills the pane, but capped so label/control pairs never
-   stretch across a 2000px window. Centring removes the old top-left void. */
+/* A full settings PAGE, not a panel: the reading column starts next to the nav
+   rather than floating in the middle of the pane, and the type steps up because
+   this surface is read at arm's length, not scanned in a 200px sidebar. */
 .settings-body {
   flex: 1 1 auto;
   min-width: 0;
   overflow-y: auto;
-  padding: var(--section-gap) var(--section-gap) 64px;
+  padding: 32px 40px 96px;
 }
 
 .settings-col {
-  max-width: 720px;
-  margin: 0 auto;
+  /* Wide enough for a real label + control pair, left-aligned to the nav so the
+     eye travels one edge instead of jumping a void. */
+  max-width: 900px;
 }
 
 .set-section-title {
-  font-size: var(--text-2xs);
+  font-size: 20px;
   font-weight: var(--weight-bold);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--text);
+  margin: 0 0 var(--space-2);
+}
+
+/* One-line summary under a section heading, so a section explains itself. */
+.set-section-sub {
+  font-size: var(--text-base);
   color: var(--text-muted);
-  margin: var(--section-gap) 0 var(--space-2);
+  margin: 0 0 var(--section-gap);
 }
 
 /* Roomier rows on the full-screen page + a hairline between them so each setting
    reads as its own line. */
 .settings-body .set-row {
-  padding: var(--panel-gap) 0;
+  padding: 18px 0;
   align-items: center;
+  gap: 40px;
+}
+
+.settings-body .set-label {
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+}
+
+.settings-body .set-desc {
+  font-size: var(--text-base);
+  line-height: 1.5;
+  margin-top: 3px;
 }
 .settings-body .set-row + .set-row {
   border-top: 1px solid var(--border);
@@ -609,8 +630,7 @@ body {
 .settings-body .set-control select,
 .settings-body .set-control input[type='text'],
 .settings-body .set-control input[type='number'] {
-  min-width: 200px;
-  height: var(--field-h);
+  min-width: 220px;
   border-radius: var(--control-radius);
 }
 /* Comfortable, tappable inputs. */
@@ -619,10 +639,28 @@ body {
 .settings-body input[type='password'],
 .settings-body select,
 .settings-body textarea {
-  padding: 7px 10px;
-  border-radius: var(--radius-md);
+  /* Height comes from padding + line-height. A fixed height here fought this
+     padding and clipped the text inside every dropdown. */
+  padding: 8px 12px;
+  font-size: var(--text-base);
+  line-height: 1.4;
+  color: var(--text);
+  border-radius: var(--control-radius);
   background: var(--bg-input);
   border: 1px solid var(--border);
+}
+
+.settings-body select:hover,
+.settings-body input[type='text']:hover,
+.settings-body input[type='number']:hover {
+  border-color: var(--text-muted);
+}
+
+.settings-body select:focus-visible,
+.settings-body input:focus-visible,
+.settings-body textarea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -1px;
 }
 .settings-body input:focus,
 .settings-body select:focus,
@@ -5297,96 +5335,13 @@ a:focus-visible,
 /* Two-segment toggle in the Settings header. One thumb moved by transform
    (never background-color, per the reduced-motion policy) — with only two
    equal segments a fixed 50% width is exact, no JS measurement needed. */
-.settings-view-switch {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  height: var(--control-h);
-  padding: 2px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--control-radius);
-}
 
-.settings-view-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: calc(50% - 2px);
-  height: calc(100% - 4px);
-  background: var(--accent);
-  border-radius: calc(var(--control-radius) - 2px);
-  transform: translateX(0);
-  transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
-}
 
-.settings-view-switch[data-view='json'] .settings-view-thumb {
-  transform: translateX(100%);
-}
 
-.settings-view-btn {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 0;
-  padding: 0 var(--space-4);
-  height: 100%;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  background: transparent;
-  border: 0;
-  border-radius: calc(var(--control-radius) - 2px);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 150ms ease-out;
-}
 
-.settings-view-btn:hover {
-  color: var(--text);
-}
 
-.settings-view-btn[aria-pressed='true'] {
-  color: var(--accent-ink);
-}
 
-.settings-view-btn:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 1px;
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .settings-view-thumb {
-    transition: none;
-  }
-}
 
-/* --- Settings JSON view -------------------------------------------------- */
-.settings-json {
-  display: flex;
-  flex-direction: column;
-  gap: var(--panel-gap);
-  height: 100%;
-  min-height: 0;
-}
 
-.settings-json-hint {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-}
 
-.settings-json-editor {
-  flex: 1 1 auto;
-  min-height: 320px;
-  border: 1px solid var(--border);
-  border-radius: var(--card-radius);
-  overflow: hidden;
-}
-
-.settings-json-error {
-  margin: 0;
-  font-size: var(--text-xs);
-  color: var(--danger, #e5534b);
-}
