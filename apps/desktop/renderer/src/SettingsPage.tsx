@@ -3,7 +3,7 @@ import { DEFAULT_SECURITY_PERSONA, type SecurityPersona } from '@strix/ai-gatewa
 import type { Settings, DirectModel } from './useSettings';
 import type { AiProviderKey } from '../../main/bridge';
 import { THEMES, ACCENTS } from './themes';
-import { SaveIcon, CloseIcon } from './icons';
+import { CloseIcon } from './icons';
 import { showToast } from './toast';
 import { CYBERSEC_ENABLED, IS_COMPETITION } from './edition';
 import { KEY_COMMANDS, resolveKey, eventAccelerator } from './keybindings';
@@ -372,15 +372,12 @@ export function SettingsPage({
   onChange,
   onReset,
   onClose,
-  onSave,
   initialSection = 'appearance',
 }: {
   settings: Settings;
   onChange: (patch: Partial<Settings>) => void;
   onReset: () => void;
   onClose: () => void;
-  // Explicitly persist the current settings (they already apply live).
-  onSave?: () => void;
   // Section to open at (deep-link, e.g. "ai" from the AI panel's config prompt).
   initialSection?: SectionId;
 }) {
@@ -388,15 +385,12 @@ export function SettingsPage({
   const [activeSection, setActiveSection] = useState<SectionId>(initialSection);
   // The shortcut row currently capturing a new key combo (command id), if any.
   const [recordingKey, setRecordingKey] = useState<string | null>(null);
+  // Reset to defaults is destructive, so it needs a second confirming click.
+  const [confirmingReset, setConfirmingReset] = useState(false);
   const searching = query.trim() !== '';
   // While searching, show every section so matches surface; otherwise show only
   // the selected one (a clean, tabbed full-screen layout).
   const showSection = (id: SectionId) => searching || activeSection === id;
-
-  const handleSave = () => {
-    onSave?.();
-    showToast('Settings saved', 'success');
-  };
 
   const persona = settings.securityPersona;
   const setPersona = (key: keyof SecurityPersona, value: string) =>
@@ -416,18 +410,27 @@ export function SettingsPage({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button
-          type="button"
-          className="set-save-btn"
-          onClick={handleSave}
-          title="Save settings"
-        >
-          <SaveIcon size={15} />
-          Save
-        </button>
-        <button type="button" className="ai-ghost-btn" onClick={onReset}>
-          Reset
-        </button>
+        {confirmingReset ? (
+          <>
+            <button
+              type="button"
+              className="ai-ghost-btn set-btn-danger"
+              onClick={() => {
+                setConfirmingReset(false);
+                onReset();
+              }}
+            >
+              Reset everything
+            </button>
+            <button type="button" className="ai-ghost-btn" onClick={() => setConfirmingReset(false)}>
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button type="button" className="ai-ghost-btn" onClick={() => setConfirmingReset(true)}>
+            Reset to defaults
+          </button>
+        )}
         <button
           type="button"
           className="set-close-btn"
@@ -436,7 +439,7 @@ export function SettingsPage({
           aria-label="Close settings"
         >
           <CloseIcon size={14} />
-          Done
+          Close
         </button>
       </div>
 
@@ -1068,11 +1071,8 @@ export function SettingsPage({
                 </li>
               </ul>
 
-              <h4>Then make it take effect (3 clicks)</h4>
+              <h4>Then make it take effect (2 clicks)</h4>
               <ol>
-                <li>
-                  Click <strong>Save</strong> at the top of Settings.
-                </li>
                 <li>
                   If a <strong>FreeBuff</strong> tab is open in the terminal at the bottom, close it
                   with the little <strong>×</strong> next to its name.

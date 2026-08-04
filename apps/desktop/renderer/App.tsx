@@ -1339,7 +1339,6 @@ export default function App() {
             onChange={updateSettings}
             onReset={() => updateSettings(DEFAULT_SETTINGS)}
             onClose={() => setSettingsOpen(false)}
-            onSave={() => updateSettings({})}
             initialSection={settingsSection}
           />
         </div>

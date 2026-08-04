@@ -546,6 +546,16 @@ body {
   border-color: var(--accent);
 }
 
+/* Destructive confirm step for "Reset to defaults" — layered onto .ai-ghost-btn. */
+.set-btn-danger {
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.set-btn-danger:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
 .settings-search {
   flex: 1 1 auto;
   max-width: 360px;

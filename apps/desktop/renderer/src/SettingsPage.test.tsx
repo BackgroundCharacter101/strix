@@ -14,18 +14,16 @@ function setup(overrides = {}) {
   const onChange = vi.fn();
   const onReset = vi.fn();
   const onClose = vi.fn();
-  const onSave = vi.fn();
   render(
     <SettingsPage
       settings={DEFAULT_SETTINGS}
       onChange={onChange}
       onReset={onReset}
       onClose={onClose}
-      onSave={onSave}
       {...overrides}
     />,
   );
-  return { onChange, onReset, onClose, onSave };
+  return { onChange, onReset, onClose };
 }
 
 describe('SettingsPage', () => {
@@ -89,17 +87,42 @@ describe('SettingsPage', () => {
     );
   });
 
-  it('Save fires its handler', () => {
-    const { onSave } = setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    expect(onSave).toHaveBeenCalled();
+  it('has no Save button, because settings persist as they change', () => {
+    setup();
+    expect(screen.queryByRole('button', { name: /^save$/i })).toBeNull();
   });
 
-  it('reset and close fire their handlers', () => {
+  it('reset (after confirming) and close fire their handlers', () => {
     const { onReset, onClose } = setup();
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset everything' }));
     expect(onReset).toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Close settings' }));
     expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('saving', () => {
+  it('applies a change immediately, without a Save step', () => {
+    const { onChange } = setup();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Reduce motion' }));
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it('requires confirmation before resetting every setting', () => {
+    const { onReset } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }));
+    expect(onReset).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Reset everything' }));
+    expect(onReset).toHaveBeenCalled();
+  });
+
+  it('lets you cancel out of the reset confirmation', () => {
+    const { onReset } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onReset).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Reset everything' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Reset to defaults' })).toBeInTheDocument();
   });
 });
