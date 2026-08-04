@@ -165,6 +165,17 @@ export function SearchView({ onOpen }: { onOpen: (path: string, line: number) =>
               ? 'No matches'
               : `${results.length} result${results.length === 1 ? '' : 's'} in ${groups.length} file${groups.length === 1 ? '' : 's'}`}
       </div>
+      {!busy && query.trim() === '' && (
+        // An empty panel with a lone input told the user nothing. Say what this
+        // searches and what the two toggles beside the field actually do.
+        <div className="panel-empty">
+          <p className="panel-empty-title">Search this folder</p>
+          <p className="panel-empty-hint">
+            Type to find text across every file in the open folder. Use{' '}
+            <strong>Aa</strong> to match case and <strong>ab</strong> to match whole words.
+          </p>
+        </div>
+      )}
       <div className="search-results" aria-label="search results">
         {groups.map(([path, matches]) => (
           <div key={path} className="search-group">

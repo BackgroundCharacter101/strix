@@ -31,6 +31,21 @@ export interface TerminalProps {
   onData?: (chunk: string) => void;
 }
 
+// xterm ships a black theme of its own, so the terminal stayed a hard black
+// rectangle while every other panel followed the light theme. Derive its colours
+// from the same CSS tokens the rest of the IDE uses.
+function readTerminalTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
+  return {
+    background: v('--bg', '#0c0d11'),
+    foreground: v('--text', '#e7e8ee'),
+    cursor: v('--accent', '#e8bd3a'),
+    cursorAccent: v('--bg', '#0c0d11'),
+    selectionBackground: v('--selection', 'rgba(255, 255, 255, 0.22)'),
+  };
+}
+
 export function Terminal({
   cwd,
   bootCommand,
@@ -90,6 +105,7 @@ export function Terminal({
       fontSize: fontSize ?? 13,
       fontFamily: fontFamily || 'Cascadia Code, Consolas, monospace',
       cursorStyle: cursorStyle ?? 'block',
+      theme: readTerminalTheme(),
       // On Windows node-pty uses ConPTY, which has its own reflow/wrapping
       // behaviour; telling xterm about it fixes redraw artifacts on resize.
       ...(isWindows ? { windowsPty: { backend: 'conpty' as const } } : {}),
@@ -280,6 +296,22 @@ export function Terminal({
     term.options.cursorStyle = cursorStyle ?? 'block';
     fitRef.current?.fit();
   }, [fontSize, fontFamily, cursorStyle]);
+
+  // Follow theme/accent changes live. Without this the terminal keeps whatever
+  // palette it was born with, so switching to the light theme leaves a black
+  // rectangle sitting in an otherwise cream window until the tab is recreated.
+  useEffect(() => {
+    const apply = () => {
+      const term = termRef.current;
+      if (term) term.options.theme = readTerminalTheme();
+    };
+    const observer = new MutationObserver(apply);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme', 'data-accent', 'data-mode'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   return <div className="terminal-host" aria-label="terminal" ref={containerRef} />;
 }

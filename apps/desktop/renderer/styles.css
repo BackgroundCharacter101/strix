@@ -10,6 +10,32 @@
   background: var(--selection);
 }
 
+/* Chrome is not a document. A stray Ctrl+A used to select every label, tab and
+   button in the IDE and wash the whole window in the accent colour (very obvious
+   with a red accent) — panels went pink while the editor and terminal did not,
+   because Monaco and xterm own their selection. Desktop apps do not let you
+   select their furniture; content areas opt back in below. */
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Anything the user is meant to read, copy, or edit stays selectable. */
+.editor-host,
+.markdown-preview,
+.terminal-host,
+.ai-msg,
+.xterm,
+.scm-history,
+.diff-view,
+.agent-report,
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* ---- Motion ------------------------------------------------------------- */
 @keyframes overlay-fade {
   from {
@@ -2166,14 +2192,21 @@ kbd {
   flex: 0 0 auto;
 }
 
+/* This slot carries short commands ("static · 127.0.0.1") but also sentence-long
+   descriptions, which were silently cut off mid-word. Let it wrap onto its own
+   line rather than ellipsing away the explanation. */
 .run-cmd {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
   margin-left: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: right;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.run-row {
+  flex-wrap: wrap;
 }
 
 .html-preview {
@@ -5378,3 +5411,29 @@ a:focus-visible,
 
 
 
+
+/* --- Shared panel empty state -------------------------------------------- */
+/* A sidebar panel with nothing in it should still teach its own controls
+   rather than being a blank rectangle. */
+.panel-empty {
+  padding: var(--section-gap) var(--panel-gutter);
+  color: var(--text-muted);
+}
+
+.panel-empty-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+.panel-empty-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+
+.panel-empty-hint strong {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
