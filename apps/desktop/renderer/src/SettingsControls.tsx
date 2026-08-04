@@ -28,32 +28,3 @@ export function Toggle({
     </button>
   );
 }
-
-// One row: label + description on the left, control right-aligned.
-export function SettingRow({
-  label,
-  description,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  description?: string;
-  htmlFor?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="set-row">
-      <div className="set-row-text">
-        {htmlFor ? (
-          <label className="set-row-label" htmlFor={htmlFor}>
-            {label}
-          </label>
-        ) : (
-          <span className="set-row-label">{label}</span>
-        )}
-        {description && <span className="set-row-desc">{description}</span>}
-      </div>
-      <div className="set-row-control">{children}</div>
-    </div>
-  );
-}

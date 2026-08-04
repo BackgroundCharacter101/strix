@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Toggle, SettingRow } from './SettingsControls';
+import { Toggle } from './SettingsControls';
 
 describe('Toggle', () => {
   it('is a switch carrying its label as the accessible name', () => {
@@ -38,18 +38,5 @@ describe('Toggle', () => {
     // Windows control inside a near-black amber IDE.
     const { container } = render(<Toggle checked onChange={vi.fn()} label="X" />);
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
-  });
-});
-
-describe('SettingRow', () => {
-  it('shows the label and description beside its control', () => {
-    render(
-      <SettingRow label="Color theme" description="Overall UI theme.">
-        <button type="button">control</button>
-      </SettingRow>,
-    );
-    expect(screen.getByText('Color theme')).toBeInTheDocument();
-    expect(screen.getByText('Overall UI theme.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'control' })).toBeInTheDocument();
   });
 });

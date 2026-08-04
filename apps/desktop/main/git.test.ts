@@ -25,7 +25,19 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await fsp.rm(tmp, { recursive: true, force: true });
+  // Windows keeps a handle on files a git subprocess just touched, so an
+  // immediate rmdir throws EBUSY. That failure used to abort teardown and leak
+  // state into the next test (a stash assertion once read the previous test's
+  // repo). Retry briefly, and never let cleanup fail a passing test — the
+  // directory is a throwaway under the OS temp dir either way.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await fsp.rm(tmp, { recursive: true, force: true });
+      return;
+    } catch {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
 });
 
 describe('getGitStatus', () => {

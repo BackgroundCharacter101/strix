@@ -593,7 +593,7 @@ body {
 /* Roomier rows on the full-screen page + a hairline between them so each setting
    reads as its own line. */
 .settings-body .set-row {
-  padding: 14px 0;
+  padding: var(--panel-gap) 0;
   align-items: center;
 }
 .settings-body .set-row + .set-row {
@@ -604,10 +604,14 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+/* One height and one radius for every field, so selects, text and number inputs
+   stop being three different shapes down the column. */
 .settings-body .set-control select,
 .settings-body .set-control input[type='text'],
 .settings-body .set-control input[type='number'] {
   min-width: 200px;
+  height: var(--field-h);
+  border-radius: var(--control-radius);
 }
 /* Comfortable, tappable inputs. */
 .settings-body input[type='text'],
@@ -5283,54 +5287,7 @@ a:focus-visible,
   }
 }
 
-.set-row {
-  display: flex;
-  align-items: center;
-  gap: var(--section-gap);
-  padding: var(--panel-gap) 0;
-}
 
-.set-row + .set-row {
-  border-top: 1px solid var(--border);
-}
-
-.set-row-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.set-row-label {
-  font-size: var(--text-base);
-  color: var(--text);
-}
-
-.set-row-desc {
-  font-size: var(--text-xs);
-  color: var(--text-muted);
-}
-
-.set-row-control {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.set-row-control select,
-.set-row-control input[type='text'],
-.set-row-control input[type='number'] {
-  height: var(--field-h);
-  min-width: 200px;
-  padding: 0 var(--space-3);
-  font-size: var(--text-sm);
-  color: var(--text);
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--control-radius);
-}
 
 .set-row-control input[type='number'] {
   min-width: 90px;
