@@ -3,7 +3,7 @@
 > **Read this first when resuming in a new session.** It captures the current
 > state, full file structure, how to run, key decisions/gotchas, and what's left.
 > **Keep it updated as work continues** (standing task — update with every change).
-> Last updated: 2026-08-02 · v0.2.16
+> Last updated: 2026-08-03 · v0.2.17
 
 ---
 
@@ -542,6 +542,31 @@ strix/ (folder: tabea)
 - **Ctrl+N untitled buffer → Ctrl+S save-as** — `useEditorTabs.openUntitled()` +
   `workspace.saveAs` (native Save dialog, defaults into the workspace).
 - Version bumped to **0.2.0**; published to the update feed (M1 + Competition).
+
+## 9l. Session update — 2026-08-03 (Settings redesign — UI slice 2)
+
+Spec: `docs/superpowers/specs/2026-08-03-settings-redesign-design.md` ·
+Plan: `docs/superpowers/plans/2026-08-03-settings-redesign.md`
+
+- **All 16 native checkboxes are now switches.** They rendered as blue Windows controls inside a
+  near-black amber IDE. `SettingsControls.tsx` provides the `Toggle` (`role="switch"`, amber when on).
+- **The Save button was a lie and is gone.** Settings already persisted on every change
+  (`useSettings.ts:191`), and `App.tsx` passed `onSave={() => updateSettings({})}` — a merge of an
+  empty object. An in-app help string still told users to click it. `Reset to defaults` now confirms
+  before discarding all 102 settings.
+- **Layout** — a centred, readable column with section icons, instead of a narrow card pinned to the
+  top-left of an otherwise empty window.
+- **`settings.json` view** (`SettingsJson.tsx`) — every setting reachable in Monaco. The JSON is a
+  DERIVED view: the GUI owns state, JSON renders from it, and an edit must parse *and* be a JSON
+  object before anything applies. Invalid input reports and applies nothing.
+- **`SettingsPage.tsx` 1238 → 410 lines**, split into `SettingsProviders` / `SettingsProviderKeys` /
+  `SettingsEditor`; every file now under the 500-line limit, with the `<Row` count verified
+  unchanged at 47 so no setting was lost in the move.
+- Two defects caught in review: a `SettingRow` component that nothing used (the existing `Row` helper
+  was better — it carries the search filtering) and `.settings-body .set-row { padding: 14px }`,
+  whose two-class specificity beat the new token rule *inside the panel being redesigned*.
+- Suite 501 → **515**, and `git.test.ts` no longer flakes (it drives real git and was being starved
+  under parallel load — failing ~1 run in 3).
 
 ## 9k. Session update — 2026-08-02 (updater: apply actually works, all-users included)
 
