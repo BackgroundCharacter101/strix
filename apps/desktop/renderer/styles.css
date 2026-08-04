@@ -460,9 +460,11 @@ body {
   overflow: hidden;
 }
 
+/* The nav is scaled to the PAGE, not to a 200px sidebar: it sits beside 15px
+   labels and 20px headings, so 12px rows read as a different app. */
 .settings-nav {
-  flex: 0 0 200px;
-  padding: var(--panel-gap) var(--space-2);
+  flex: 0 0 240px;
+  padding: 20px var(--space-6);
   border-right: 1px solid var(--border);
   overflow-y: auto;
 }
@@ -470,17 +472,22 @@ body {
 .settings-nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-5);
   width: 100%;
-  height: var(--control-h);
-  padding: 0 var(--space-3);
-  font-size: var(--text-sm);
+  height: 38px;
+  padding: 0 var(--space-5);
+  font-size: 15px;
   color: var(--text-muted);
   background: transparent;
   border: 0;
   border-radius: var(--control-radius);
   cursor: pointer;
   text-align: left;
+}
+
+/* A selected section is a real state, not a faint tint. */
+.settings-nav-item[aria-current='true'] {
+  font-weight: var(--weight-medium);
 }
 
 .settings-nav-item:hover {
@@ -497,15 +504,16 @@ body {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-8);
+  gap: var(--space-6);
+  padding: var(--space-6) var(--space-10);
   border-bottom: 1px solid var(--border);
 }
 
 .settings-heading {
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--weight-medium);
+  font-size: 22px;
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
 }
 
 /* Primary Save action in the Settings toolbar (amber, with the disk icon). */
@@ -563,8 +571,10 @@ body {
 
 .settings-search {
   flex: 1 1 auto;
-  max-width: 360px;
-  font-size: var(--text-base);
+  max-width: 420px;
+  padding: 9px 14px;
+  font-size: 15px;
+  border-radius: var(--control-radius);
 }
 
 /* A full settings PAGE, not a panel: the reading column starts next to the nav

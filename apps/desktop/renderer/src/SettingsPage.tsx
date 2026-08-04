@@ -118,7 +118,7 @@ export function SettingsPage({
                 setActiveSection(s.id);
               }}
             >
-              <s.Icon size={14} />
+              <s.Icon size={17} />
               {s.title}
             </button>
           ))}
