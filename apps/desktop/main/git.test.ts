@@ -18,6 +18,14 @@ import {
   parsePorcelain,
 } from './git';
 
+// These tests drive the REAL git binary, so a single case can spawn a dozen
+// subprocesses. Under the full suite (75 files in parallel) that contends for
+// CPU and occasionally blows the default 5s budget — the file failed roughly one
+// run in three, on a different case each time, while passing in isolation. The
+// tests are correct; they are just starved. Give them room rather than leaving a
+// flaky suite that trains everyone to re-run and shrug.
+vi.setConfig({ testTimeout: 30_000, hookTimeout: 30_000 });
+
 let tmp: string;
 
 beforeEach(async () => {
