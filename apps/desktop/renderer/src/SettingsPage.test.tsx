@@ -14,7 +14,7 @@ function setup(overrides = {}) {
   const onChange = vi.fn();
   const onReset = vi.fn();
   const onClose = vi.fn();
-  render(
+  const { container } = render(
     <SettingsPage
       settings={DEFAULT_SETTINGS}
       onChange={onChange}
@@ -23,7 +23,7 @@ function setup(overrides = {}) {
       {...overrides}
     />,
   );
-  return { onChange, onReset, onClose };
+  return { onChange, onReset, onClose, container };
 }
 
 describe('SettingsPage', () => {
@@ -105,8 +105,17 @@ describe('SettingsPage', () => {
 describe('saving', () => {
   it('applies a change immediately, without a Save step', () => {
     const { onChange } = setup();
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Reduce motion' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Reduce motion' }));
     expect(onChange).toHaveBeenCalled();
+  });
+
+  it('uses switches, not native checkboxes, for every boolean setting', () => {
+    const { container } = setup();
+    // Editor alone renders several boolean settings; the assertion stays loose
+    // because the visible count depends on the active section.
+    fireEvent.click(screen.getByRole('button', { name: 'Editor' }));
+    expect(container.querySelectorAll('input[type="checkbox"]').length).toBe(0);
+    expect(screen.getAllByRole('switch').length).toBeGreaterThanOrEqual(5);
   });
 
   it('requires confirmation before resetting every setting', () => {

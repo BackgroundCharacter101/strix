@@ -13,6 +13,7 @@ import {
   ProblemsIcon,
 } from './icons';
 import { showToast } from './toast';
+import { Toggle } from './SettingsControls';
 import { CYBERSEC_ENABLED, IS_COMPETITION } from './edition';
 import { KEY_COMMANDS, resolveKey, eventAccelerator } from './keybindings';
 
@@ -527,11 +528,10 @@ export function SettingsPage({
             </select>
           </Row>
           <Row query={query} label="Reduce motion" desc="Minimize non-essential UI animations.">
-            <input
-              type="checkbox"
-              aria-label="Reduce motion"
+            <Toggle
               checked={settings.reduceMotion}
-              onChange={(e) => onChange({ reduceMotion: e.target.checked })}
+              onChange={(v) => onChange({ reduceMotion: v })}
+              label="Reduce motion"
             />
           </Row>
           <Row
@@ -539,11 +539,10 @@ export function SettingsPage({
             label="Liquid Glass"
             desc="Frosted translucent blur on menus, dialogs, and side panels."
           >
-            <input
-              type="checkbox"
-              aria-label="Liquid Glass"
+            <Toggle
               checked={settings.liquidGlass}
-              onChange={(e) => onChange({ liquidGlass: e.target.checked })}
+              onChange={(v) => onChange({ liquidGlass: v })}
+              label="Liquid Glass"
             />
           </Row>
         </section>
@@ -586,19 +585,17 @@ export function SettingsPage({
             label="Indent using spaces"
             desc="Insert spaces when pressing Tab (off = real tab characters)."
           >
-            <input
-              type="checkbox"
-              aria-label="Indent using spaces"
+            <Toggle
               checked={settings.insertSpaces}
-              onChange={(e) => onChange({ insertSpaces: e.target.checked })}
+              onChange={(v) => onChange({ insertSpaces: v })}
+              label="Indent using spaces"
             />
           </Row>
           <Row query={query} label="Word wrap" desc="Wrap long lines instead of scrolling.">
-            <input
-              type="checkbox"
-              aria-label="Word wrap"
+            <Toggle
               checked={settings.wordWrap}
-              onChange={(e) => onChange({ wordWrap: e.target.checked })}
+              onChange={(v) => onChange({ wordWrap: v })}
+              label="Word wrap"
             />
           </Row>
           <Row query={query} label="Line numbers" desc="How line numbers are displayed.">
@@ -666,19 +663,17 @@ export function SettingsPage({
             />
           </Row>
           <Row query={query} label="Font ligatures" desc="Render programming ligatures (e.g. =>, !==).">
-            <input
-              type="checkbox"
-              aria-label="Font ligatures"
+            <Toggle
               checked={settings.fontLigatures}
-              onChange={(e) => onChange({ fontLigatures: e.target.checked })}
+              onChange={(v) => onChange({ fontLigatures: v })}
+              label="Font ligatures"
             />
           </Row>
           <Row query={query} label="Sticky scroll" desc="Pin the enclosing scope (function/class) to the top.">
-            <input
-              type="checkbox"
-              aria-label="Sticky scroll"
+            <Toggle
               checked={settings.stickyScroll}
-              onChange={(e) => onChange({ stickyScroll: e.target.checked })}
+              onChange={(v) => onChange({ stickyScroll: v })}
+              label="Sticky scroll"
             />
           </Row>
           <Row
@@ -686,19 +681,17 @@ export function SettingsPage({
             label="Bracket pair colorization"
             desc="Colour matching brackets so nesting is easy to follow."
           >
-            <input
-              type="checkbox"
-              aria-label="Bracket pair colorization"
+            <Toggle
               checked={settings.bracketColorization}
-              onChange={(e) => onChange({ bracketColorization: e.target.checked })}
+              onChange={(v) => onChange({ bracketColorization: v })}
+              label="Bracket pair colorization"
             />
           </Row>
           <Row query={query} label="Smooth scrolling" desc="Animate scrolling instead of jumping.">
-            <input
-              type="checkbox"
-              aria-label="Smooth scrolling"
+            <Toggle
               checked={settings.smoothScrolling}
-              onChange={(e) => onChange({ smoothScrolling: e.target.checked })}
+              onChange={(v) => onChange({ smoothScrolling: v })}
+              label="Smooth scrolling"
             />
           </Row>
           <Row
@@ -706,27 +699,24 @@ export function SettingsPage({
             label="Scroll beyond last line"
             desc="Allow scrolling past the final line of the file."
           >
-            <input
-              type="checkbox"
-              aria-label="Scroll beyond last line"
+            <Toggle
               checked={settings.scrollBeyondLastLine}
-              onChange={(e) => onChange({ scrollBeyondLastLine: e.target.checked })}
+              onChange={(v) => onChange({ scrollBeyondLastLine: v })}
+              label="Scroll beyond last line"
             />
           </Row>
           <Row query={query} label="Minimap" desc="Show the code minimap on the right.">
-            <input
-              type="checkbox"
-              aria-label="Minimap"
+            <Toggle
               checked={settings.minimap}
-              onChange={(e) => onChange({ minimap: e.target.checked })}
+              onChange={(v) => onChange({ minimap: v })}
+              label="Minimap"
             />
           </Row>
           <Row query={query} label="Format on save" desc="Run the language formatter when you save a file.">
-            <input
-              type="checkbox"
-              aria-label="Format on save"
+            <Toggle
               checked={settings.formatOnSave}
-              onChange={(e) => onChange({ formatOnSave: e.target.checked })}
+              onChange={(v) => onChange({ formatOnSave: v })}
+              label="Format on save"
             />
           </Row>
           <Row
@@ -734,11 +724,10 @@ export function SettingsPage({
             label="Trim trailing whitespace on save"
             desc="Remove spaces/tabs at the end of each line when saving."
           >
-            <input
-              type="checkbox"
-              aria-label="Trim trailing whitespace on save"
+            <Toggle
               checked={settings.trimTrailingWhitespace}
-              onChange={(e) => onChange({ trimTrailingWhitespace: e.target.checked })}
+              onChange={(v) => onChange({ trimTrailingWhitespace: v })}
+              label="Trim trailing whitespace on save"
             />
           </Row>
           <Row
@@ -746,11 +735,10 @@ export function SettingsPage({
             label="Insert final newline on save"
             desc="Ensure files end with a single newline."
           >
-            <input
-              type="checkbox"
-              aria-label="Insert final newline on save"
+            <Toggle
               checked={settings.insertFinalNewline}
-              onChange={(e) => onChange({ insertFinalNewline: e.target.checked })}
+              onChange={(v) => onChange({ insertFinalNewline: v })}
+              label="Insert final newline on save"
             />
           </Row>
           <Row query={query} label="End of line" desc="Line endings written on save.">
@@ -765,11 +753,10 @@ export function SettingsPage({
             </select>
           </Row>
           <Row query={query} label="Auto save" desc="Periodically write unsaved changes to disk.">
-            <input
-              type="checkbox"
-              aria-label="Auto save"
+            <Toggle
               checked={settings.autoSave}
-              onChange={(e) => onChange({ autoSave: e.target.checked })}
+              onChange={(v) => onChange({ autoSave: v })}
+              label="Auto save"
             />
           </Row>
           <Row
@@ -777,11 +764,10 @@ export function SettingsPage({
             label="Reopen last folder on startup"
             desc="Open the most recent folder (and its tabs) on launch instead of the welcome screen."
           >
-            <input
-              type="checkbox"
-              aria-label="Reopen last folder on startup"
+            <Toggle
               checked={settings.restoreLastFolder}
-              onChange={(e) => onChange({ restoreLastFolder: e.target.checked })}
+              onChange={(v) => onChange({ restoreLastFolder: v })}
+              label="Reopen last folder on startup"
             />
           </Row>
           <Row
@@ -1034,11 +1020,10 @@ export function SettingsPage({
             label="Apply AI changes without confirming"
             desc="Hands-off agent: write file changes immediately, skipping the review/diff modal."
           >
-            <input
-              type="checkbox"
-              aria-label="Apply AI changes without confirming"
+            <Toggle
               checked={settings.agentAutoApply}
-              onChange={(e) => onChange({ agentAutoApply: e.target.checked })}
+              onChange={(v) => onChange({ agentAutoApply: v })}
+              label="Apply AI changes without confirming"
             />
           </Row>
 
