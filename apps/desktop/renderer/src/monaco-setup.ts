@@ -134,15 +134,15 @@ function defineStrixThemes(accent: string) {
       // Warm, soft light: paper-cream background + warm-gray text. These MUST
       // track --bg / --text in tokens.css, or the editor becomes a differently
       // shaded island in the middle of the window.
-      'editor.background': '#eae5da',
-      'editor.foreground': '#2c2822',
-      'editorLineNumber.foreground': '#7e7566',
+      'editor.background': '#e4dfd7',
+      'editor.foreground': '#22201b',
+      'editorLineNumber.foreground': '#78746a',
       'editorLineNumber.activeForeground': accent,
       'editorCursor.foreground': accent,
       'editor.selectionBackground': withAlpha(accent, '44'),
       'editor.lineHighlightBackground': '#7a5a2010',
       'editor.lineHighlightBorder': '#00000000',
-      'editorIndentGuide.background': '#d5ccba',
+      'editorIndentGuide.background': '#cbc7bd',
       'editorIndentGuide.activeBackground': withAlpha(accent, '66'),
       'editorBracketMatch.border': accent,
       'editorGutter.background': '#faf7f1',

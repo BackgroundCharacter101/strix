@@ -175,24 +175,25 @@
    Brand, status, and file-type accents stay the same.
    ========================================================================= */
 :root[data-theme='light'] {
-  /* Warm paper, deliberately NOT near-white. The previous values peaked at 93%
-     lightness for panels and 98% for inputs, which glares on a big screen, and
-     --text-muted only reached 3.53:1 against it — under the 4.5:1 minimum, so
-     every description and hint was genuinely hard to read. Surfaces now top out
-     at 88% with clearly separated layers, and muted text passes at 5.0:1.
-     Keep `editor.background` in monaco-setup.ts equal to --bg. */
-  --bg-app: #cbc4b6; /* canvas darker than panels, so panels read as raised */
-  --bg: #eae5da;
-  --bg-elevated: #e1dbcd;
-  --bg-titlebar: #ddd6c7;
-  --bg-activity: #e0dacc;
-  --bg-input: #f4f1e9;
-  --bg-hover: #d8d1c0;
+  /* Warm paper with REAL layering. The previous pass lowered brightness but
+     kept every surface within 0.4-3.5 perceptual L* of its neighbour — below the
+     ~4 L* threshold where the eye can tell two greys apart — so the whole window
+     read as one flat sheet. That flatness, not the brightness alone, is what
+     made it feel "too white": nothing framed anything.
+     Adjacent layers are now 6+ L* apart, so the editor reads as content sitting
+     inside chrome. Keep `editor.background` in monaco-setup.ts equal to --bg. */
+  --bg-app: #9b9893;      /* L* 63 — canvas behind the panels */
+  --bg: #e4dfd7;          /* L* 89 — the editor surface */
+  --bg-elevated: #cfccc4; /* L* 82 — panels */
+  --bg-activity: #bebbb4; /* L* 76 — the icon rail */
+  --bg-titlebar: #b4b1aa; /* L* 72 */
+  --bg-input: #f5f1e7;    /* L* 95 — fields are the one bright surface */
+  --bg-hover: #aca8a2;    /* L* 69 */
 
-  --border: #cac1ae;
-  --text: #2c2822;
-  --text-muted: #665f52;
-  --icon-muted: #665f52;
+  --border: #aeaaa4;
+  --text: #22201b;        /* 12.3:1 on the editor */
+  --text-muted: #4d4a3c;  /* passes 4.5:1 on every surface above (4.64 worst) */
+  --icon-muted: #4d4a3c;
 
   --scrollbar: #ddd3c1;
   --scrollbar-hover: #ccc1ac;
